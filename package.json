@@ -1,0 +1,20 @@
+{
+  "name": "smartfruit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "setup:supabase": "node scripts/setup-supabase.mjs",
+    "check:supabase": "node scripts/check-supabase.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.3"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}
