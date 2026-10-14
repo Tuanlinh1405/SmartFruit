@@ -69,7 +69,7 @@ Publishable key được thiết kế để dùng ở browser, với Auth/RLS ki
 
 Quyền Owner/Administrator trên Dashboard là quyền của thành viên đội phát triển. Các role FARMER/BUYER/CARRIER/ADMIN trong bảng profiles là quyền của người dùng ứng dụng. Đăng nhập Dashboard không tạo session Supabase Auth trong React app.
 
-Database hiện chưa có account demo lâu dài. Để test CRUD Farmer/Carrier qua client:
+Ngày 15/10/2026 đã thêm [dữ liệu demo](demo-data.md) và 6 hồ sơ Auth placeholder không có mật khẩu đăng nhập. Để test CRUD Farmer/Carrier qua client bằng tài khoản riêng:
 
 1. Tạo account demo riêng trong Supabase Auth theo phương án đăng nhập team đang dùng; mật khẩu trao riêng, không đưa vào repo.
 2. Quản trị viên cấp `profiles.role` đúng FARMER hoặc CARRIER theo [quy trình schema](database-schema.md#6-auth-provisioning-và-api-contract-cho-dev-ab). Trigger chỉ tự nhận role đáng tin từ app_metadata lúc tạo Auth user; user_metadata không cấp quyền.

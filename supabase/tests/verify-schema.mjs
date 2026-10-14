@@ -36,7 +36,7 @@ async function asUser(user, sql, params = []) {
   await db.exec('begin');
   try {
     await db.exec(`set local role ${user === 'anon' ? 'anon' : 'authenticated'}`);
-    await db.query("select set_config('request.jwt.claim.sub', $1, true)", [ids[user] ?? '']);
+    await db.query("select set_config('request.jwt.claim.sub', $1, true)", [ids[user] ?? (user === 'anon' ? '' : user)]);
     return await db.query(sql, params);
   } finally {
     await db.exec('rollback');
@@ -64,7 +64,7 @@ try {
     create schema storage;
     grant usage on schema public, auth, storage to anon, authenticated, service_role;
     create table auth.users (
-      id uuid primary key, phone text,
+      id uuid primary key, phone text, email text unique,
       raw_app_meta_data jsonb default '{}', raw_user_meta_data jsonb default '{}'
     );
     create function auth.uid() returns uuid language sql stable as $$
@@ -281,6 +281,41 @@ try {
     const r=await db.query("select count(*)::integer n from auth.users where id::text like '99000000-%'");
     assert.equal(r.rows[0].n,0);
   });
+  const demoSql = await readFile(path.join(root, 'seeds', 'demo.sql'), 'utf8');
+  const demoBuyer = '71000000-0000-4000-8000-000000000004';
+  const demoFarmer = '71000000-0000-4000-8000-000000000002';
+  const demoLot = '72000000-0000-4000-8000-000000000001';
+  await check('demo seed creates complete linked business dataset', async () => {
+    await db.exec(demoSql);
+    const results = await db.exec(await readFile(path.join(root, 'seeds', 'verify-demo.sql'), 'utf8'));
+    assert.deepEqual(Object.fromEntries(results[0].rows.map(r => [r.dataset, Number(r.records)])), {
+      profiles:6,farmer_profiles:3,buyer_profiles:2,carrier_profiles:1,marketplace_profiles:6,
+      lots:6,lot_private_details:6,buy_requests:5,vehicles:3,
+    });
+    assert.deepEqual(results[1].rows.map(r => Number(r.candidate_lots)), [1,1,1,0]);
+  });
+  await check('demo rerun preserves edits and never duplicates business rows', async () => {
+    await db.exec(`update public.lot_private_details set price_floor_vnd_per_kg=50000 where lot_id='${demoLot}';
+      update public.lots set title='[DEMO] Edited by developer',price_vnd_per_kg=55000 where id='${demoLot}';`);
+    await db.exec(demoSql);
+    await db.exec(demoSql);
+    const r=await db.query(`select title,price_vnd_per_kg from public.lots where id='${demoLot}'`);
+    assert.equal(r.rows[0].title,'[DEMO] Edited by developer');
+    assert.equal(Number(r.rows[0].price_vnd_per_kg),55000);
+    const n=await db.query("select count(*)::integer n from public.lots where id::text like '72000000-%'");
+    assert.equal(n.rows[0].n,6);
+    await db.exec(`update public.lots set price_vnd_per_kg=65000 where id='${demoLot}';`);
+  });
+  await check('demo Buyer sees four published lots and only own requests', async () => {
+    await count(demoBuyer,'public.lots',4,"id::text like '72000000-%'");
+    await count(demoBuyer,'public.buy_requests',2,"id::text like '73000000-%'");
+    await count(demoBuyer,'public.lot_private_details',0);
+  });
+  await check('demo Farmer sees own draft and published lot plus open requests', async () => {
+    await count(demoFarmer,'public.lots',2,"id::text like '72000000-%'");
+    await count(demoFarmer,'public.buy_requests',4,"id::text like '73000000-%'");
+  });
+  await check('demo Carrier sees only own three vehicles', () => count('71000000-0000-4000-8000-000000000006','public.vehicles',3));
   console.log(`\n${passed} database checks passed. Auth/Storage HTTP services are not emulated.`);
 } catch (error) {
   console.error(`FAIL after ${passed} checks: ${error.message}`);

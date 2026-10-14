@@ -2,6 +2,10 @@
 
 Ngày lập: 14/10/2026. Đây là kế hoạch thực hiện, chưa phải mã ứng dụng hoặc xác nhận phê duyệt Scope.
 
+Cập nhật 15/10/2026: [kế hoạch code UI, backend và thuật toán](code-implementation-plan.md) là backlog triển khai hiện tại, có công thức matching đề xuất, tiêu chí nghiệm thu và ước lượng mới. Tài liệu này giữ inventory màn hình và phân chia Scope làm căn cứ.
+
+Cập nhật hướng matching theo yêu cầu người dùng: [vector + graph + điều kiện giao dịch](vector-graph-matching-plan.md) thay cách triển khai B-06 chỉ tính điểm phía client. B-06 và lịch bảy ngày bên dưới là baseline/lịch sử; dùng backlog M0–M6 và ước lượng mới trong plan vector/graph khi triển khai. Phạm vi UI Buyer/Admin giữ nguyên.
+
 Cập nhật database 14/10/2026: đã hoàn thiện [schema/ERD](database-schema.md), tạo 12 bảng cùng RLS và bucket ảnh trên Supabase LogStar. [Biên bản triển khai](database-deployment.md) ghi kết quả 90 kiểm tra local và 16 kiểm tra cloud. Phần schema của ngày 1 đã có; Auth UI, account demo và ứng dụng vẫn cần triển khai.
 
 ## 1. Căn cứ và hiện trạng
@@ -9,7 +13,7 @@ Cập nhật database 14/10/2026: đã hoàn thiện [schema/ERD](database-schem
 - TDD: nội dung phiên bản 0.4, cập nhật 13/10/2026; tên trang vẫn ghi v0.1. Kiến trúc React + TypeScript + Vite + Tailwind + React Router + Supabase.
 - Scope: nội dung phiên bản 0.2. Đối chiếu BR-01..11, FR-04, AR-01..05, FLOW-01..04 và AC-01..10.
 - Trang Team Confirm hiện vẫn chờ xác nhận; các checkbox quyết định chưa được tick. Các mặc định dưới đây phục vụ lập kế hoạch, không coi là quyết định khách hàng đã duyệt.
-- Repo hiện có README và bốn PDF trong `Description/`; chưa có scaffold React, package.json, schema hoặc migration.
+- Repo đã có package.json, cấu hình/client Supabase, schema/migration và dữ liệu demo; chưa có scaffold React/Vite, router hoặc màn hình ứng dụng. Sáu hồ sơ seed chưa có mật khẩu đăng nhập.
 - Buyer.pdf có 10 trang: mô tả nghiệp vụ ở trang 1-2, thiết kế màn hình ở trang 3-9; trang 10 không có thiết kế bổ sung. Admin.pdf có 3 trang, chủ yếu là ảnh thiết kế.
 
 Nguồn Notion:
