@@ -7,9 +7,9 @@ test('production app opens and refreshes without JavaScript errors', async ({ pa
     if (message.type() === 'error') errors.push(message.text());
   });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'LogStar' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'SmartFruit' })).toBeVisible();
   await expect(page.getByText('Nền dự án đã sẵn sàng.')).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'LogStar' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'SmartFruit' })).toBeVisible();
   expect(errors).toEqual([]);
 });

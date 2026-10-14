@@ -1,5 +1,5 @@
 {
-  "name": "logstar",
+  "name": "smartfruit",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -12,7 +12,9 @@
     "test:unit": "vitest run",
     "test:system": "playwright test",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup:supabase": "node scripts/setup-supabase.mjs",
+    "check:supabase": "node scripts/check-supabase.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.3",

@@ -5,6 +5,6 @@ import { AppRouter } from './router';
 
 test('boots the app without Supabase configuration', () => {
   render(<AppProviders><AppRouter /></AppProviders>);
-  expect(screen.getByRole('heading', { name: 'LogStar' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'SmartFruit' })).toBeVisible();
   expect(screen.getByText('Nền dự án đã sẵn sàng.')).toBeVisible();
 });

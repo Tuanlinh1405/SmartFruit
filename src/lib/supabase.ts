@@ -1,13 +1,28 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
-let client: SupabaseClient | undefined;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
 
-// Lazy initialization lets the stage-1 app run without a Supabase project.
-export function getSupabaseClient(): SupabaseClient {
-  if (client) return client;
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) throw new Error('Chưa cấu hình Supabase trong .env.local.');
-  client = createClient(url, key);
-  return client;
+if (!supabaseUrl || !publishableKey) {
+  throw new Error('Thiếu cấu hình Supabase. Chạy npm run setup:supabase rồi khởi động lại Vite.');
+}
+
+if (!publishableKey.startsWith('sb_publishable_')) {
+  throw new Error('Frontend SmartFruit chỉ dùng publishable key lấy từ cấu hình project.');
+}
+
+// Import this shared instance in both Farmer/Carrier and Buyer/Admin features.
+// The authenticated user and database RLS determine which records can be accessed.
+export const supabase = createClient(supabaseUrl, publishableKey, {
+  db: { schema: 'public' },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
+
+// Both import styles use the same authenticated client instance.
+export function getSupabaseClient() {
+  return supabase;
 }

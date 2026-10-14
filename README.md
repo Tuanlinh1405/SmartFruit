@@ -1,29 +1,50 @@
-# SmartFruit / LogStar
+# SmartFruit
 
-Repo chung cho hai developer. Giai đoạn 1 chỉ setup ứng dụng và công cụ test; chưa có skeleton UI hoặc nghiệp vụ.
+SmartFruit MVP: React/Supabase theo TDD; hiện repo có tài liệu, schema và kiểm thử database.
 
-## Yêu cầu và cài đặt
+Cấu hình Supabase cho thành viên trong nhóm (Node.js 24 LTS, >=24.11.0 <25):
 
-Node.js 24 LTS (tối thiểu 24.11.0), npm đi kèm và Git. Chạy trong thư mục gốc repo. Nếu PowerShell chặn npm.ps1, dùng npm.cmd thay npm.
-
-```sh
-git clone https://github.com/Tuanlinh1405/SmartFruit.git
-cd SmartFruit
+```powershell
 npm ci
-npm run dev
+npm run setup:supabase
+npm run check:supabase
+npm run typecheck
 ```
 
-Vite in URL local. Trang nền không cần kết nối Supabase. Chủ repo cần commit/push baseline trước khi máy thứ hai clone được các file setup; phiên setup không tự commit/push.
+URL/publishable key thực đã có trong `.env.example`; setup tạo `.env.local` riêng trên từng máy và không ghi đè file có sẵn. Client chung nằm ở `src/lib/supabase.ts`. [Hướng dẫn cho Dev A/B và quyền Dashboard](docs/supabase-team-setup.md).
 
-## Môi trường
+- [Kế hoạch Developer B](docs/dev-b-plan.md)
+- [Database schema, ERD và contract tích hợp](docs/database-schema.md)
+- [Biên bản triển khai Supabase](docs/database-deployment.md)
+- [Cấu hình ứng dụng và Dashboard cho Dev A/B](docs/supabase-team-setup.md)
+- [Migration SQL](supabase/migrations/202610140001_initial_schema.sql)
+- [Gói cài đặt SQL Editor](supabase/deploy.sql)
+- [Kiểm tra trước triển khai](supabase/preflight.sql)
+- [Xác minh sau triển khai](supabase/verify-deployment.sql)
 
-Không cần .env.local để chạy giai đoạn 1. Khi tích hợp ở giai đoạn 3, sao chép .env.example sang .env.local và điền Supabase URL/public publishable key. Không commit secrets hoặc dùng service-role key trên frontend.
+Đã triển khai ngày 14/10/2026 lên project LogStar `yyslykqpamnlqkvutrlm`: 12 bảng bật RLS, catalog trái cây và bucket ảnh private. Kiểm thử: 90 kiểm tra local và 16 kiểm tra cloud đạt; không có tài khoản test lưu lại. Xem biên bản triển khai để biết phạm vi đã xác minh.
 
-Client tại src/lib/supabase.ts khởi tạo khi feature gọi getSupabaseClient(); thiếu cấu hình sẽ báo lỗi rõ. Chưa tạo project, schema, RLS, tài khoản hoặc seed.
+Kiểm thử database cục bộ:
 
-## Kiểm tra local
+```powershell
+cd supabase/tests
+npm ci --ignore-scripts
+npm test
+npm test -- --deploy
+```
 
-```sh
+Tạo lại gói deploy sau khi sửa migration/seed:
+
+```powershell
+node supabase/scripts/build-deploy.mjs
+```
+
+Không commit mật khẩu, service-role key hoặc thông tin đăng nhập. Không chạy initial migration lần thứ hai trên project đã cài đặt.
+
+## Ứng dụng React và kiểm thử
+
+```powershell
+npm run dev
 npm run typecheck
 npm run test:unit
 npm run build
@@ -31,40 +52,17 @@ npx playwright install chromium
 npm run test:system
 ```
 
-Playwright tự build và chạy production preview trên http://127.0.0.1:4173, kiểm tra trang/refresh/lỗi JavaScript rồi đóng server. Để port 4173 trống. Lần đầu cài Chromium cần mạng; unit test dùng jsdom.
+Trang khởi động chưa có nghiệp vụ và chạy được khi chưa cấu hình Supabase.
+Khi dùng client Supabase, chạy `npm run setup:supabase` trước. Cả export
+`supabase` và `getSupabaseClient()` dùng chung một instance với cấu hình Auth/RLS.
 
-```sh
-npm run preview -- --host 127.0.0.1 --port 4173 --strictPort
-```
+Playwright tự build và chạy production preview tại http://127.0.0.1:4173.
+Để port 4173 trống; lần đầu cài Chromium cần mạng. Nếu PowerShell chặn
+`npm.ps1`, dùng `npm.cmd` thay cho `npm`.
 
-Preview thủ công cần build trước, dừng bằng Ctrl+C. Không có CI hoặc lint. PR chạy typecheck, unit và build; thay đổi app và nghiệm thu chạy thêm system test.
+`src/app` chứa providers, router và trang khởi động; `src/components` và
+`src/layouts` giữ chỗ cho UI. Developer A phụ trách Farmer/Carrier;
+Developer B phụ trách Buyer/Admin/Auth. `src/test` và `tests/system` chứa
+kiểm thử ứng dụng; `supabase/tests` chứa kiểm thử database.
 
-## Cấu trúc và ownership
-
-| Thư mục | Trách nhiệm |
-| --- | --- |
-| src/app | Providers, router, trang khởi động |
-| src/layouts, src/components | Giữ chỗ cho skeleton/UI kit giai đoạn 2 |
-| src/features/farmer, src/features/carrier | A sở hữu end-to-end |
-| src/features/buyer, src/features/admin, src/features/auth | B sở hữu; B điều phối Auth/schema và matching |
-| src/lib, src/types | Client và contract chung |
-| src/mocks | Fixtures D/U, làm sau |
-| supabase/migrations | SQL migrations, làm sau |
-| src/test, tests/system | Unit setup và system tests |
-| Description | Tài liệu gốc được giữ nguyên |
-
-.gitkeep chỉ giữ thư mục, không đánh dấu module đã hoàn thành. Chưa generate database.ts vì chưa có schema. Khi làm feature, queries nằm trong services riêng; shared component không chứa truy vấn DB.
-
-## Quy trình hai người
-
-1. Chủ repo thêm người thứ hai tại GitHub Settings → Collaborators. Quyền collaborator và máy thứ hai chưa được kiểm chứng trong giai đoạn 1.
-2. Sau khi chủ dự án commit/push baseline, pull main rồi tạo nhánh codex/<feature>. Không push trực tiếp main.
-3. PR ghi feature/UI ID, thay đổi, kết quả test; PR UI kèm ảnh desktop/mobile. Người còn lại review trước merge.
-4. Thay đổi contract/shared component thống nhất bằng PR. Auth/RLS/migration phải review chéo và integration test nhiều tài khoản khi triển khai giai đoạn 3.
-5. Giai đoạn 2: một người làm tokens, UI kit và skeleton. A/B sau đó tự điền feature theo cùng phong cách.
-
-Baseline kỹ thuật: Description/TechnicalDocumentDesign.md. Tham chiếu UI: LogStar_UI_Implementation_Plan_v1.md do chủ dự án cung cấp bên ngoài repo. Chưa sao chép hoặc sửa tài liệu gốc.
-
-## Mốc dừng
-
-Sau đánh giá giai đoạn 1, dừng trước skeleton/UI kit, Supabase project, nghiệp vụ, hosting và commit/push. Báo cáo: docs/stage-1-assessment.md.
+Baseline kỹ thuật: [TechnicalDocumentDesign](Description/TechnicalDocumentDesign.md).
