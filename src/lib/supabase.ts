@@ -21,3 +21,8 @@ export const supabase = createClient(supabaseUrl, publishableKey, {
     detectSessionInUrl: true,
   },
 });
+
+// Both import styles use the same authenticated client instance.
+export function getSupabaseClient() {
+  return supabase;
+}

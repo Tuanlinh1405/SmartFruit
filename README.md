@@ -2,7 +2,7 @@
 
 LogStar MVP: React/Supabase theo TDD; hiện repo có tài liệu, schema và kiểm thử database.
 
-Cấu hình Supabase cho thành viên trong nhóm (Node.js >=22):
+Cấu hình Supabase cho thành viên trong nhóm (Node.js 24 LTS, >=24.11.0 <25):
 
 ```powershell
 npm ci
@@ -40,3 +40,29 @@ node supabase/scripts/build-deploy.mjs
 ```
 
 Không commit mật khẩu, service-role key hoặc thông tin đăng nhập. Không chạy initial migration lần thứ hai trên project đã cài đặt.
+
+## Ứng dụng React và kiểm thử
+
+```powershell
+npm run dev
+npm run typecheck
+npm run test:unit
+npm run build
+npx playwright install chromium
+npm run test:system
+```
+
+Trang khởi động chưa có nghiệp vụ và chạy được khi chưa cấu hình Supabase.
+Khi dùng client Supabase, chạy `npm run setup:supabase` trước. Cả export
+`supabase` và `getSupabaseClient()` dùng chung một instance với cấu hình Auth/RLS.
+
+Playwright tự build và chạy production preview tại http://127.0.0.1:4173.
+Để port 4173 trống; lần đầu cài Chromium cần mạng. Nếu PowerShell chặn
+`npm.ps1`, dùng `npm.cmd` thay cho `npm`.
+
+`src/app` chứa providers, router và trang khởi động; `src/components` và
+`src/layouts` giữ chỗ cho UI. Developer A phụ trách Farmer/Carrier;
+Developer B phụ trách Buyer/Admin/Auth. `src/test` và `tests/system` chứa
+kiểm thử ứng dụng; `supabase/tests` chứa kiểm thử database.
+
+Baseline kỹ thuật: [TechnicalDocumentDesign](Description/TechnicalDocumentDesign.md).
