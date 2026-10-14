@@ -5,6 +5,6 @@ import { AppRouter } from './router';
 
 test('boots the app without Supabase configuration', () => {
   render(<AppProviders><AppRouter /></AppProviders>);
-  expect(screen.getByRole('heading', { name: 'SmartFruit' })).toBeVisible();
-  expect(screen.getByText('Nền dự án đã sẵn sàng.')).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Cùng một phong cách, bốn khu vực' })).toBeVisible();
+  expect(screen.getAllByRole('link', { name: /^Mở khu vực/ })).toHaveLength(4);
 });

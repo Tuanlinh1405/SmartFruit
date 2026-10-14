@@ -1,0 +1,23 @@
+:root {
+  --forest: #15372a;
+  --leaf: #1fa85c;
+  --primary: #167843;
+  --cream: #f6f5ee;
+  --amber: #f3a712;
+  --coral: #e3632f;
+  --ink: #26332c;
+  --muted: #526157;
+  --border: #dce3d9;
+  --surface: #fff;
+  --mist: #ecf5ed;
+  --danger: #b74438;
+  --radius: 10px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --font-body: 'Plus Jakarta Sans Variable', Arial, system-ui, sans-serif;
+  --font-heading: 'Fraunces Variable', Georgia, serif;
+}

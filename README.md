@@ -52,17 +52,27 @@ npx playwright install chromium
 npm run test:system
 ```
 
-Trang khởi động chưa có nghiệp vụ và chạy được khi chưa cấu hình Supabase.
+Trang đầu và các route skeleton chưa có nghiệp vụ; chạy được khi chưa cấu hình Supabase.
 Khi dùng client Supabase, chạy `npm run setup:supabase` trước. Cả export
 `supabase` và `getSupabaseClient()` dùng chung một instance với cấu hình Auth/RLS.
 
-Playwright tự build và chạy production preview tại http://127.0.0.1:4173.
-Để port 4173 trống; lần đầu cài Chromium cần mạng. Nếu PowerShell chặn
+Playwright tự build và chạy production preview tại http://127.0.0.1:4173,
+cùng dev server tại http://127.0.0.1:5173 để kiểm tra UI kit development-only.
+Để hai port 4173/5173 trống; lần đầu cài Chromium cần mạng. Nếu PowerShell chặn
 `npm.ps1`, dùng `npm.cmd` thay cho `npm`.
 
-`src/app` chứa providers, router và trang khởi động; `src/components` và
-`src/layouts` giữ chỗ cho UI. Developer A phụ trách Farmer/Carrier;
+`src/app` chứa providers, router và registry skeleton; `src/components` và
+`src/layouts` chứa UI kit và shell dùng chung. Developer A phụ trách Farmer/Carrier;
 Developer B phụ trách Buyer/Admin/Auth. `src/test` và `tests/system` chứa
 kiểm thử ứng dụng; `supabase/tests` chứa kiểm thử database.
 
 Baseline kỹ thuật: [TechnicalDocumentDesign](Description/TechnicalDocumentDesign.md).
+
+## Giai đoạn 2 — UI chung
+
+- Chạy `npm run dev`, mở `/dev/ui` để xem UI kit và hai mẫu local danh sách/form-preview.
+- [Tài liệu UI chung](docs/ui.md): phong cách, component, cách ghép feature, inventory và quyết định thiết kế.
+- Cập nhật vùng inventory trong tài liệu UI sau đổi registry: `node scripts/generate-ui-inventory.mjs`.
+- Giai đoạn 2 chưa yêu cầu screenshot; system tests vẫn kiểm tra responsive và tương tác UI.
+- `/dev/ui` không có trong production; menu role chỉ là skeleton, chưa xác thực/phân quyền.
+- Không thêm CI/lint. Dừng sau [đánh giá giai đoạn 2](docs/stage-2-assessment.md), chưa triển khai CRUD/matching/chat/vận chuyển.
