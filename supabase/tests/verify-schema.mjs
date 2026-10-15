@@ -3,11 +3,12 @@ import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
+import { vector } from '@electric-sql/pglite-pgvector';
 
 // Real PostgreSQL engine, temporary in-memory database. These minimal Supabase
 // system-schema stubs are TEST ONLY. Never run them against hosted Supabase.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const db = await PGlite.create();
+const db = await PGlite.create({ extensions: { vector } });
 let passed = 0;
 const ids = {
   farmer: '30000000-0000-4000-8000-000000000001',
@@ -36,7 +37,7 @@ async function asUser(user, sql, params = []) {
   await db.exec('begin');
   try {
     await db.exec(`set local role ${user === 'anon' ? 'anon' : 'authenticated'}`);
-    await db.query("select set_config('request.jwt.claim.sub', $1, true)", [ids[user] ?? '']);
+    await db.query("select set_config('request.jwt.claim.sub', $1, true)", [ids[user] ?? (user === 'anon' ? '' : user)]);
     return await db.query(sql, params);
   } finally {
     await db.exec('rollback');
@@ -62,9 +63,10 @@ try {
     create role service_role nologin bypassrls;
     create schema auth;
     create schema storage;
-    grant usage on schema public, auth, storage to anon, authenticated, service_role;
+    create schema extensions;
+    grant usage on schema public, auth, storage, extensions to anon, authenticated, service_role;
     create table auth.users (
-      id uuid primary key, phone text,
+      id uuid primary key, phone text, email text unique,
       raw_app_meta_data jsonb default '{}', raw_user_meta_data jsonb default '{}'
     );
     create function auth.uid() returns uuid language sql stable as $$
@@ -127,9 +129,9 @@ try {
     values ('${lot}',${quote(objectPath)},0),('${draftLot}',${quote(draftPath)},0);
   `);
 
-  await check('all 12 application tables have RLS', async () => {
+  await check('all 18 application and hybrid-search tables have RLS', async () => {
     const r = await db.query("select count(*)::integer n, bool_and(relrowsecurity) secured from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'");
-    assert.equal(r.rows[0].n, 12); assert.equal(r.rows[0].secured, true);
+    assert.equal(r.rows[0].n, 18); assert.equal(r.rows[0].secured, true);
   });
   await check('deployment verification queries run successfully', async () => {
     await db.exec(await readFile(path.join(root, 'verify-deployment.sql'), 'utf8'));
@@ -313,6 +315,70 @@ try {
     const r=await db.query("select count(*)::integer n from auth.users where id::text like '99000000-%'");
     assert.equal(r.rows[0].n,0);
   });
+  const demoSql = await readFile(path.join(root, 'seeds', 'demo.sql'), 'utf8');
+  const demoBuyer = '71000000-0000-4000-8000-000000000004';
+  const demoFarmer = '71000000-0000-4000-8000-000000000002';
+  const demoLot = '72000000-0000-4000-8000-000000000001';
+  await check('demo seed creates complete linked business dataset', async () => {
+    await db.exec(demoSql);
+    const results = await db.exec(await readFile(path.join(root, 'seeds', 'verify-demo.sql'), 'utf8'));
+    assert.deepEqual(Object.fromEntries(results[0].rows.map(r => [r.dataset, Number(r.records)])), {
+      profiles:6,farmer_profiles:3,buyer_profiles:2,carrier_profiles:1,marketplace_profiles:6,
+      lots:6,lot_private_details:6,buy_requests:5,vehicles:3,
+    });
+    assert.deepEqual(results[1].rows.map(r => Number(r.candidate_lots)), [1,1,1,0]);
+  });
+  await check('hybrid graph/vector candidates enforce Buyer and Farmer ownership', async () => {
+    await db.exec('begin');
+    try {
+      const lotId = '72000000-0000-4000-8000-000000000001';
+      const requestId = '73000000-0000-4000-8000-000000000001';
+      const embedding = "('[' || array_to_string(array_fill('0.01'::text,array[768]), ',') || ']')::extensions.vector(768)";
+      await db.exec(`
+        insert into public.lot_embeddings(lot_id,model_version,content_hash,embedding)
+          select lot_id,'multilingual-e5-base-v1',content_hash,${embedding}
+          from public.lot_search_documents where lot_id='${lotId}';
+        insert into public.buy_request_embeddings(request_id,model_version,content_hash,embedding)
+          select request_id,'multilingual-e5-base-v1',content_hash,${embedding}
+          from public.buy_request_search_documents where request_id='${requestId}';
+        set local role authenticated;
+        select set_config('request.jwt.claim.sub','71000000-0000-4000-8000-000000000004',true);
+      `);
+      const buyer = await db.query(`select * from public.search_lot_candidates('${requestId}',${embedding},'Ri6') where lot_id='${lotId}'`);
+      assert.equal(buyer.rows.length, 1); assert.equal(Number(buyer.rows[0].semantic_rank), 1);
+      assert.ok(buyer.rows[0].graph_paths.some(p => p.startsWith('Từ khóa')));
+      assert.equal((await db.query(`select * from public.search_lot_candidates('73000000-0000-4000-8000-000000000003',null::extensions.vector(768),'Ri6')`)).rows.length, 0);
+      await db.exec("select set_config('request.jwt.claim.sub','71000000-0000-4000-8000-000000000001',true)");
+      const farmer = await db.query(`select * from public.search_request_candidates('${lotId}',${embedding},'Ri6') where request_id='${requestId}'`);
+      assert.equal(farmer.rows.length, 1); assert.equal(Number(farmer.rows[0].semantic_rank), 1);
+      assert.ok(farmer.rows[0].graph_paths.some(p => p.startsWith('Từ khóa')));
+      assert.equal((await db.query(`select * from public.search_request_candidates('72000000-0000-4000-8000-000000000003',null::extensions.vector(768),'Ri6')`)).rows.length, 0);
+    } finally {
+      await db.exec('rollback');
+    }
+  });
+  await check('demo rerun preserves edits and never duplicates business rows', async () => {
+    await db.exec(`update public.lot_private_details set price_floor_vnd_per_kg=50000 where lot_id='${demoLot}';
+      update public.lots set title='[DEMO] Edited by developer',price_vnd_per_kg=55000 where id='${demoLot}';`);
+    await db.exec(demoSql);
+    await db.exec(demoSql);
+    const r=await db.query(`select title,price_vnd_per_kg from public.lots where id='${demoLot}'`);
+    assert.equal(r.rows[0].title,'[DEMO] Edited by developer');
+    assert.equal(Number(r.rows[0].price_vnd_per_kg),55000);
+    const n=await db.query("select count(*)::integer n from public.lots where id::text like '72000000-%'");
+    assert.equal(n.rows[0].n,6);
+    await db.exec(`update public.lots set price_vnd_per_kg=65000 where id='${demoLot}';`);
+  });
+  await check('demo Buyer sees four published lots and only own requests', async () => {
+    await count(demoBuyer,'public.lots',4,"id::text like '72000000-%'");
+    await count(demoBuyer,'public.buy_requests',2,"id::text like '73000000-%'");
+    await count(demoBuyer,'public.lot_private_details',0);
+  });
+  await check('demo Farmer sees own draft and published lot plus open requests', async () => {
+    await count(demoFarmer,'public.lots',2,"id::text like '72000000-%'");
+    await count(demoFarmer,'public.buy_requests',4,"id::text like '73000000-%'");
+  });
+  await check('demo Carrier sees only own three vehicles', () => count('71000000-0000-4000-8000-000000000006','public.vehicles',3));
   console.log(`\n${passed} database checks passed. Auth/Storage HTTP services are not emulated.`);
 } catch (error) {
   console.error(`FAIL after ${passed} checks: ${error.message}`);

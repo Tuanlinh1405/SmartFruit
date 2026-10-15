@@ -16,7 +16,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "setup:supabase": "node scripts/setup-supabase.mjs",
-    "check:supabase": "node scripts/check-supabase.mjs"
+    "check:supabase": "node scripts/check-supabase.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "5.3.0",
@@ -25,8 +26,8 @@
     "@supabase/supabase-js": "2.117.3",
     "@tanstack/react-query": "5.104.2",
     "lucide-react": "1.57.0",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "react-router-dom": "7.18.4"
   },
   "devDependencies": {

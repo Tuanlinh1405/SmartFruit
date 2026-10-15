@@ -2,6 +2,10 @@
 .env.*
 !.env.example
 node_modules/
+dist/
+__pycache__/
+*.pyc
+.venv/
 supabase/.temp/
 tmp/
 dist/

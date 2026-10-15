@@ -17,4 +17,14 @@ from (values
 ) as v(id, type_code, code, name)
 join public.fruit_types t on t.code = v.type_code
 on conflict (fruit_type_id, code) do nothing;
+-- A fresh install seeds catalog AFTER migrations; initialize matching aliases
+-- here too, while retaining compatibility with projects without hybrid search.
+do $$ begin
+  if to_regclass('public.fruit_type_aliases') is not null then
+    insert into public.fruit_type_aliases(fruit_type_id, alias)
+      select id, name from public.fruit_types on conflict do nothing;
+    insert into public.fruit_variety_aliases(variety_id, alias)
+      select id, name from public.fruit_varieties on conflict do nothing;
+  end if;
+end $$;
 commit;
