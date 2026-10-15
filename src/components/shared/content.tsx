@@ -1,0 +1,11 @@
+import { useState, type PropsWithChildren, type ReactNode } from 'react';
+import { CircleHelp, ImageOff, Info, LoaderCircle, AlertTriangle } from 'lucide-react';
+import { Button } from '../ui/button';
+export function Card({ title, children }: PropsWithChildren<{ title?: string }>) { return <section className="card">{title && <h2 className="card-title">{title}</h2>}{children}</section>; }
+export function PageHeader({ title, description, action, eyebrow }: { title: string; description?: string; action?: ReactNode; eyebrow?: string }) { return <header className="page-header"><div>{eyebrow && <p className="eyebrow" style={{ marginBottom: 8 }}>{eyebrow}</p>}<h1>{title}</h1>{description && <p className="muted">{description}</p>}</div>{action}</header>; }
+export function DemoNotice({ children = 'Dữ liệu minh họa; thao tác chỉ thay đổi trạng thái local, không tạo giao dịch thật.' }: PropsWithChildren) { return <div className="notice"><Info size={18} aria-hidden="true" /><p>{children}</p></div>; }
+export function EmptyState({ title = 'Chưa có dữ liệu', description = 'Nội dung sẽ xuất hiện tại đây.' }: { title?: string; description?: string }) { return <div className="state"><CircleHelp size={28} aria-hidden="true" /><h3>{title}</h3><p className="muted">{description}</p></div>; }
+export function LoadingState() { return <div className="state" role="status"><LoaderCircle size={28} aria-hidden="true" /><p>Đang tải…</p></div>; }
+export function ErrorState({ message = 'Không thể tải dữ liệu.', onRetry }: { message?: string; onRetry?: () => void }) { return <div className="state" role="alert"><AlertTriangle size={28} aria-hidden="true" /><p>{message}</p>{onRetry && <Button variant="secondary" onClick={onRetry}>Thử lại</Button>}</div>; }
+export function PhotoPlaceholder({ src, alt }: { src?: string; alt: string }) { const [failedSrc, setFailedSrc] = useState<string>(); return <div className="photo">{src && failedSrc !== src ? <img src={src} alt={alt} onError={() => setFailedSrc(src)} /> : <div className="photo-fallback" role="img" aria-label={alt}><ImageOff size={28} aria-hidden="true" /><span>{alt}</span></div>}</div>; }
+export function FormLayout({ children, preview }: PropsWithChildren<{ preview: ReactNode }>) { return <div className="form-grid"><div>{children}</div><aside aria-label="Xem trước">{preview}</aside></div>; }
