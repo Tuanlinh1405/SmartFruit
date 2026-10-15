@@ -54,6 +54,14 @@ Form hai cột desktop → một cột mobile. DataTable chuyển thành card tr
 
 ## Quy tắc mở rộng và review
 
+### Các feature A đã có, đang chờ Auth/matching B
+
+Các màn D/U Farmer/Carrier đã thay skeleton bằng tương tác minh họa, state nằm trong `ADemoProvider`, không ghi Supabase. Khi tích hợp Auth, truyền identity của session vào provider để reset state khi đổi tài khoản. Không coi menu chọn khu vực là phân quyền.
+
+Các panel hồ sơ/lô/ảnh, Carrier/xe và matching F nhận user ID từ Auth đã resolve; chưa nối public router khi B chưa bàn giao guards. `AFeaturePage` là điểm ghép cho B dưới guard đúng role, có callbacks điều hướng list/detail/edit. Scorer của B được inject vào `FarmerMatchingPanel`; thiếu scorer sẽ hiển thị chưa khả dụng, không sinh điểm giả.
+
+`tests/harness/index.html` là entry test trình duyệt độc lập dùng repositories giả lập, không nằm trong router hoặc output production. `npm run test:system` kiểm tra UI này và toàn bộ D/U ở 1440/768/390px; không thay thế test lưu thật/phân quyền. `npm run test:integration` mặc định skip có lý do; xem phần môi trường test SDK trong database-schema.md trước khi bật.
+
 Component/tokens mới cần review chung trước khi nhân rộng. PR UI ghi UI ID, ảnh 1440/390px và kết quả typecheck/unit/system/build. Ghi khác biệt thiết kế trong phần Quyết định thiết kế của tài liệu này. Không thêm lint/CI. Không coi test skeleton là test nghiệp vụ.
 
 ## Kiểm thử

@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run",
     "test:system": "playwright test",
+    "test:integration": "node --test tests/integration/a-live.test.mjs",
+    "test:database": "npm --prefix supabase/tests test",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "setup:supabase": "node scripts/setup-supabase.mjs",

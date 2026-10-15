@@ -8,8 +8,8 @@ export default defineConfig({
   reporter: 'list',
   use: { baseURL: 'http://127.0.0.1:4173', trace: 'retain-on-failure' },
   projects: [
-    { name: 'production', testMatch: /(?:start|skeleton)\.spec\.ts/, use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:4173' } },
-    { name: 'ui-kit-dev', testMatch: /ui-kit\.spec\.ts/, use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:5173' } },
+    { name: 'production', testMatch: /(?:start|skeleton|a-demo)\.spec\.ts/, use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:4173' } },
+    { name: 'ui-kit-dev', testMatch: /(?:ui-kit|a-harness)\.spec\.ts/, use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:5173' } },
   ],
   webServer: [{
     command: 'npm run build && npm run preview -- --host 127.0.0.1 --port 4173 --strictPort',

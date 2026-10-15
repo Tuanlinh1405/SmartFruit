@@ -18,6 +18,13 @@
 }
 
 .stack { display: grid; gap: var(--space-6); }
+.a-chat { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,2fr) minmax(0,1fr); gap: var(--space-4); }
+.a-chat > section { min-width: 0; overflow-wrap: anywhere; }
+@media(max-width:767px) {
+  .a-chat { display: block; }
+  .a-chat > section { display: none; }
+  .a-chat[data-view="list"] > .a-chat-list, .a-chat[data-view="conversation"] > .a-chat-conversation, .a-chat[data-view="detail"] > .a-chat-detail { display: block; }
+}
 .stack-sm { display: grid; gap: var(--space-3); }
 .row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
 .muted { color: var(--muted); }

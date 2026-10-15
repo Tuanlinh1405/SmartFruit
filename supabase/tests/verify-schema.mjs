@@ -273,9 +273,41 @@ try {
   await check('all SECURITY DEFINER functions pin an empty search path',async()=>{
     const r=await db.query("select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='logstar_private' and p.prosecdef and not coalesce(p.proconfig @> array['search_path=\"\"'],false)");assert.deepEqual(r.rows,[]);
   });
-  await check('no SECURITY DEFINER API function in public schema',async()=>{
-    const r=await db.query("select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prosecdef");assert.deepEqual(r.rows,[]);
+  await check('only lifecycle RPCs are SECURITY DEFINER APIs, with safe search_path and no anonymous grants',async()=>{
+    const r=await db.query("select p.proname,p.proconfig,has_function_privilege('anon',p.oid,'EXECUTE') as anon_access from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prosecdef order by p.proname");
+    const expected = ['delete_empty_lot','replace_lot_image'];
+    assert.deepEqual(r.rows.map(x=>x.proname),expected);
+    for(const x of r.rows){assert.ok(x.proconfig.includes('search_path=""'));assert.equal(x.anon_access,false);}
   });
+  if(!process.argv.includes('--deploy')) {
+    await check('image lifecycle RPC rejects other owners and roles',async()=>{
+      const image=(await db.query(`select id from public.lot_images where lot_id='${lot}' limit 1`)).rows[0].id;
+      for(const user of ['farmer2','buyer','admin']) {
+        await denied(user,`select public.replace_lot_image('${image}',${quote(objectPath)})`);
+        await denied(user,`select public.delete_empty_lot('${lot}')`);
+      }
+      await denied('anon',`select public.delete_empty_lot('${lot}')`);
+    });
+    await check('lot DELETE blocked by linked images AND orphan objects',async()=>{
+      await denied('farmer',`delete from public.lots where id='${lot}'`,['23514']);
+      await db.exec('begin');try {
+        await db.exec(`set local role authenticated;select set_config('request.jwt.claim.sub','${ids.farmer}',true);delete from public.lot_images where lot_id='${lot}'`);
+        await assert.rejects(()=>db.query(`select public.delete_empty_lot('${lot}')`),e=>e.code==='23514');
+      }finally{await db.exec('rollback');}
+    });
+    await check('image replacement preserves slot and old file until Storage cleanup; delete empty lot works',async()=>{
+      await db.exec('begin');try {
+        await db.exec(`set local role authenticated;select set_config('request.jwt.claim.sub','${ids.farmer}',true);insert into storage.objects(bucket_id,name) values ('lot-images','${ids.farmer}/${lot}/replacement.jpg')`);
+        const image=(await db.query(`select id,sort_order from public.lot_images where lot_id='${lot}' limit 1`)).rows[0];
+        await db.query('select public.replace_lot_image($1,$2)',[image.id,`${ids.farmer}/${lot}/replacement.jpg`]);
+        const next=(await db.query('select storage_path,sort_order from public.lot_images where id=$1',[image.id])).rows[0];
+        assert.equal(next.sort_order,image.sort_order);assert.equal(next.storage_path,`${ids.farmer}/${lot}/replacement.jpg`);
+        assert.equal((await db.query(`select count(*)::int n from storage.objects where name=${quote(objectPath)}`)).rows[0].n,1);
+        await db.exec(`delete from public.lot_images where lot_id='${lot}';delete from storage.objects where name like '${ids.farmer}/${lot}/%';select public.delete_empty_lot('${lot}')`);
+        assert.equal((await db.query(`select count(*)::int n from public.lots where id='${lot}'`)).rows[0].n,0);
+      }finally{await db.exec('rollback');}
+    });
+  }
   await check('cloud smoke script passes and rolls back all synthetic accounts', async () => {
     await db.exec(await readFile(path.join(root, 'tests', 'cloud-smoke.sql'), 'utf8'));
     const r=await db.query("select count(*)::integer n from auth.users where id::text like '99000000-%'");

@@ -2,6 +2,19 @@
 
 SmartFruit MVP: React/Supabase theo TDD; hiện repo có tài liệu, schema và kiểm thử database.
 
+Farmer/Carrier đã có các màn minh họa tương tác. Các panel dữ liệu thật (hồ sơ, lô/ảnh, đội xe và matching) đang chờ Auth/guards và scorer chung của B để nối production; menu chọn khu vực không cấp quyền dữ liệu.
+
+```powershell
+npm run dev
+npm run test:unit
+npx playwright install chromium
+npm run test:system
+```
+
+System suite gồm UI production và test harness độc lập có repository giả, không chứng minh persistence/RLS thực. Không có CI/lint. [Contract UI và cách tích hợp phần A](docs/ui.md).
+
+Migration `202610150001_lot_image_lifecycle.sql` mới chỉ được chuẩn bị và kiểm thử local, chưa xác nhận áp cloud. Project đã có schema không chạy lại deploy.sql; cần review/apply migration bổ sung trước test Storage/RPC thực. [Hướng dẫn môi trường SDK test](docs/database-schema.md).
+
 Cấu hình Supabase cho thành viên trong nhóm (Node.js 24 LTS, >=24.11.0 <25):
 
 ```powershell

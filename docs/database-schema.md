@@ -6,6 +6,20 @@ Ngày thiết kế: 14/10/2026. Project đích: `yyslykqpamnlqkvutrlm`.
 
 ## 1. Phạm vi và nguồn sự thật
 
+### Migration vòng đời ảnh (mã đã chuẩn bị, chưa xác nhận áp cloud)
+
+`202610150001_lot_image_lifecycle.sql` bổ sung RPC `replace_lot_image(image_id,new_path)` và `delete_empty_lot(lot_id)`, giới hạn Farmer owner, cùng trigger chặn xóa lô còn links/file. Policy upload khóa bản ghi lô để phối hợp với thao tác xóa. Không cấp quyền update storage_path đại trà và không thao tác Storage metadata từ frontend.
+
+Project đã có initial schema chỉ áp migration bổ sung sau review, không chạy lại deploy.sql. File deploy.sql được generate lại cho cài đặt mới; việc generate không có nghĩa đã triển khai lên cloud. Test PGlite chạy toàn bộ migrations; khóa cạnh tranh và Storage HTTP phải nghiệm thu thêm trên môi trường test thực.
+
+### Môi trường test SDK phần A
+
+Chạy `npm run test:database` cho SQL/PGlite; dependency của suite được cài bằng `npm ci --ignore-scripts --prefix supabase/tests`.
+
+`npm run test:integration` mặc định skip. Để bật cần `RUN_A_LIVE=1`, `A_TEST_SUPABASE_URL`, `A_TEST_SUPABASE_KEY` là publishable key và `A_TEST_ACCOUNTS` là JSON ánh xạ farmer1/farmer2/carrier1/carrier2/buyer/admin tới phone/password của tài khoản test chuyên dụng. Không dùng account người dùng thật, không commit credentials hoặc đưa chúng vào VITE_*.
+
+Suite đăng nhập qua Auth HTTP, tạo dữ liệu có UUID/tag riêng, kiểm tra PostgREST/RLS/Storage/signed URL và cleanup trong finally. Không tạo user, không áp SQL, không reset DB chung. Cần áp migration bổ sung và cấp role đúng trước khi chạy; nếu bật nhưng thiếu cấu hình thì test fail, không tự chuyển sang mock.
+
 Schema hoàn thiện phần dữ liệu F của TDD v0.4 và form trong bộ thiết kế `Description/`. SQL trong `supabase/migrations/202610140001_initial_schema.sql` là định nghĩa chính xác của tên cột, kiểu, constraints, indexes, grants và RLS. `supabase/deploy.sql` được ghép tự động từ migration và seed, dùng cho cài đặt ban đầu trong SQL Editor.
 
 Project Supabase đã có database PostgreSQL `postgres`, schema `auth` và `storage`. Cài đặt này tạo các bảng ứng dụng trong `public`, các hàm nội bộ trong `logstar_private`, và bucket ảnh riêng tư. Không tạo một Supabase project khác hoặc database PostgreSQL thứ hai.
