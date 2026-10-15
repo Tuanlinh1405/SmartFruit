@@ -1,54 +1,56 @@
 # SmartFruit
 
-LogStar MVP: React/TypeScript/Vite + Supabase theo TDD. Dev B đã có Auth, Buyer, Admin demo và matching theo quy tắc; pipeline vector/graph có migration, worker, Edge Function và cờ bật riêng.
+LogStar MVP: React/TypeScript/Vite + Supabase. Dev B đã triển khai Auth, Buyer, kết nối Buyer/Farmer, chat, thương lượng/thỏa thuận, đánh giá và Admin bằng dữ liệu thật. Matching mặc định theo quy tắc; vector/graph có schema và mã, còn chờ host inference/worker. [Trạng thái tính năng và các phần hoãn](docs/implementation-status.md).
 
-Cấu hình Supabase cho thành viên trong nhóm (Node.js >=22):
+Khởi tạo máy developer với Node.js >=22:
 
 ```powershell
 npm ci
 npm run setup:supabase
 npm run check:supabase
-npm run typecheck
+npm run build
 npm test
 npm run dev
 ```
 
-URL/publishable key thực đã có trong `.env.example`; setup tạo `.env.local` riêng trên từng máy và không ghi đè file có sẵn. Client chung nằm ở `src/lib/supabase.ts`. [Hướng dẫn cho Dev A/B và quyền Dashboard](docs/supabase-team-setup.md).
+Mở `http://localhost:5173`. URL/publishable key có sẵn trong `.env.example`; setup tạo `.env.local` riêng và giữ file có sẵn. Client chung: `src/lib/supabase.ts`. [Hướng dẫn Dev A/B và quyền Dashboard](docs/supabase-team-setup.md).
 
-Mở `http://localhost:5173`. Auth dùng SĐT quốc tế và mật khẩu Supabase Auth của tài khoản được cấp sẵn. Theo quyết định ngày 15/10/2026, bỏ OTP và luồng đăng ký demo; không cần dịch vụ SMS. Sáu hồ sơ seed không có mật khẩu, nên không thể đăng nhập bằng chúng. Route Buyer: `/buyer`, `/buyer/profile`, `/buyer/requests`, `/buyer/lots`; lời mời/chat/vận chuyển/đánh giá là demo có nhãn. Admin dùng Auth role `ADMIN`, nội dung quản lý là fixture; Farmer/Carrier dùng `/role-home` chờ Dev A gắn giao diện.
+Đăng nhập email hoặc SĐT quốc tế + mật khẩu Supabase Auth; không cần OTP/SMS. Đã tạo 7 tài khoản test cho BUYER/FARMER/CARRIER/ADMIN. Email và cách lấy mật khẩu nằm trong [ghi chú kiểm thử](docs/implementation-status.md#tài-khoản-kiểm-thử). Mật khẩu được trao riêng, không có trong Git. Các hồ sơ `[DEMO]` cũ chỉ là dữ liệu mẫu, không có mật khẩu.
 
-`VITE_MATCHING_MODE=rule-only` là mặc định. Migration [hybrid search](supabase/migrations/202610150001_hybrid_search.sql) đã áp ngày 15/10/2026 trên project LogStar: 6 tài liệu lô, 5 tài liệu nhu cầu và 11 job embedding; vector hiện bằng 0 vì chưa có host/model worker. Worker/model và cách bật chức năng ở [hướng dẫn embedding](services/embedding/README.md). Edge Function và inference service chưa deploy, nên không bật `hybrid` cho người dùng. SQL đã kiểm tra cả Buyer/Farmer, vector cosine, alias graph, RLS trong transaction rollback bằng [smoke test](supabase/tests/hybrid-cloud-smoke.sql).
+Route chính: `/buyer`, `/farmer`, `/carrier`, `/admin`; quyền dựa trên Auth và database. Farmer/Carrier có workspace đọc dữ liệu thật, hồ sơ và luồng giao dịch phục vụ test; đăng/sửa lô, upload ảnh và CRUD xe nâng cao theo phân công Dev A. Vận chuyển, tracking, thanh toán và chính sách chưa sẵn sàng được ghi rõ trên giao diện.
 
-- [Kế hoạch Developer B](docs/dev-b-plan.md)
-- [Kế hoạch code UI, backend và thuật toán](docs/code-implementation-plan.md)
-- [Kế hoạch matching vector + graph](docs/vector-graph-matching-plan.md)
-- [Database schema, ERD và contract tích hợp](docs/database-schema.md)
-- [Biên bản triển khai Supabase](docs/database-deployment.md)
-- [Cấu hình ứng dụng và Dashboard cho Dev A/B](docs/supabase-team-setup.md)
-- [Dữ liệu demo và kịch bản kiểm thử](docs/demo-data.md)
-- [Migration SQL](supabase/migrations/202610140001_initial_schema.sql)
-- [Migration matching](supabase/migrations/202610150001_hybrid_search.sql)
-- [Gói cài đặt SQL Editor](supabase/deploy.sql)
-- [Kiểm tra trước triển khai](supabase/preflight.sql)
-- [Xác minh sau triển khai](supabase/verify-deployment.sql)
+Supabase LogStar `yyslykqpamnlqkvutrlm` đã có initial schema, catalog, bucket ảnh private; migration hybrid và migration giao dịch đã áp ngày 15/10/2026. Năm bảng giao dịch có RLS, các RPC kiểm tra participant/role/trạng thái; Admin dùng API giới hạn, không đọc chat riêng hoặc giá sàn. Không chạy lại migration đã áp lên project dùng chung. Gói `supabase/deploy.sql` chỉ dành cho baseline ban đầu; chưa gồm migration hybrid/giao dịch.
 
-Đã triển khai ngày 14/10/2026 lên project LogStar `yyslykqpamnlqkvutrlm`: 12 bảng bật RLS, catalog trái cây và bucket ảnh private. Migration matching bổ sung được áp ngày 15/10/2026. Xem biên bản triển khai để biết phạm vi đã xác minh.
-
-Ngày 15/10/2026 đã seed 6 hồ sơ demo không có mật khẩu, 6 lô hàng, 5 nhu cầu thu mua và 3 xe. Bộ kiểm tra hiện có 95 kiểm tra local đạt. Script demo nằm riêng trong `supabase/seeds/demo.sql`, không thuộc gói deploy schema.
-
-Kiểm thử database cục bộ:
+Kiểm thử database bằng PostgreSQL cục bộ:
 
 ```powershell
 cd supabase/tests
 npm ci --ignore-scripts
 npm test
-npm test -- --deploy
+npm run test:vector
 ```
 
-Tạo lại gói deploy sau khi sửa migration/seed:
+`npm test` chạy 95 kiểm tra baseline và 23 kiểm tra giao dịch. `npm run test:vector` kiểm tra truy hồi cosine top 20/RLS bằng PostgreSQL + pgvector cục bộ, dùng vector giả lập nhỏ và không chạy model. Smoke test hybrid ban đầu trên cloud nằm ở [smoke test rollback](supabase/tests/hybrid-cloud-smoke.sql).
+
+Seed tài khoản và kiểm thử HTTP cloud là thao tác ghi dữ liệu test trên LogStar. Seed cần backend key; kiểm thử HTTP chỉ dùng publishable key và thông tin các tài khoản test:
 
 ```powershell
-node supabase/scripts/build-deploy.mjs
+# .env.admin.local: SUPABASE_URL và SUPABASE_SECRET_KEY, không dùng VITE_ cho secret
+npm run seed:test
+npm run test:live
 ```
 
-Không commit mật khẩu, service-role key, database URL hoặc thông tin đăng nhập. Không chạy lại các migration đã áp dụng bằng SQL Editor trên project dùng chung. Kiểm thử HTTP đăng nhập/CRUD/ảnh với tài khoản thật và benchmark chất lượng E5 còn cần thực hiện khi có tài khoản test và host inference.
+Seed không reset mật khẩu account có sẵn. Script HTTP dùng JWT của từng role để kiểm tra ownership, chat/thỏa thuận/đánh giá, ảnh private và Admin; để lại dữ liệu `[TEST HTTP]`, chỉ đóng lô của lượt test và khôi phục trạng thái khóa sau test. Giữ `tmp/test-accounts.json` và `.md` riêng; không gửi backend key cho frontend.
+
+- [Kế hoạch Developer B](docs/dev-b-plan.md)
+- [Tích hợp khung UI Dev A (PR #2) với tính năng thật](docs/ui-integration.md)
+- [UI kit, quy ước và inventory màn hình](docs/ui.md)
+- [Kế hoạch UI, backend và thuật toán](docs/code-implementation-plan.md)
+- [Kế hoạch matching vector + graph](docs/vector-graph-matching-plan.md)
+- [Matching hiện hành: E5 → vector top 20 → so từ rerank](docs/matching-e5-top20.md)
+- [Database schema, ERD và contract](docs/database-schema.md)
+- [Biên bản triển khai Supabase](docs/database-deployment.md)
+- [Migration giao dịch](supabase/migrations/202610150002_trading.sql)
+- [Worker embedding và cách bật hybrid](services/embedding/README.md)
+
+`VITE_MATCHING_MODE=rule-only` là mặc định; đã có so từ chính xác/gần đúng. Đã code E5-base → cosine top 20 → rerank, nhưng migration mới `202610150003_vector_top20.sql` chưa áp cloud; inference/worker và Edge Function chưa deploy. Đã có [phép thử E5 local với tên giống](docs/benchmarks/e5-varieties-2026-10-15/README.md), chưa phải benchmark đại diện để bật hybrid cho người dùng. Không commit mật khẩu, secret/service-role key hoặc database URL có thông tin đăng nhập.

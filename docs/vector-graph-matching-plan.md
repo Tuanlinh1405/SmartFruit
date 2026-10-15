@@ -1,14 +1,16 @@
 # Kế hoạch matching bằng vector, graph và điều kiện giao dịch
 
-Ngày 15/10/2026. Người dùng đã chọn hướng vector + graph. Tài liệu này thay phần matching chỉ dựa trên luật trong [plan code Dev B](code-implementation-plan.md); công thức cũ giữ làm baseline và fallback.
+Ngày 15/10/2026. Thiết kế vector + graph ban đầu; các đề xuất alias/graph/LLM chưa code bên dưới giữ làm backlog. **Contract hiện hành là [E5 → vector top 20 → so từ rerank](matching-e5-top20.md)**, thay phương án union keyword/graph và RRF cũ. Công thức giá/lượng giữ làm điểm phụ và fallback.
 
 Trạng thái triển khai 15/10/2026: đã áp migration pgvector, tài liệu tìm kiếm, alias, queue và hai RPC trên Supabase; đã có mã worker/inference, Edge Function và UI bật bằng cờ. Chưa tải/chạy model trên host, chưa deploy Edge Function, chưa benchmark đủ để bật hybrid mặc định. Mọi mục tiêu recall/latency dưới đây vẫn là gate đề xuất, chưa được đo.
 
+**Phạm vi mới nhất 15/10/2026:** E5-base 768 chiều, top 20 theo cosine rồi so từ khớp/gần khớp; chỉ xét sản phẩm, lượng và giá. Map/khoảng cách/ưu tiên tỉnh được hoãn. Giữ các trường địa chỉ/tỉnh/huyện nhưng không dùng làm filter, điểm hoặc đường dẫn ưu tiên. Loại/giống đã chỉ định phải khớp; trạng thái/ngày vẫn kiểm tra tính khả dụng. Core `e5-top20-name-rerank-v2`; migration top 20 còn chờ áp cloud. Trạng thái thực tế xem [implementation status](implementation-status.md).
+
 ## 1. Mục tiêu và phạm vi
 
-Thương lái nhập tên/mô tả nông sản và yêu cầu giao dịch, hệ thống tìm lô có ý nghĩa phù hợp, dùng quan hệ nghiệp vụ để xác định/mở rộng đúng loại và giống, rồi lọc/xếp hạng bằng giá, lượng, thời gian và địa điểm. Đơn vị kết quả là lô hàng; một nhà vườn có thể sở hữu nhiều lô khác nhau.
+Thương lái nhập tên/mô tả nông sản và yêu cầu giao dịch, hệ thống tìm lô có ý nghĩa phù hợp, dùng quan hệ nghiệp vụ để xác định/mở rộng đúng loại và giống, rồi xếp hạng bằng độ liên quan sản phẩm, giá và lượng sau khi kiểm tra tính khả dụng. Đơn vị kết quả là lô hàng; một nhà vườn có thể sở hữu nhiều lô khác nhau.
 
-Ví dụ: “Cần Ri6 loại A ở Đồng Nai, khoảng 10 tấn, giá không quá 70 nghìn/kg”. UI hiển thị lại loại/giống, tỉnh, lượng, giá trần và tùy chọn chấp nhận một phần; người dùng có thể sửa trước khi áp các điều kiện suy ra.
+Ví dụ: “Cần Ri6 loại A, khoảng 10 tấn, giá không quá 70 nghìn/kg”. UI hiển thị lại loại/giống, lượng, giá trần và tùy chọn chấp nhận một phần; người dùng có thể sửa trước khi áp các điều kiện suy ra.
 
 Phạm vi triển khai đầu tiên:
 
@@ -132,56 +134,53 @@ LLM extraction là mở rộng tùy chọn sau parser v1, vẫn phải validate 
 
 Áp quyền truy cập, trạng thái, fruit/variety đã xác định, khoảng ngày giao nhau, min_lot và `allow_partial` như contract hiện có. Giá tối đa/ngân sách người dùng đánh dấu bắt buộc là hard filter; điểm semantic cao không bù cho vi phạm.
 
-Tỉnh, giá mong muốn hoặc lượng mục tiêu có thể là ưu tiên mềm nếu người dùng chọn như vậy. Khi không cho phép một phần, lượng lô phải >= target. Grade/chứng nhận nếu được bật thành yêu cầu bắt buộc phải kiểm tra bằng trường dữ liệu, không chỉ similarity. Thiếu dữ liệu để chứng minh một điều kiện hard thì không đưa vào tập hợp lệ.
+Giá mong muốn và lượng mục tiêu là ưu tiên mềm hiện tại. Khi không cho phép một phần, lượng lô phải >= target. Tỉnh không tham gia matching. Grade/chứng nhận là dữ liệu tham khảo; nếu sau này cho bật thành yêu cầu bắt buộc phải kiểm tra bằng trường dữ liệu, không chỉ similarity.
 
 Các filter hard được truyền xuống từng nhánh query và kiểm tra lại trước trả kết quả. Không chỉ lấy top semantic không lọc rồi bỏ các record vi phạm, vì có thể mất các lô hợp lệ nằm ngoài top ban đầu.
 
-### 6.3 Tạo tập ứng viên từ vector, keyword và graph
+### 6.3 Truy hồi vector top 20 trước khi so từ
 
-1. Graph resolution xác định entity/path: alias → variety/type → tập lô liên quan; optional region/farmer thu hẹp theo quan hệ. Đây là nguồn candidate có provenance, không chỉ là hình vẽ minh họa.
-2. Semantic branch: tìm vector gần query trong tập có quyền và điều kiện hard; exact trước, HNSW khi đã kiểm chứng.
-3. Keyword branch: ưu tiên tên/mã chính xác, alias và full-text. Thử cấu hình `simple` với chuẩn hóa tiếng Việt; typo/fuzzy là tùy chọn có benchmark, không khẳng định full-text mặc định hiểu mọi tên nông sản.
-4. Structured/graph branch giữ các lô khớp entity và điều kiện nghiệp vụ, kể cả document đang chờ embedding. Nhánh này cũng tránh việc chỉ lấy top semantic làm mất lô có giá/lượng rất tốt.
-5. Union theo lotId/requestId; ghi nguồn tìm thấy. Trên pool đã union, tính lại similarity chính xác cho các vector hợp lệ và lexical relevance để chuẩn bị rerank. Không gán điểm ngữ nghĩa giả cho document chưa có vector.
+1. E5 embed tên query hoặc tên sản phẩm nguồn; query/passages cùng model version và convention.
+2. RPC mới `search_lot_vector_top20` / `search_request_vector_top20` đọc dưới JWT/RLS của caller, áp điều kiện hard và chỉ đọc vector đúng model/content hash.
+3. Cosine search trong pgvector, sort giảm dần rồi ID, **limit 20**. Không union lexical/graph, không đưa record chưa có vector vào pool này.
+4. Service giữ nguyên pool, đọc lại dữ liệu hiện tại, so từ chính xác/gần đúng và loại trừ. Không bù ứng viên thứ 21 nếu một kết quả bị loại.
+5. Rerank toàn bộ pool trước phân trang; trả cosine gốc và `rankingScope=vector_top20`. Ưu tiên tên sản phẩm trước giá/lượng.
 
-Thông số khởi đầu để đo, chưa phải cấu hình tối ưu: top 200 semantic + top 200 lexical; graph/structured pool tối đa 1.000 record. Với tập hợp lệ <=1.000, có thể lấy toàn bộ để xếp hạng chính xác và đối chiếu. Khi lớn hơn: lấy structured candidates theo nhiều tiêu chí ổn định như giá, mức đáp ứng lượng và tỉnh; ghi `truncated=true`, `ranking_scope=candidate_pool`. Số lượng 1.000 là budget, không phải tổng toàn thị trường.
+Core kiểm tra giới hạn 20 lần nữa để chặn ứng viên ngoài pool. SQL dùng cosine exact hiện tại; chỉ thêm HNSW sau khi đo recall/latency. Candidate recall ngoài top 20 là giới hạn có chủ ý của pipeline mới, không thể sửa bằng reranker.
 
 HNSW dùng tìm kiếm xấp xỉ; bộ lọc có thể làm trả thiếu kết quả. Cần đo recall theo từng nhóm filter, thử iterative scan nếu version hỗ trợ, tăng search budget hoặc dùng exact search khi tập lọc nhỏ. Không quảng bá top toàn bộ database từ pool bị cắt. [pgvector filtering](https://github.com/pgvector/pgvector#filtering)
 
-### 6.4 Hợp nhất và xếp hạng
+### 6.4 So từ và xếp hạng
 
-Baseline B0: matching theo luật trong plan cũ. Baseline B1: keyword + luật. Phương án mới: semantic + keyword + graph candidate expansion + luật.
+Trong vector top 20: khớp đầy đủ từ → gần khớp đầy đủ → khớp một phần → chưa khớp từ. Trong cùng nhóm, xét độ phủ/độ gần từ, sau đó điểm phụ cosine/giá/lượng, cuối cùng ID. Chuẩn hóa tiếng Việt, so token đầy đủ và chỉnh sửa ký tự có giới hạn; mã chứa số như Ri6/Ri7 và từ ngắn chỉ so chính xác. Một số cụm loại trừ rõ được xử lý; không giả lập khả năng hiểu mọi câu phủ định.
 
-Đề xuất dùng RRF để hợp nhất thứ hạng semantic và lexical, tránh cộng trực tiếp cosine với điểm full-text ở các thang đo khác nhau. Xếp hai danh sách trên pool đã union; record không có vector hợp lệ không đóng góp semantic, record không có lexical match không đóng góp lexical.
+Không dùng RRF để mở rộng/hợp nhất pool. `nameMatch` và cosine được trả riêng để biết lý do thứ tự. Tên chuẩn lấy từ catalog; fuzzy không tự kết luận mọi alias là cùng giống.
 
 ```text
-rrf = contribution_semantic + contribution_lexical
-contribution = 1 / (60 + rank) nếu có; bằng 0 nếu không có
-relevance = rrf / (2 / 61)              # nằm trong [0,1]
+relevance = clamp(cosineSimilarity, 0, 1)
 
 score = 100 × (0.45 × relevance
              +0.25 × priceFit
-             +0.20 × quantityFit
-             +0.10 × locationFit)
+             +0.20 × quantityFit) / 0.90
 ```
 
-Đây là trọng số/ngưỡng khởi đầu cần tune trên development set. RRF là phương pháp hợp nhất rank đã được Supabase minh họa: [Hybrid search](https://supabase.com/docs/guides/ai/hybrid-search).
+Đây là trọng số/ngưỡng khởi đầu cần tune trên development set, được xét sau mức khớp tên. Giữ tỷ lệ cosine/giá/lượng 45:25:20, chuẩn hóa về 100; không có điểm khu vực.
 
 - `priceFit`: giữ phép tính theo khoảng giá của baseline cho giá ưu tiên mềm; vi phạm giá hard đã bị loại. Nếu không có nhu cầu/ngân sách, không giả lập mức phù hợp giá.
 - `quantityFit = min(lot.quantity_kg / request.target_quantity_kg, 1)` cho cặp có target hợp lệ; trả contribution/remaining như baseline. Không coi quantity là lượng còn lại sau đặt hàng.
-- `locationFit`: 1 khi không giới hạn tỉnh hoặc đúng tỉnh ưu tiên; 0 khi ngoài tỉnh/chưa rõ, với lý do phân biệt. Chưa có tọa độ công khai và điểm giao hàng nên chưa dùng khoảng cách km.
-- Nếu chỉ duyệt bằng text, chưa có request/target/giá: mode `browse` xếp theo relevance; không gắn điểm phù hợp thương mại 100 điểm giả định.
-- Graph v1 quyết định eligibility/candidate/provenance, chưa cộng một “graph score” tùy ý. Chỉ thêm điểm quan hệ khi xác định được tín hiệu khác với các feature đã tính và benchmark chứng minh ích lợi.
-- Sort score chưa làm tròn giảm dần rồi ID tăng dần. Điểm hiển thị được làm tròn; cùng corpus/pool/model/rule cho cùng thứ tự. Rank fusion phụ thuộc pool nên điểm không được coi là xác suất hoặc so sánh tuyệt đối giữa hai truy vấn.
+- Khu vực/địa chỉ/khoảng cách: chỉ giữ dữ liệu để dùng sau, không tham gia score hoặc eligibility trong phạm vi hiện tại.
+- Nếu chỉ duyệt text trên web, chưa chọn request/target/giá: dùng so từ local, không gắn điểm thương mại giả định. RPC vector hiện yêu cầu source thuộc tài khoản.
+- Quan hệ loại/giống phục vụ eligibility/provenance; không mở rộng pool sau vector top 20 hoặc cộng graph score.
+- Sort theo nhóm/độ khớp tên trước score chưa làm tròn, rồi ID. Không coi cosine hoặc score là xác suất giao dịch.
 - Khi cần ngưỡng liên quan tối thiểu để bỏ kết quả không liên quan, hiệu chỉnh trên tập có nhãn theo mode/entity. Không tự đặt một cosine threshold dùng chung cho mọi model.
 
-Các điểm 75,50 / 88,33 / 82,50 của seed trước đây chỉ là regression cho baseline, không phải kết quả kỳ vọng của hybrid mới.
+Baseline hiện tại: `100 × (0.40 × priceFit + 0.35 × quantityFit) / 0.75`. Các cặp seed Ri6/mít/thanh long tương ứng 67,33 / 84,44 / 76,67 điểm; không phải kết quả kỳ vọng của hybrid.
 
 ### 6.5 Lý do kết quả và trường hợp suy giảm
 
-Trả lý do từ dữ liệu đã kiểm tra: “Đúng giống Ri6 qua mã giống”, “Giá nằm trong khoảng”, “Đáp ứng 15/50 tấn”, “Đúng tỉnh ưu tiên”. Semantic similarity có thể ghi “Mô tả gần với nội dung tìm kiếm”; không biến nó thành chứng nhận thuộc tính chưa có trong DB.
+Trả mức khớp từ/gần khớp/một phần và dữ liệu đã kiểm tra như giá trong khoảng, đóng góp 15/50 tấn; không thêm lý do ưu tiên tỉnh. Không biến similarity thành chứng nhận thuộc tính chưa có trong DB.
 
-Nếu model/embedding service lỗi: tiếp tục keyword + graph + baseline nghiệp vụ, trả `mode=degraded` và lý do; không báo toàn bộ hệ thống không có lô. Nếu không có embedding cho một lô thì vẫn giữ khả năng xuất hiện qua nhánh structured/keyword và hiển thị metadata chất lượng tìm kiếm phù hợp.
+Nếu inference lỗi/không có: fallback theo quy tắc và so từ, trả `mode=degraded`, ghi rõ chưa dùng E5. Nếu query E5 hợp lệ nhưng không có passage vector thì pool vector rỗng; không union record chưa có vector để giả top 20. Luồng đầy đủ và giới hạn triển khai ở [contract E5 mới](matching-e5-top20.md).
 
 ## 7. Backend, API và UI
 

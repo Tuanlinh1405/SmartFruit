@@ -4,7 +4,7 @@ Cập nhật 15/10/2026. Phạm vi: Auth chung, Buyer, matching dùng chung, Adm
 
 Trạng thái triển khai 15/10/2026: ứng dụng React/Vite, Auth, Buyer CRUD, tìm lô theo quy tắc, Admin/Buyer demo, core matching và test đã có trong `src/`. Migration hybrid đã áp trên Supabase; Edge Function và Python embedding service/worker đã có mã nhưng chưa triển khai lên host. Vì vậy app vẫn mặc định `rule-only`. Xem [README](../README.md) để chạy và biết giới hạn kiểm thử hiện tại. Các mục bên dưới giữ vai trò tiêu chí nghiệm thu và backlog còn lại, không phải tuyên bố đã hoàn tất toàn bộ.
 
-Hướng matching đã được người dùng đổi sang [vector + graph + điều kiện giao dịch](vector-graph-matching-plan.md). Plan đó là thiết kế triển khai hiện hành cho matching. Mục 5 bên dưới giữ công thức theo luật để làm baseline/fallback, không còn là toàn bộ hệ thống tìm kiếm. UI/CRUD/Auth trong tài liệu này vẫn áp dụng.
+Hướng matching hiện hành là [E5 → vector top 20 → so từ rerank](matching-e5-top20.md), thay phương án union vector/keyword/graph và RRF cũ. Mục 5 bên dưới giữ công thức giá/lượng để làm baseline/fallback, được xét sau mức khớp tên. UI/CRUD/Auth trong tài liệu này vẫn áp dụng.
 
 ## 1. Điểm xuất phát và đầu ra
 
@@ -117,7 +117,7 @@ Phần CRUD chưa cần server Express/Nest hoặc ORM riêng. Matching mới c�
 
 Phần này giữ để so sánh và xử lý khi inference lỗi. Trọng số hybrid, graph traversal, candidate retrieval, model version và scope xếp hạng tuân theo [plan vector/graph](vector-graph-matching-plan.md). Mục 5.4 là cách nạp dữ liệu của baseline client, được thay bằng truy hồi backend khi chạy hybrid.
 
-Trọng số 40/35/25 kế thừa đề xuất trong plan cũ; công thức chi tiết dưới đây là đề xuất mới, chưa phải quyết định đã duyệt trong TDD. Lưu `ruleVersion = "v1-proposed"` và các ngưỡng trong config để có thể thay đổi kèm test. Điểm biểu thị mức phù hợp theo luật, không phải xác suất giao dịch thành công.
+Quyết định mới nhất 15/10/2026: hoãn map/khoảng cách/ưu tiên theo tỉnh, chỉ xét sản phẩm, giá và lượng. Giữ tỷ lệ giá/lượng 40:35 và chuẩn hóa về 100; `ruleVersion = "e5-top20-name-rerank-v2"`. Loại/giống đã chỉ định phải khớp; khớp từ/gần khớp tên được xét trước điểm giá/lượng. Điểm biểu thị mức phù hợp theo luật, không phải xác suất giao dịch thành công.
 
 ### 5.1 Chuẩn hóa và loại ứng viên
 
@@ -133,13 +133,13 @@ Loại ứng viên khi:
 6. `allow_partial=false` và lượng lô nhỏ hơn `target_quantity_kg`.
 7. Thiếu/không hợp lệ dữ liệu cốt lõi: fruit ID, quantity, price, dates, target hoặc khoảng giá. Trả lý do thay vì cho NaN đi vào score.
 
-Filter người dùng chủ động bật như tỉnh, giá tối đa, grade, chứng nhận là điều kiện loại riêng của lần tìm kiếm. Khi chưa bật filter, `preferred_provinces` là ưu tiên mềm theo điểm khu vực. Grade/chất lượng/đóng gói/hình thức mua bán được so sánh và hiển thị phù hợp/chưa đáp ứng/chưa rõ; không ngầm coi chứng nhận tự khai là đã xác minh. Hiển thị rõ điểm v1 chỉ xét giá/lượng/tỉnh để người dùng không hiểu điểm cao là đạt toàn bộ yêu cầu.
+Tỉnh/huyện/địa chỉ được giữ để tham khảo, không lọc hoặc cộng điểm. Grade/chất lượng/đóng gói/hình thức mua bán là thông tin tham khảo, chưa tham gia score; không ngầm coi chứng nhận tự khai là đã xác minh. Điểm fallback chỉ xét giá/lượng sau khi qua điều kiện loại/giống và tính khả dụng, không có nghĩa là đạt toàn bộ yêu cầu.
 
 ### 5.2 Chấm điểm
 
 Ký hiệu: `p` = giá lô, `[a,b]` = khoảng giá nhu cầu, `q` = lượng lô, `Q` = tổng lượng cần mua; `clamp(x)=min(1,max(0,x))`.
 
-**Giá — tối đa 40 điểm**
+**Giá — tỷ trọng 40/75 (khoảng 53,33 điểm)**
 
 ```text
 nếu a <= p <= b: P = 1
@@ -149,7 +149,7 @@ nếu p > b:      P = clamp(1 - (p - b) / (0.20 * b))
 
 Ngoài khoảng giá vẫn có thể được gợi ý với nhãn “Giá ngoài khoảng — cần thương lượng”; không gắn “đáp ứng giá”. Lệch 20% trở lên so với biên tương ứng được 0 điểm giá. Ngưỡng 20% là tham số đề xuất; không chia cho `b-a`, nên khoảng giá cố định `a=b` vẫn hợp lệ. Không dùng giá sàn riêng nhà vườn để tính điểm Buyer.
 
-**Khối lượng — tối đa 35 điểm**
+**Khối lượng — tỷ trọng 35/75 (khoảng 46,67 điểm)**
 
 ```text
 Qscore = min(q / Q, 1)
@@ -160,19 +160,16 @@ excessKg = max(q - Q, 0)
 
 Lô đáp ứng một phần vẫn được xếp hạng nếu qua điều kiện ở trên. `remainingKg` chỉ là phần thiếu khi xét riêng cặp này; không phải tồn dư của một đơn đã đặt. Nếu lô dư lượng hoặc hình thức bán không rõ việc chia lô, hiển thị cần thống nhất khối lượng; không hứa người bán đã đồng ý bán một phần.
 
-**Khu vực — tối đa 25 điểm**
+**Khu vực — hoãn**
 
-- Danh sách tỉnh ưu tiên rỗng: `L=1`, lý do “Không giới hạn tỉnh”.
-- Tỉnh lô có trong danh sách: `L=1`.
-- Tỉnh ngoài danh sách hoặc chưa có: `L=0`, phân biệt lý do “Ngoài tỉnh ưu tiên” / “Chưa rõ tỉnh”. Không tự cộng điểm cho tỉnh lân cận.
-- Chuẩn hóa tên tỉnh theo danh mục dùng chung; unknown không đoán. Chưa chấm điểm huyện hoặc khoảng cách.
+Giữ `preferred_provinces`, `preferred_districts` và địa chỉ lô trong dữ liệu/UI; không tính điểm hoặc lọc ứng viên dựa vào các trường này. Đổi tỉnh/huyện không đổi kết quả matching ở cả hai chiều Buyer ↔ Farmer.
 
 ```text
-rawScore = 40 * P + 35 * Qscore + 25 * L
+rawScore = 100 * (40 * P + 35 * Qscore) / 75
 score hiển thị = round(rawScore, 2)
 ```
 
-Không tự chia lại trọng số khi thiếu tỉnh. Tie-break: rawScore giảm dần → lot ID tăng dần (phía Buyer), hoặc request ID tăng dần (phía Farmer). Tính từ cùng input/config phải ra cùng kết quả; không dùng random hoặc giờ hiện tại trong score.
+Tie-break: rawScore giảm dần → lot ID tăng dần (phía Buyer), hoặc request ID tăng dần (phía Farmer). Tính từ cùng input/config phải ra cùng kết quả; không dùng random hoặc giờ hiện tại trong score.
 
 `MatchResult`: lotId, requestId, eligible, score, breakdown, reasons, warnings, exclusionReasons, contributionKg, remainingKg, excessKg, ruleVersion. Tách mã lý do và bản dịch tiếng Việt khỏi phép tính.
 
@@ -180,9 +177,9 @@ Không tự chia lại trọng số khi thiếu tỉnh. Tie-break: rawScore gi�
 
 | Nhu cầu / lô | Kỳ vọng theo v1 đề xuất |
 | --- | --- |
-| Ri6 50 tấn / Ri6 15 tấn, giá 65.000 trong 60.000–70.000, đúng tỉnh | 75,50 điểm; đóng góp 15 tấn, còn thiếu 35 tấn |
-| Mít 12 tấn / mít 8 tấn, giá 14.000 trong 12.000–18.000, đúng tỉnh | 88,33 điểm; còn thiếu 4 tấn |
-| Thanh long 20 tấn / lô 10 tấn, đúng giá và tỉnh | 82,50 điểm; còn thiếu 10 tấn |
+| Ri6 50 tấn / Ri6 15 tấn, giá 65.000 trong 60.000–70.000 | 67,33 điểm; đóng góp 15 tấn, còn thiếu 35 tấn |
+| Mít 12 tấn / mít 8 tấn, giá 14.000 trong 12.000–18.000 | 84,44 điểm; còn thiếu 4 tấn |
+| Thanh long 20 tấn / lô 10 tấn, đúng giá | 76,67 điểm; còn thiếu 10 tấn |
 | Ri6 15–20/11 / các lô hiện tại | Không có lô hợp lệ do ngày/trạng thái |
 | Nhu cầu Ri6 / lô Monthong | Bị loại do giống |
 | Lô DRAFT hoặc CLOSED | Không được đưa vào kết quả Buyer |

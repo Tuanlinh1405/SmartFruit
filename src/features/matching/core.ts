@@ -1,13 +1,15 @@
 import type { BuyRequest, Lot } from '../../lib/domain.ts';
+import { compareNameMatches, createNameMatcher, productSearchText,
+  type NameMatch, type ProductCatalog } from './name-match.ts';
+export { normalizeSearchText } from './name-match.ts';
 
-export const RULE_VERSION = 'hybrid-v1-proposed';
+export const RULE_VERSION = 'e5-top20-name-rerank-v2';
 export type MatchMode = 'hybrid' | 'rule-only' | 'degraded';
 export interface BusinessScore {
   eligible: boolean;
   exclusions: string[];
   priceFit: number;
   quantityFit: number;
-  locationFit: number;
   contributionKg: number;
   remainingKg: number;
   reasons: string[];
@@ -49,35 +51,30 @@ export function scoreBusiness(lot: Lot, request: BuyRequest): BusinessScore {
   }
   const quantityFit = finitePositive(request.target_quantity_kg)
     ? clamp(lot.quantity_kg / request.target_quantity_kg) : 0;
-  const locationFit = request.preferred_provinces.length === 0 ||
-    request.preferred_provinces.includes(lot.province) ? 1 : 0;
   const contributionKg = Math.min(lot.quantity_kg, request.target_quantity_kg);
   const remainingKg = Math.max(request.target_quantity_kg - lot.quantity_kg, 0);
   const reasons = [
     priceFit === 1 ? 'Giá nằm trong khoảng mong muốn.' : 'Giá ngoài khoảng mong muốn, cần thương lượng.',
     remainingKg === 0 ? 'Lô đáp ứng đủ lượng mục tiêu.' : `Lô đóng góp ${contributionKg / 1000} tấn; còn thiếu ${remainingKg / 1000} tấn.`,
-    locationFit === 1 ? 'Đúng khu vực ưu tiên hoặc không giới hạn khu vực.' : 'Ngoài tỉnh ưu tiên.',
   ];
-  return { eligible: exclusions.length === 0, exclusions, priceFit, quantityFit, locationFit,
+  return { eligible: exclusions.length === 0, exclusions, priceFit, quantityFit,
     contributionKg, remainingKg, reasons };
 }
 
 export function baselineScore(business: BusinessScore): number {
-  return business.eligible ? 100 * (0.4 * business.priceFit + 0.35 * business.quantityFit +
-    0.25 * business.locationFit) : 0;
+  // Renormalize the existing price/quantity weights after deferring geography.
+  return business.eligible ? 100 * (0.4 * business.priceFit + 0.35 * business.quantityFit) / 0.75 : 0;
 }
 
 export interface Candidate {
   lot: Lot;
-  semanticRank?: number;
-  lexicalRank?: number;
+  cosineSimilarity?: number;
   graphPaths?: string[];
 }
 
 export interface RequestCandidate {
   request: BuyRequest;
-  semanticRank?: number;
-  lexicalRank?: number;
+  cosineSimilarity?: number;
   graphPaths?: string[];
 }
 
@@ -86,32 +83,41 @@ export interface MatchResult {
   score: number;
   rawScore: number;
   relevance: number | null;
+  cosineSimilarity: number | null;
   business: BusinessScore;
+  nameMatch: NameMatch;
   graphPaths: string[];
   mode: MatchMode;
   ruleVersion: string;
 }
 
-function scorePair(business: BusinessScore, semanticRank: number | undefined,
-  lexicalRank: number | undefined, mode: MatchMode) {
-  const semantic = semanticRank && semanticRank > 0 ? 1 / (60 + semanticRank) : 0;
-  const lexical = lexicalRank && lexicalRank > 0 ? 1 / (60 + lexicalRank) : 0;
-  const relevance = mode === 'hybrid' ? clamp((semantic + lexical) / (2 / 61)) : null;
+function scorePair(business: BusinessScore, cosineSimilarity: number | undefined, mode: MatchMode) {
+  const relevance = mode === 'hybrid' && cosineSimilarity !== undefined && Number.isFinite(cosineSimilarity)
+    ? clamp(cosineSimilarity) : null;
   const rawScore = relevance === null ? baselineScore(business)
     : 100 * (0.45 * relevance + 0.25 * business.priceFit +
-      0.2 * business.quantityFit + 0.1 * business.locationFit);
-  return { relevance, rawScore, score: Math.round(rawScore * 100) / 100 };
+      0.2 * business.quantityFit) / 0.9;
+  return { relevance, rawScore, score: Math.round(rawScore * 100) / 100,
+    cosineSimilarity: relevance === null ? null : cosineSimilarity! };
 }
 
-export function rankMatches(candidates: Candidate[], request: BuyRequest, mode: MatchMode): MatchResult[] {
+export interface MatchOptions { text?: string; catalog?: ProductCatalog }
+
+export function rankMatches(candidates: Candidate[], request: BuyRequest, mode: MatchMode,
+  options: MatchOptions = {}): MatchResult[] {
+  const queryText = options.text?.trim() || productSearchText(request, options.catalog);
+  const matchName = createNameMatcher(queryText);
   return candidates.flatMap(candidate => {
     const business = scoreBusiness(candidate.lot, request);
     if (!business.eligible) return [];
-    const { relevance, rawScore, score } = scorePair(business, candidate.semanticRank,
-      candidate.lexicalRank, mode);
+    const candidateText = productSearchText(candidate.lot, options.catalog);
+    const nameMatch = matchName(candidateText);
+    if (nameMatch.kind === 'excluded' || createNameMatcher(candidateText)(queryText).kind === 'excluded') return [];
+    const { relevance, rawScore, score, cosineSimilarity } = scorePair(business, candidate.cosineSimilarity, mode);
     return [{ lot: candidate.lot, rawScore, score,
-      relevance, business, graphPaths: candidate.graphPaths ?? [], mode, ruleVersion: RULE_VERSION }];
-  }).sort((a, b) => b.rawScore - a.rawScore || a.lot.id.localeCompare(b.lot.id));
+      relevance, cosineSimilarity, business, nameMatch, graphPaths: candidate.graphPaths ?? [], mode, ruleVersion: RULE_VERSION }];
+  }).sort((a, b) => compareNameMatches(a.nameMatch, b.nameMatch) ||
+    b.rawScore - a.rawScore || a.lot.id.localeCompare(b.lot.id));
 }
 
 export interface RequestMatchResult extends Omit<MatchResult, 'lot'> {
@@ -119,31 +125,28 @@ export interface RequestMatchResult extends Omit<MatchResult, 'lot'> {
 }
 
 export function rankRequestMatches(candidates: RequestCandidate[], lot: Lot,
-  mode: MatchMode): RequestMatchResult[] {
+  mode: MatchMode, options: MatchOptions = {}): RequestMatchResult[] {
+  const queryText = options.text?.trim() || productSearchText(lot, options.catalog);
+  const matchName = createNameMatcher(queryText);
   return candidates.flatMap(candidate => {
     const business = scoreBusiness(lot, candidate.request);
     if (!business.eligible || candidate.request.status !== 'OPEN') return [];
-    const { relevance, rawScore, score } = scorePair(business, candidate.semanticRank,
-      candidate.lexicalRank, mode);
-    return [{ request: candidate.request, rawScore, score, relevance, business,
+    const candidateText = productSearchText(candidate.request, options.catalog);
+    const nameMatch = matchName(candidateText);
+    if (nameMatch.kind === 'excluded' || createNameMatcher(candidateText)(queryText).kind === 'excluded') return [];
+    const { relevance, rawScore, score, cosineSimilarity } = scorePair(business, candidate.cosineSimilarity, mode);
+    return [{ request: candidate.request, rawScore, score, relevance, cosineSimilarity, business, nameMatch,
       graphPaths: candidate.graphPaths ?? [], mode, ruleVersion: RULE_VERSION }];
-  }).sort((a, b) => b.rawScore - a.rawScore || a.request.id.localeCompare(b.request.id));
+  }).sort((a, b) => compareNameMatches(a.nameMatch, b.nameMatch) ||
+    b.rawScore - a.rawScore || a.request.id.localeCompare(b.request.id));
 }
 
-export function normalizeSearchText(value: string): string {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
-    .toLocaleLowerCase('vi-VN').replace(/\s+/g, ' ').trim();
-}
-
-export function lexicalRank(lots: Lot[], searchText: string): Map<string, number> {
-  const needle = normalizeSearchText(searchText);
-  if (!needle) return new Map();
-  const tokens = needle.split(' ').filter(Boolean);
+export function lexicalRank(lots: Lot[], searchText: string, catalog?: ProductCatalog): Map<string, number> {
+  if (!searchText.trim()) return new Map();
+  const matchName = createNameMatcher(searchText);
   return new Map(lots.map(lot => {
-    const haystack = normalizeSearchText(`${lot.title} ${lot.description} ${lot.grade ?? ''}`);
-    const hits = tokens.filter(token => haystack.includes(token)).length;
-    return { id: lot.id, hits };
-  }).filter(row => row.hits > 0)
-    .sort((a, b) => b.hits - a.hits || a.id.localeCompare(b.id))
+    return { id: lot.id, nameMatch: matchName(productSearchText(lot, catalog)) };
+  }).filter(row => ['exact', 'fuzzy', 'partial', 'unspecified'].includes(row.nameMatch.kind))
+    .sort((a, b) => compareNameMatches(a.nameMatch, b.nameMatch) || a.id.localeCompare(b.id))
     .map((row, index) => [row.id, index + 1]));
 }

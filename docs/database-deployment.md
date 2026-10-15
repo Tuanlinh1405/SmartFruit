@@ -2,6 +2,8 @@
 
 Ngày: 14/10/2026 (Asia/Bangkok).
 
+Cập nhật 15/10/2026: đã áp thêm migration hybrid và `202610150002_trading.sql` trên cùng project. Năm bảng giao dịch đều bật RLS, đã kiểm tra HTTP bằng 7 tài khoản đủ role; xem [biên bản tính năng và kiểm thử hiện hành](implementation-status.md#triển-khai-và-kiểm-thử). Phần bên dưới ghi lại triển khai baseline ngày 14/10.
+
 ## Project và phạm vi
 
 - Project: **LogStar**, ref `yyslykqpamnlqkvutrlm`.

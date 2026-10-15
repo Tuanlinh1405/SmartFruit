@@ -8,7 +8,7 @@ import { explainError } from '../../lib/format';
 type AuthState = {
   session: Session | null;
   profile: Profile | null;
-  status: 'loading' | 'signed-out' | 'ready' | 'error';
+  status: 'loading' | 'signed-out' | 'ready' | 'error' | 'suspended';
   error: string | null;
   retry: () => void;
 };
@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthState['status']>('loading');
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -28,34 +29,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!alive) return;
       if (authError) { setError(explainError(authError)); setStatus('error'); return; }
       setSession(data.session);
+      setSessionLoaded(true);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, next) => {
-      if (alive) setSession(next);
+      if (alive) { setSession(next); setSessionLoaded(true); }
     });
     return () => { alive = false; subscription.unsubscribe(); };
   }, []);
 
   useEffect(() => {
     let alive = true;
+    if (!sessionLoaded) return () => { alive = false; };
     if (!session) {
       setProfile(null);
       setStatus('signed-out');
       setError(null);
       return () => { alive = false; };
     }
-    setStatus('loading');
-    setProfile(null);
-    supabase.from('profiles').select('id,role,full_name,phone_display').eq('id', session.user.id).maybeSingle()
+    if (profile?.id !== session.user.id) { setStatus('loading'); setProfile(null); }
+    supabase.from('profiles').select('id,role,full_name,phone_display,is_suspended').eq('id', session.user.id).maybeSingle()
       .then(({ data, error: loadError }) => {
         if (!alive) return;
         if (loadError) { setError(explainError(loadError)); setStatus('error'); return; }
         if (!data) { setError('Chưa có hồ sơ ứng dụng cho tài khoản này.'); setStatus('error'); return; }
         setProfile(data as Profile);
         setError(null);
-        setStatus('ready');
+        setStatus(data.is_suspended ? 'suspended' : 'ready');
       });
     return () => { alive = false; };
-  }, [session?.user.id, attempt]);
+  }, [session?.user.id, attempt, sessionLoaded]);
+
+  useEffect(() => {
+    if (!session) return;
+    const refresh = () => setAttempt(value => value + 1);
+    window.addEventListener('focus', refresh);
+    const timer = window.setInterval(refresh, 60000);
+    return () => { window.removeEventListener('focus', refresh); window.clearInterval(timer); };
+  }, [session?.user.id]);
 
   const retry = useCallback(() => setAttempt(value => value + 1), []);
   const value = useMemo(() => ({ session, profile, status, error, retry }), [session, profile, status, error, retry]);

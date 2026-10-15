@@ -2,6 +2,8 @@
 
 Ngày thiết kế: 14/10/2026. Project đích: `yyslykqpamnlqkvutrlm`.
 
+Cập nhật 15/10/2026: tài liệu này mô tả baseline v1. Đã áp thêm hybrid search và [migration giao dịch](../supabase/migrations/202610150002_trading.sql) gồm 5 bảng có RLS; xem [trạng thái hiện hành](implementation-status.md#triển-khai-và-kiểm-thử). Các mô tả chưa có chat bên dưới là phạm vi baseline, đã được mở rộng bởi migration này.
+
 **Trạng thái triển khai:** đã tạo và xác minh trên Supabase project LogStar `yyslykqpamnlqkvutrlm` ngày 14/10/2026. Có 12 bảng ứng dụng bật RLS, bucket private và catalog. 90 kiểm tra cục bộ và 16 kiểm tra bảo mật trên cloud đạt; toàn bộ fixtures cloud được rollback. Xem [biên bản triển khai](database-deployment.md).
 
 ## 1. Phạm vi và nguồn sự thật

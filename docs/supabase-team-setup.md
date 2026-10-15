@@ -1,6 +1,6 @@
 # Cấu hình Supabase cho Dev A và Dev B
 
-Cập nhật: 14/10/2026. Cấu hình đã được kiểm tra kết nối HTTPS thực tế với project LogStar.
+Cập nhật: 15/10/2026. Cấu hình, đăng nhập các role và nghiệp vụ đã được kiểm tra HTTPS thực tế với project LogStar. [Trạng thái và tài khoản test](implementation-status.md).
 
 ## 1. Project dùng chung
 
@@ -33,7 +33,7 @@ npm run typecheck
 - `.env.local` được Git ignore. Không gửi `.env.local` qua Git; các thành viên tự tạo từ cùng `.env.example`.
 - Nếu Vite đang chạy khi đổi biến môi trường, khởi động lại Vite.
 
-Repo hiện có cấu hình và client, chưa có UI React/Vite hoặc lệnh `npm run dev`. Dev A bổ sung scaffold vào cùng package.json/tsconfig hiện có; giữ dependency Supabase và các script setup/check.
+Repo đã có React/Vite, Auth và workspace cho các role. Sau khi setup chạy `npm run dev`. Dev A phát triển tiếp Farmer/Carrier trên scaffold hiện tại, dùng client và Auth chung.
 
 ## 3. Dùng Supabase client trong Farmer/Carrier
 
@@ -69,14 +69,14 @@ Publishable key được thiết kế để dùng ở browser, với Auth/RLS ki
 
 Quyền Owner/Administrator trên Dashboard là quyền của thành viên đội phát triển. Các role FARMER/BUYER/CARRIER/ADMIN trong bảng profiles là quyền của người dùng ứng dụng. Đăng nhập Dashboard không tạo session Supabase Auth trong React app.
 
-Ngày 15/10/2026 đã thêm [dữ liệu demo](demo-data.md) và 6 hồ sơ Auth placeholder không có mật khẩu đăng nhập. Để test CRUD Farmer/Carrier qua client bằng tài khoản riêng:
+Ngày 15/10/2026 đã tạo thêm 7 tài khoản email/mật khẩu đầy đủ role. Dùng `farmer1@logstar.test`, `farmer2@logstar.test`, `carrier1@logstar.test`, `carrier2@logstar.test` để test Dev A. Nhận mật khẩu qua kênh riêng từ người giữ `tmp/test-accounts.md`; pull Git không có mật khẩu hoặc backend key. Các placeholder DEMO cũ vẫn không đăng nhập được. Khi cần tạo tài khoản khác:
 
 1. Tạo account demo riêng trong Supabase Auth theo phương án đăng nhập team đang dùng; mật khẩu trao riêng, không đưa vào repo.
 2. Quản trị viên cấp `profiles.role` đúng FARMER hoặc CARRIER theo [quy trình schema](database-schema.md#6-auth-provisioning-và-api-contract-cho-dev-ab). Trigger chỉ tự nhận role đáng tin từ app_metadata lúc tạo Auth user; user_metadata không cấp quyền.
 3. Đăng nhập account đó qua `supabase.auth.signInWithPassword(...)` trong client, sau đó tạo hồ sơ Farmer/Carrier.
 4. Dùng `auth.getUser()` lấy user ID, tạo/cập nhật dữ liệu của chính account. RLS kiểm tra quyền ở database.
 
-Giữ phương án phone/password trong TDD; không tự đổi sang email/password hoặc tích hợp SMS thật chỉ để chạy lệnh kiểm tra cấu hình.
+Theo quyết định người dùng ngày 15/10/2026, dùng email/password cho test; app vẫn hỗ trợ phone/password, bỏ OTP. Không cần SMS.
 
 Khi chưa đăng nhập, query bảng bị lỗi quyền `42501` là hành vi mong đợi của schema hiện tại. Không mở grants cho anon hoặc tắt RLS để làm query chạy được.
 
@@ -94,12 +94,12 @@ Nếu FAIL kết nối, kiểm tra mạng/DNS/proxy trước; nếu lỗi HTTP 4
 
 ## 6. Database và phối hợp A/B
 
-12 bảng và bucket đã được tạo trên project này. Mỗi người không chạy lại `supabase/deploy.sql` hoặc initial migration.
+Baseline 12 bảng, bucket, migration hybrid và 5 bảng giao dịch đã tạo trên project này. Mỗi người không chạy lại `supabase/deploy.sql` hoặc các migration đã áp.
 
 - Schema/đơn vị/quyền: [database-schema.md](database-schema.md).
 - Kết quả triển khai: [database-deployment.md](database-deployment.md).
 - Dev A: Farmer, lots, ảnh, Carrier/vehicles.
-- Dev B: Auth chung, Buyer, matching và Admin demo.
+- Dev B: Auth chung, Buyer, matching, giao dịch và Admin dùng database thật.
 - Thay đổi schema tiếp theo viết migration mới và cùng review; không dùng reset database trên project dùng chung.
 
 Supabase CLI dùng đăng nhập riêng của developer nếu sau này cần schema tools. Cấu hình SDK này không chứa PAT hay mật khẩu DB. Initial migration được áp qua SQL Editor nên phải reconcile migration history trước khi dùng CLI db push; chưa thực hiện db push trong bước cấu hình client này.

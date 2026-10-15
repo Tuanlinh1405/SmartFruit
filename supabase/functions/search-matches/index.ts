@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.117.3';
 import type { BuyRequest, Lot } from '../../../src/lib/domain.ts';
+import { EMBEDDING_MODEL } from '../../../src/features/matching/embedding-config.ts';
 import { searchMatches, SearchAccessError, type CandidateRow,
   type EmbeddingProvider, type SearchRepository } from '../../../src/features/matching/search-service.ts';
 
@@ -50,12 +51,18 @@ Deno.serve(async request => {
   const mapCandidates = (rows: Record<string, unknown>[] | null, direction: 'lot' | 'request'): CandidateRow[] =>
     (rows ?? []).map(row => ({
       id: String(row[direction === 'lot' ? 'lot_id' : 'request_id']),
-      semanticRank: row.semantic_rank == null ? undefined : Number(row.semantic_rank),
-      lexicalRank: row.lexical_rank == null ? undefined : Number(row.lexical_rank),
+      cosineSimilarity: row.cosine_similarity == null ? undefined : Number(row.cosine_similarity),
       graphPaths: Array.isArray(row.graph_paths) ? row.graph_paths.map(String) : [],
       eligibleCount: Number(row.eligible_count || 0), truncated: Boolean(row.truncated),
     }));
   const repository: SearchRepository = {
+    async catalog() {
+      const [types, varieties] = await Promise.all([
+        supabase.from('fruit_types').select('id,name').eq('active', true),
+        supabase.from('fruit_varieties').select('id,name').eq('active', true),
+      ]);
+      return { types: check(types.data, types.error) ?? [], varieties: check(varieties.data, varieties.error) ?? [] };
+    },
     async getBuyerRequest(id, userId) {
       const result = await supabase.from('buy_requests').select(requestFields)
         .eq('id', id).eq('buyer_id', userId).in('status', ['OPEN', 'DRAFT']).maybeSingle();
@@ -67,16 +74,20 @@ Deno.serve(async request => {
       return check(result.data, result.error) as Lot | null;
     },
     async lotCandidates(id, embedding, text) {
-      const result = await supabase.rpc('search_lot_candidates', {
-        source_request_id: id, query_embedding: embedding ? `[${embedding.join(',')}]` : null,
-        query_text: text,
+      const result = embedding ? await supabase.rpc('search_lot_vector_top20', {
+        source_request_id: id, query_embedding: `[${embedding.join(',')}]`,
+        active_model_version: EMBEDDING_MODEL.version,
+      }) : await supabase.rpc('search_lot_candidates', {
+        source_request_id: id, query_embedding: null, query_text: text,
       });
       return mapCandidates(check(result.data, result.error), 'lot');
     },
     async requestCandidates(id, embedding, text) {
-      const result = await supabase.rpc('search_request_candidates', {
-        source_lot_id: id, query_embedding: embedding ? `[${embedding.join(',')}]` : null,
-        query_text: text,
+      const result = embedding ? await supabase.rpc('search_request_vector_top20', {
+        source_lot_id: id, query_embedding: `[${embedding.join(',')}]`,
+        active_model_version: EMBEDDING_MODEL.version,
+      }) : await supabase.rpc('search_request_candidates', {
+        source_lot_id: id, query_embedding: null, query_text: text,
       });
       return mapCandidates(check(result.data, result.error), 'request');
     },
@@ -97,11 +108,13 @@ Deno.serve(async request => {
         method: 'POST', signal: AbortSignal.timeout(3000),
         headers: { Authorization: `Bearer ${modelToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: text.slice(0, 600), kind: 'query',
-          modelVersion: 'multilingual-e5-base-v1' }),
+          modelVersion: EMBEDDING_MODEL.version }),
       });
       if (!response.ok) throw new Error(`Embedding HTTP ${response.status}`);
       const payload = await response.json();
-      if (!Array.isArray(payload.vector)) throw new Error('Invalid embedding response');
+      if (payload.modelVersion !== EMBEDDING_MODEL.version || !Array.isArray(payload.vector)) {
+        throw new Error('Invalid embedding model or response');
+      }
       return payload.vector as number[];
     },
   } : undefined;
