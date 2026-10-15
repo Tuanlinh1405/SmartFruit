@@ -252,7 +252,7 @@ Bộ PGlite hiện có vẫn chạy cho schema gốc. Các test extension/vector
 
 Tổng ước lượng phần vector/graph: khoảng 8–13 ngày Dev B, bao gồm prototype và đánh giá đầu tiên. Có thể code contract/fixture/API mock trong lúc chờ inference host. Không tính thời gian chờ hosting, credential hoặc thay model do chất lượng không đạt. Thay B4 cũ 1,5–2 ngày bằng chuỗi M0–M6; toàn bộ phần Dev B ước tính lại khoảng 18–25 ngày làm việc nếu một người thực hiện tuần tự, A vẫn làm phần A song song.
 
-Dev B sở hữu search architecture, schema dẫn xuất, worker, thuật toán/API, benchmark và UI Buyer. Dev A bàn giao catalog/đơn vị/các trường lô theo contract, kiểm tra sự kiện tạo/sửa/đóng lô, upload ảnh và tích hợp endpoint Farmer. Không nhân đôi model service hoặc scoring giữa A/B. Phần đăng ký/OTP, Admin, chat và vận chuyển vẫn theo phạm vi demo trước đây.
+Dev B sở hữu search architecture, schema dẫn xuất, worker, thuật toán/API, benchmark và UI Buyer. Dev A bàn giao catalog/đơn vị/các trường lô theo contract, kiểm tra sự kiện tạo/sửa/đóng lô, upload ảnh và tích hợp endpoint Farmer. Không nhân đôi model service hoặc scoring giữa A/B. OTP và đăng ký demo đã bỏ theo quyết định 15/10/2026; Admin, chat và vận chuyển vẫn theo phạm vi demo trước đây.
 
 Trình tự tích hợp: M0 tạo benchmark baseline → M1 tạo dữ liệu dẫn xuất → M2 backfill → M3/M4 chạy API → M5 nối UI → M6 quyết định bật mặc định. M0–M2 có thể bắt đầu sau khi chốt contract, không cần đợi toàn bộ UI Buyer hoàn thành.
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { explainError } from '../../lib/format';
 import { useAuth } from './AuthProvider';
@@ -42,7 +42,6 @@ export function LoginPage() {
         <button className="button primary full" disabled={busy} type="submit">{busy ? 'Đang đăng nhập…' : 'Đăng nhập →'}</button>
       </form>
       <div className="login-note">Hồ sơ [DEMO] trong database là dữ liệu mẫu và chưa có mật khẩu đăng nhập.</div>
-      <Link className="text-link" to="/register">Xem luồng đăng ký demo →</Link>
     </div></main>
   </div>;
 }

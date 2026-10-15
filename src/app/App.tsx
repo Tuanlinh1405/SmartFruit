@@ -1,7 +1,6 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from '../features/auth/AuthProvider';
 import { LoginPage } from '../features/auth/LoginPage';
-import { RegisterDemoPage } from '../features/auth/RegisterDemoPage';
 import { BuyerShell, AdminShell } from './Shell';
 import { BuyerDashboard } from '../features/buyer/BuyerDashboard';
 import { BuyerProfilePage } from '../features/buyer-profile/BuyerProfilePage';
@@ -49,7 +48,7 @@ function OtherRoleHome() {
 export function App() {
   return <BrowserRouter><AuthProvider><Routes>
     <Route path="/login" element={<LoginPage />} />
-    <Route path="/register" element={<RegisterDemoPage />} />
+    <Route path="/register" element={<Navigate to="/login" replace />} />
     <Route path="/" element={<Home />} />
     <Route path="/role-home" element={<RoleGuard role={['FARMER', 'CARRIER']} />}>
       <Route index element={<OtherRoleHome />} />

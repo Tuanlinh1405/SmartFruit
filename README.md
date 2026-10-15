@@ -15,7 +15,7 @@ npm run dev
 
 URL/publishable key thực đã có trong `.env.example`; setup tạo `.env.local` riêng trên từng máy và không ghi đè file có sẵn. Client chung nằm ở `src/lib/supabase.ts`. [Hướng dẫn cho Dev A/B và quyền Dashboard](docs/supabase-team-setup.md).
 
-Mở `http://localhost:5173`. Auth dùng SĐT quốc tế và mật khẩu Supabase Auth của tài khoản thật. Sáu hồ sơ seed không có mật khẩu, nên không thể đăng nhập bằng chúng. Route Buyer: `/buyer`, `/buyer/profile`, `/buyer/requests`, `/buyer/lots`; lời mời/chat/vận chuyển/đánh giá là demo có nhãn. Admin dùng Auth role `ADMIN`, nội dung quản lý là fixture; Farmer/Carrier dùng `/role-home` chờ Dev A gắn giao diện.
+Mở `http://localhost:5173`. Auth dùng SĐT quốc tế và mật khẩu Supabase Auth của tài khoản được cấp sẵn. Theo quyết định ngày 15/10/2026, bỏ OTP và luồng đăng ký demo; không cần dịch vụ SMS. Sáu hồ sơ seed không có mật khẩu, nên không thể đăng nhập bằng chúng. Route Buyer: `/buyer`, `/buyer/profile`, `/buyer/requests`, `/buyer/lots`; lời mời/chat/vận chuyển/đánh giá là demo có nhãn. Admin dùng Auth role `ADMIN`, nội dung quản lý là fixture; Farmer/Carrier dùng `/role-home` chờ Dev A gắn giao diện.
 
 `VITE_MATCHING_MODE=rule-only` là mặc định. Migration [hybrid search](supabase/migrations/202610150001_hybrid_search.sql) đã áp ngày 15/10/2026 trên project LogStar: 6 tài liệu lô, 5 tài liệu nhu cầu và 11 job embedding; vector hiện bằng 0 vì chưa có host/model worker. Worker/model và cách bật chức năng ở [hướng dẫn embedding](services/embedding/README.md). Edge Function và inference service chưa deploy, nên không bật `hybrid` cho người dùng. SQL đã kiểm tra cả Buyer/Farmer, vector cosine, alias graph, RLS trong transaction rollback bằng [smoke test](supabase/tests/hybrid-cloud-smoke.sql).
 

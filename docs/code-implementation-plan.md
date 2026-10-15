@@ -15,7 +15,7 @@ Hướng matching đã được người dùng đổi sang [vector + graph + đi
 | Nhóm | Mức thực hiện |
 | --- | --- |
 | Auth/session, hồ sơ Buyer, nhu cầu, tìm lô, chi tiết/ảnh, matching | Dữ liệu thật qua Supabase và quyền hiện có |
-| Đăng ký/OTP | Demo theo giả định TDD; chưa nghiệm thu như đăng ký thật |
+| Đăng ký/OTP | Bỏ OTP và đăng ký demo theo quyết định 15/10/2026; dùng tài khoản cấp sẵn |
 | Dashboard tổng hợp, lời mời, chat, thỏa thuận, vận chuyển, đánh giá | Fixtures/state demo có nhãn, có thể reset |
 | Admin danh sách/chi tiết/bản đồ/thao tác quản lý | Demo; đăng nhập theo role ADMIN, dữ liệu quản lý là fixtures |
 | Settings/chính sách/giá/thanh toán | Placeholder theo Scope; không phát sinh giao dịch |
@@ -51,7 +51,7 @@ Tài liệu triển khai: [Vite](https://vite.dev/guide/), [React Router](https:
 2. Component chung: Button, Input, Select, DateRange, Modal, Tabs, Badge, Table, Pagination, Loading, EmptyState, ErrorState, DemoBadge. Có label, focus bàn phím, đóng modal bằng Escape, trả focus về nút mở và thông báo lỗi cạnh trường.
 3. Layout: BuyerLayout, AdminLayout; sidebar Buyer chuyển drawer trên mobile; điều hướng sửa đúng nhãn Buyer dù PDF có vài nhãn Farmer tái sử dụng.
 4. AuthProvider, RoleGuard, màn pending-role/forbidden/not-found. Chờ tải session và profile xong mới redirect; lỗi mạng tải profile phải có retry, không coi là chưa đăng nhập. Xóa dữ liệu cache theo user khi logout/đổi tài khoản.
-5. Login SĐT/password theo TDD. Trang đăng ký/OTP có nhãn demo; chưa tự đổi sang email hay bật SMS. Tài khoản test đăng nhập được phải chuẩn bị riêng, không dùng 6 placeholder seed như tài khoản có mật khẩu.
+5. Login SĐT/password bằng tài khoản cấp sẵn theo TDD. Quyết định 15/10/2026: bỏ OTP và đăng ký demo do chưa có tài nguyên SMS. Tài khoản test đăng nhập được phải chuẩn bị riêng, không dùng 6 placeholder seed như tài khoản có mật khẩu.
 
 ### UI-02 — Hồ sơ và nhu cầu Buyer
 
@@ -267,4 +267,4 @@ Mỗi hàng là một nhóm thay đổi có thể review riêng, chia commit nh�
 - Baseline regression dùng ba cặp seed có điểm kỳ vọng 75,50 / 88,33 / 82,50; hybrid có benchmark riêng về candidate recall/NDCG, hard constraints, freshness, fallback và HNSW so với exact theo plan bổ sung. Không dùng điểm baseline làm kết quả kỳ vọng hybrid.
 - Release: typecheck + production build, mở lại các deep link trên môi trường đích, không secret trong bundle, docs setup/contract/giới hạn đầy đủ. Kết quả 95 test hiện tại không được dùng để tuyên bố UI đã nghiệm thu.
 
-Các giả định cần giữ rõ khi bắt đầu code: trọng số/ngưỡng matching là cấu hình đề xuất; giống là điều kiện bắt buộc khi đã chọn; đăng ký/OTP và Admin vẫn demo; date seed cố định tháng 10–11/2026; A sở hữu Farmer/Carrier và điều phối scaffold. Có thể triển khai nền UI/API theo plan trong khi các quy tắc matching còn được review.
+Các giả định cần giữ rõ khi bắt đầu code: trọng số/ngưỡng matching là cấu hình đề xuất; giống là điều kiện bắt buộc khi đã chọn; OTP/đăng ký demo đã bỏ, Admin vẫn demo; date seed cố định tháng 10–11/2026; A sở hữu Farmer/Carrier và điều phối scaffold. Có thể triển khai nền UI/API theo plan trong khi các quy tắc matching còn được review.

@@ -46,7 +46,7 @@ Các route là đề xuất để tích hợp; tên cuối cùng thống nhất 
 
 | Màn/route đề xuất | Tham chiếu thiết kế | Mức | Đầu ra |
 | --- | --- | --- | --- |
-| `/login`, `/register` | Buyer trang 3 | F cho login; D cho đăng ký/OTP theo phương án TDD | Form, validation, duy trì phiên, logout, chuyển đúng role; OTP demo ghi rõ không xác minh số điện thoại |
+| `/login` | Buyer trang 3 | F cho login bằng tài khoản cấp sẵn | Form, validation, duy trì phiên, logout, chuyển đúng role; bỏ OTP và đăng ký demo theo quyết định 15/10/2026 |
 | `/buyer/dashboard` | Buyer trang 4 | D, BR-06/07/09 | KPI, timeline, biểu đồ chỉ tiêu/thực tế, bản đồ/pin mẫu; tracking/IoT chỉ minh họa |
 | `/buyer/profile` hoặc mục hồ sơ trong tài khoản | Yêu cầu `buyer_profiles` của TDD; chưa có mockup riêng | F tối thiểu | Tên tổ chức, tỉnh và thông tin cá nhân được phép sửa; dùng form chung, không thêm workflow xác minh |
 | `/buyer/requests` | Bổ sung để quản lý bản ghi BR-02 | F | Danh sách nhu cầu của mình, tạo/sửa/xem, trạng thái và đường dẫn đến matching |
@@ -105,7 +105,7 @@ Thiết kế Admin hiện hiển thị mật khẩu dạng rõ. Khi triển khai
 - Tạo tài khoản demo bằng quy trình quản trị tin cậy; chuẩn bị ít nhất hai Buyer, hai Farmer và tài khoản Carrier/Admin để test ownership lẫn role. Không commit mật khẩu/khóa quản trị vào seed SQL hoặc frontend.
 - Role không lấy từ lựa chọn role trên màn login hoặc localStorage. Cấp role từ quy trình tin cậy; user không tự sửa `profiles.role` hoặc khóa sở hữu.
 - RLS là nơi kiểm soát quyền thật; route guard chỉ điều hướng UX. Không thêm quyền Admin toàn bảng để phục vụ màn fixture.
-- TDD dùng tài khoản cấp sẵn trong khi Scope có đăng ký F: ghi ngoại lệ này vào tài liệu, chưa đánh dấu đăng ký F hoàn thành bằng OTP mock.
+- Quyết định 15/10/2026: dùng tài khoản cấp sẵn, bỏ OTP và luồng đăng ký demo do chưa có tài nguyên SMS; đăng ký thật chưa nằm trong bản triển khai này.
 
 ### B-03. Schema Buyer và các trường UI còn thiếu
 
@@ -194,7 +194,7 @@ Các đường dẫn dưới đây là đầu ra dự kiến, hiện chưa tồn
 ```text
 src/
   app/                    # session/role guards và đăng ký route; phối hợp A
-  pages/auth/             # login, đăng ký/OTP demo
+  pages/auth/             # login bằng tài khoản cấp sẵn
   pages/buyer/            # layout, dashboard, profile, requests, lots, demo pages
   pages/admin/            # layout, danh sách, maps, giám sát, placeholders
   features/buy-requests/  # types, API, hooks, form, preview
@@ -240,7 +240,7 @@ Viết unit test cho scoring và chuẩn hóa dữ liệu có ảnh hưởng k�
 | --- | --- | --- |
 | Scaffold và component chung ai bàn giao? | A điều phối, B đóng góp Auth/Buyer/Admin; một repo/app/client | Trước khi tạo nền ứng dụng |
 | Supabase project và tài khoản demo | Dùng chung project dev, có quyền tạo tài khoản và migration; password cấp qua kênh riêng | Để kiểm chứng F từ ngày 1 |
-| Đăng ký và OTP | Login thật bằng tài khoản cấp sẵn; đăng ký/OTP chỉ D, cần chấp nhận ngoại lệ Scope | Trước khi nghiệm thu BR-01 |
+| Đăng ký và OTP | Quyết định 15/10/2026: bỏ OTP/đăng ký demo; login thật bằng tài khoản cấp sẵn | Đã chốt với người dùng |
 | Trường form Buyer | Chốt mapping với schema, thêm các trường thông tin cần giữ bằng SQL migration | Trước khi nối form DB ngày 2 |
 | Lô nhỏ hơn tổng nhu cầu | Gợi ý đóng góp một phần, không tự gom/giữ nhiều lô; confirm rule chính thức | Trước scoring ngày 4 |
 | Giá ngoài range và dữ liệu thiếu | Chốt loại/trừ điểm và test case; trọng số 40/35/25 vẫn là đề xuất | Trước scoring ngày 4 |
