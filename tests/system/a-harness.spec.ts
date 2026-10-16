@@ -3,6 +3,7 @@ for (const width of [1440, 768, 390]) {
   test(`Farmer independent profile, lot, photo and matching UI at ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 960 }); const requests: string[] = []; page.on('request', r => { if (r.url().includes('supabase.co')) requests.push(r.url()); });
     await page.goto('/tests/harness/index.html?panel=profile');
+    await expect(page.getByLabel(/^Tên\ vườn/)).toBeVisible();
     const png = Buffer.from(await page.evaluate(() => { const canvas = document.createElement('canvas'); canvas.width = 2; canvas.height = 2; const ctx = canvas.getContext('2d')!; ctx.fillStyle = '#167843'; ctx.fillRect(0, 0, 2, 2); return canvas.toDataURL('image/png').split(',')[1]; }), 'base64');
     await page.getByLabel(/^Tên\ vườn/).fill('Vườn test'); await page.getByLabel(/^Tỉnh\ \/\ thành\ phố/).fill('Tiền Giang');
     await page.getByRole('button', { name: 'Lưu hồ sơ', exact: true }).click(); await expect(page.getByText('Đã lưu hồ sơ nhà vườn.')).toBeVisible();

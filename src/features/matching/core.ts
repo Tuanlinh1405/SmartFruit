@@ -1,5 +1,8 @@
 import type { BuyRequest, Lot } from '../../lib/domain.ts';
 
+// Minimal public request projection shared by Buyer and Farmer adapters.
+export type ScoringRequest = Pick<BuyRequest, 'id' | 'status' | 'fruit_type_id' | 'variety_id' | 'target_quantity_kg' | 'min_lot_quantity_kg' | 'allow_partial' | 'min_price_vnd_per_kg' | 'max_price_vnd_per_kg' | 'required_start' | 'required_end' | 'preferred_provinces'>;
+
 export const RULE_VERSION = 'hybrid-v1-proposed';
 export type MatchMode = 'hybrid' | 'rule-only' | 'degraded';
 export interface BusinessScore {
@@ -16,7 +19,7 @@ export interface BusinessScore {
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
 const finitePositive = (value: number) => Number.isFinite(value) && value > 0;
 
-export function scoreBusiness(lot: Lot, request: BuyRequest): BusinessScore {
+export function scoreBusiness(lot: Lot, request: ScoringRequest): BusinessScore {
   const exclusions: string[] = [];
   if (lot.status !== 'PUBLISHED') exclusions.push('Lô chưa được công bố.');
   if (!['OPEN', 'DRAFT'].includes(request.status)) exclusions.push('Nhu cầu không còn mở.');
@@ -75,7 +78,7 @@ export interface Candidate {
 }
 
 export interface RequestCandidate {
-  request: BuyRequest;
+  request: ScoringRequest;
   semanticRank?: number;
   lexicalRank?: number;
   graphPaths?: string[];
@@ -115,7 +118,7 @@ export function rankMatches(candidates: Candidate[], request: BuyRequest, mode: 
 }
 
 export interface RequestMatchResult extends Omit<MatchResult, 'lot'> {
-  request: BuyRequest;
+  request: ScoringRequest;
 }
 
 export function rankRequestMatches(candidates: RequestCandidate[], lot: Lot,

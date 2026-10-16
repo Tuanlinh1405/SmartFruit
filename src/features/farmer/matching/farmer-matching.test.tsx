@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createFarmerMatchingRepository, FarmerMatchingPanel, validateMatches, type BuyCandidate, type FarmerMatchingRepository, type MatchResult } from './farmer-matching';
 import { testLot } from '../lots/lot.fixtures';
-const request: BuyCandidate = { id: 'r', buyer_id: 'b', fruit_type_id: 'fruit-1', variety_id: null, title: 'Nhu cầu', target_quantity_kg: 5000, min_lot_quantity_kg: null, allow_partial: true, min_price_vnd_per_kg: 60000, max_price_vnd_per_kg: 70000, required_start: '2026-10-15', required_end: '2026-10-20', preferred_provinces: [] };
+const request: BuyCandidate = { id: 'r', status: 'OPEN', buyer_id: 'b', fruit_type_id: 'fruit-1', variety_id: null, title: 'Nhu cầu', target_quantity_kg: 5000, min_lot_quantity_kg: null, allow_partial: true, min_price_vnd_per_kg: 60000, max_price_vnd_per_kg: 70000, required_start: '2026-10-15', required_end: '2026-10-20', preferred_provinces: [] };
 const match: MatchResult = { lotId: 'lot-1', requestId: 'r', score: 86, reasons: ['Cùng loại quả'], missingInformation: [], ruleVersion: 'fixture-only', suggestedQuantityKg: 1000 };
 function repo(): FarmerMatchingRepository { return { lots: vi.fn(async () => [testLot()]), candidates: vi.fn(async () => ({ lot: testLot(), requests: [request], partners: [{ user_id: 'b', display_name: 'Buyer công khai', province: 'Tiền Giang' }] })) }; }
 function show(repository: FarmerMatchingRepository, scorer?: () => MatchResult[]) {

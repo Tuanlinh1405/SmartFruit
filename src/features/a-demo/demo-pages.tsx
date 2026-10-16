@@ -5,8 +5,9 @@ import { Button, Modal, Select, TextArea, TextField } from '../../components/ui'
 import { formatDate, formatVnd } from '../../lib/formatters';
 import { demoPartners, demoVehicles, type DemoTransport } from '../../mocks/a-demo';
 import { useADemo } from './demo-context';
-import { parsePrice, parseQuantity } from '../farmer/lots/lot.model';
+import { parsePrice, parseQuantity, formatQuantity } from '../farmer/lots/lot.model';
 import type { Vehicle } from '../carrier/vehicles/vehicle.model';
+import { Package, Handshake, Truck } from 'lucide-react';
 
 function Frame({ title, children }: { title: string; children: ReactNode }) {
   const { reset } = useADemo(); return <div className="stack"><PageHeader title={title} action={<Button variant="secondary" onClick={reset}>Đặt lại minh họa</Button>} /><DemoNotice />{children}</div>;
@@ -21,14 +22,27 @@ function MapList({ farmerMap = false }: { farmerMap?: boolean }) {
   </div>;
 }
 export function DemoDashboard({ role }: { role: 'FARMER' | 'CARRIER' }) {
-  const { state } = useADemo(); const farmer = role === 'FARMER';
-  return <Frame title="Tổng quan"><div className="role-grid"><Card title={farmer ? 'Lô hàng mẫu' : 'Yêu cầu xe mẫu'}><strong>{farmer ? 3 : state.transports.length}</strong><p>Dữ liệu minh họa</p></Card><Card title={farmer ? 'Nhu cầu thu mua mẫu' : 'Chuyến nhận mẫu'}><strong>{farmer ? demoPartners.length : state.transports.filter(t => t.status === 'ACCEPTED').length}</strong><p>Dữ liệu minh họa</p></Card></div>
+  const { state, reset } = useADemo(); const farmer = role === 'FARMER';
+  return <div className="stack">
+    <PageHeader eyebrow={`Tổng quan · ${farmer ? 'Nhà vườn' : 'Nhà xe'}`} title={farmer ? 'Mùa vụ sẵn sàng, kết nối người mua.' : 'Chuyến hàng tiếp nối, vững bước đường xa.'} description={farmer ? 'Quản lý lô nông sản và khám phá nhu cầu thu mua phù hợp.' : 'Quản lý đội xe và tìm yêu cầu vận chuyển phù hợp.'} action={<Link className="button button-accent" to={farmer ? '/farmer/lots/new' : '/carrier/vehicles'}>{farmer ? '＋ Tạo lô hàng' : 'Quản lý đội xe'}</Link>} />
+    <DemoNotice />
+    <section className="stat-grid" aria-label="Hoạt động minh họa">
+      <section className="stat-card"><span className="stat-icon"><Package size={20} aria-hidden="true" /></span><h2>{farmer ? 'Lô hàng mẫu' : 'Yêu cầu xe mẫu'}</h2><strong>{farmer ? 3 : state.transports.length}</strong><small>Dữ liệu minh họa</small></section>
+      <section className="stat-card"><span className="stat-icon amber"><Handshake size={20} aria-hidden="true" /></span><h2>{farmer ? 'Nhu cầu thu mua mẫu' : 'Chuyến nhận mẫu'}</h2><strong>{farmer ? demoPartners.length : state.transports.filter(t => t.status === 'ACCEPTED').length}</strong><small>Dữ liệu minh họa</small></section>
+      <section className="stat-card"><span className="stat-icon green"><Truck size={20} aria-hidden="true" /></span><h2>Vận chuyển minh họa</h2><strong>{state.transports.length}</strong><small>Yêu cầu trong phiên minh họa</small></section>
+    </section>
+    <div className="dashboard-columns">
+      <section className="panel hero-panel"><span className="eyebrow">{farmer ? 'Kết nối thu mua' : 'Kết nối vận tải'}</span><h2>{farmer ? 'Đưa nông sản đến đúng người mua' : 'Tìm chuyến phù hợp với đội xe'}</h2><p>{farmer ? 'Chọn lô đã công bố, xem nhu cầu và lý do người mua phù hợp.' : 'Xem tuyến đường, tải trọng và thời gian trước khi báo giá minh họa.'}</p><div className="hero-actions"><Link className="button button-primary" to={farmer ? '/farmer/matches' : '/carrier/requests'}>{farmer ? 'Tìm người mua →' : 'Xem yêu cầu xe →'}</Link><Link className="button button-secondary" to={farmer ? '/farmer/lots' : '/carrier/vehicles'}>{farmer ? 'Mở danh sách lô' : 'Mở hồ sơ & xe'}</Link></div><div className="hero-pattern" aria-hidden="true">◌ ◍ ◌</div></section>
+      <section className="panel demo-panel"><span className="badge badge-demo">Minh họa</span><h2>Tiến trình vận chuyển</h2><div className="timeline"><span className="done">Tạo yêu cầu</span><span>Báo giá</span><span>Nhận chuyến</span></div><p>Khám phá luồng vận chuyển mẫu. Chưa kết nối GPS hoặc giao dịch thật.</p><Link className="text-link" to={farmer ? '/farmer/transport' : '/carrier/tracking'}>Xem vận chuyển →</Link></section>
+    </div>
     <Card title={farmer ? 'Khu vực thu mua' : 'Tuyến hoạt động'}><MapList farmerMap={farmer} /></Card>
-    <div className="role-grid"><Card title={farmer ? 'Quản lý lô thật' : 'Đội xe của bạn'}><p>Khu vực quản lý dữ liệu thật yêu cầu đăng nhập.</p><Link to={farmer ? '/farmer/lots' : '/carrier/vehicles'}>{farmer ? 'Mở danh sách lô' : 'Mở hồ sơ & xe'}</Link></Card><Card title="Vận chuyển minh họa"><p>{state.transports.length} yêu cầu trong phiên minh họa.</p><Link to={farmer ? '/farmer/transport' : '/carrier/requests'}>Xem vận chuyển</Link></Card><Card title="Đánh giá minh họa"><Link to={farmer ? '/farmer/reviews' : '/carrier/reviews'}>Xem đánh giá</Link></Card></div>
-  </Frame>;
+    <div className="row"><Link className="text-link" to={farmer ? '/farmer/reviews' : '/carrier/reviews'}>Xem đánh giá minh họa →</Link><Button variant="secondary" onClick={reset}>Đặt lại minh họa</Button></div>
+  </div>;
 }
 export function FarmerTransport() {
-  const { state, update } = useADemo(); const [form, setForm] = useState({ origin: '', destination: '', quantity: '', when: '', vehicleType: 'ENCLOSED', packaging: 'Thùng carton', offer: '' });
+  const location = useLocation(); const raw: unknown = location.state?.transportLot;
+  const snapshot = raw && typeof raw === 'object' && 'id' in raw && typeof raw.id === 'string' && 'title' in raw && typeof raw.title === 'string' && 'quantityKg' in raw && typeof raw.quantityKg === 'number' && Number.isFinite(raw.quantityKg) && raw.quantityKg > 0 && 'province' in raw && typeof raw.province === 'string' ? { id: raw.id, title: raw.title, quantityKg: raw.quantityKg, province: raw.province } : null;
+  const { state, update } = useADemo(); const [form, setForm] = useState(() => ({ origin: snapshot?.province ?? '', destination: '', quantity: snapshot ? formatQuantity(snapshot.quantityKg, 'tonne') : '', when: '', vehicleType: 'ENCLOSED', packaging: 'Thùng carton', offer: '' }));
   const [error, setError] = useState(''); const [requestId, setRequestId] = useState(''); const [chosen, setChosen] = useState('');
   const kg = parseQuantity(form.quantity, 'tonne'); const [params] = useSearchParams(); const lotId = params.get('lotId');
   function submit(event: FormEvent) {
@@ -39,7 +53,7 @@ export function FarmerTransport() {
     setRequestId(id); setChosen(''); setError('');
   }
   const request = state.transports.find(item => item.id === requestId);
-  return <Frame title="Tìm xe">{lotId && <DemoNotice>Chuyển từ lô thật sang yêu cầu vận chuyển minh họa; không đặt xe cho đối tác.</DemoNotice>}
+  return <Frame title="Tìm xe">{snapshot && <p>Ngữ cảnh công khai: {snapshot.title} · {snapshot.quantityKg} kg · {snapshot.province}</p>}{lotId && <DemoNotice>Chuyển từ lô thật sang yêu cầu vận chuyển minh họa; không đặt xe cho đối tác.</DemoNotice>}
     <FormLayout preview={<Card title="Nhà xe gợi ý">{!request ? <EmptyState title="Nhập yêu cầu để xem xe minh họa" /> : demoVehicles.filter(v => v.capacity >= request.kg && v.type === request.vehicleType).length ? demoVehicles.filter(v => v.capacity >= request.kg && v.type === request.vehicleType).map(v => <div className="stack-sm" key={v.id}><p>{v.name}</p><Button variant="secondary" onClick={() => setChosen(v.id)}>Chọn {v.name}</Button></div>) : <EmptyState title="Không có xe mẫu đủ tải" />}</Card>}>
       <Card title="Yêu cầu vận chuyển"><form className="stack-sm" noValidate onSubmit={submit}>{([['origin', 'Điểm nhận'], ['destination', 'Điểm giao'], ['quantity', 'Khối lượng (tấn)'], ['offer', 'Cước đề xuất (đ)']] as const).map(([key, label]) => <TextField key={key} label={label} required value={form[key]} onChange={e => { setForm(v => ({ ...v, [key]: e.target.value })); setRequestId(''); setError(''); }} />)}
         <TextField label="Giờ nhận hàng" type="datetime-local" required value={form.when} onChange={e => { setForm(v => ({ ...v, when: e.target.value })); setRequestId(''); }} />
@@ -70,7 +84,7 @@ export function CarrierRequests({ vehicles }: { vehicles?: Vehicle[] }) {
 export function CarrierTracking() {
   const { state } = useADemo(); const [id, setId] = useState(''); const selected = state.transports.find(t => t.id === id); const steps = ['Yêu cầu đã tạo', 'Nhà xe báo giá', 'Nhận chuyến minh họa'];
   return <Frame title="Theo dõi chuyến"><Select label="Chọn yêu cầu theo dõi" value={id} onChange={e => setId(e.target.value)}><option value="">Chọn yêu cầu</option>{state.transports.map(t => <option key={t.id} value={t.id}>{t.origin} → {t.destination}</option>)}</Select>
-    {!selected ? <EmptyState title="Chưa chọn chuyến" /> : <Card title="Tiến trình minh họa"><p>{selected.origin} → {selected.destination}</p><ol>{steps.map((step, i) => <li key={step}>{step} · {i <= (selected.status === 'NEW' ? 0 : selected.status === 'QUOTED' ? 1 : 2) ? 'Đã đạt' : 'Chưa đạt'}</li>)}</ol><p>Không có GPS trực tiếp hoặc xác nhận giao hàng thật.</p></Card>}
+    {!selected ? <EmptyState title="Chưa chọn chuyến" /> : <Card title="Tiến trình minh họa"><p>{selected.origin} → {selected.destination}</p><ol className="trip-timeline">{steps.map((step, i) => <li key={step} data-complete={i <= (selected.status === 'NEW' ? 0 : selected.status === 'QUOTED' ? 1 : 2)}>{step} · {i <= (selected.status === 'NEW' ? 0 : selected.status === 'QUOTED' ? 1 : 2) ? 'Đã đạt' : 'Chưa đạt'}</li>)}</ol><p>Không có GPS trực tiếp hoặc xác nhận giao hàng thật.</p></Card>}
   </Frame>;
 }
 export function FarmerChat() {

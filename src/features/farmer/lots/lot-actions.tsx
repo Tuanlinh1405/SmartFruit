@@ -21,6 +21,6 @@ export function LotActions({ lot, onStatus, onDelete }: { lot: Lot; onStatus: (s
   return <div className="row">
     {([['PUBLISHED', 'Công bố lô'], ['CLOSED', 'Đóng lô'], ['CANCELLED', 'Hủy lô']] as const).filter(([status]) => canChangeStatus(lot.status, status)).map(([status, label]) =>
       <Action key={status} label={label} description={status === 'PUBLISHED' ? 'Nội dung lô sẽ được Buyer đọc. Thông tin riêng không công khai.' : 'Chỉ đổi trạng thái lô, không xác nhận giao dịch hoặc giao hàng.'} onConfirm={() => onStatus(status)} />)}
-    <Action label="Xóa lô" description="Xóa vĩnh viễn lô và thông tin riêng. Lô có ảnh cần được xử lý ảnh trước; chức năng này chưa hỗ trợ." danger onConfirm={onDelete} />
+    <Action label="Xóa lô" description="Xóa vĩnh viễn lô, thông tin riêng và ảnh. Nếu dọn ảnh chưa hoàn tất, lô được giữ lại để thử lại." danger onConfirm={onDelete} />
   </div>;
 }

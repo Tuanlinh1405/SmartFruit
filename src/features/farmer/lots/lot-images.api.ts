@@ -1,3 +1,4 @@
+import { supabase } from '../../../lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 export interface LotImage { id: string; lot_id: string; storage_path: string; sort_order: number; }
 export interface SignedImage extends LotImage { url: string | null; expiresAt: number; }
@@ -110,7 +111,7 @@ export function createLotImagesRepository(client: SupabaseClient): LotImagesRepo
   };
   return repository;
 }
-async function configured() { const { supabase } = await import('../../../lib/supabase'); return createLotImagesRepository(supabase); }
+async function configured() { return createLotImagesRepository(supabase); }
 export const lotImagesRepository: LotImagesRepository = {
   list: async (u, l) => (await configured()).list(u, l), upload: async (u, l, f, r) => (await configured()).upload(u, l, f, r),
   remove: async (u, l, i) => (await configured()).remove(u, l, i), cleanup: async (u, l) => (await configured()).cleanup(u, l),

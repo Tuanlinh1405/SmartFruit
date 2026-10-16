@@ -1,3 +1,4 @@
+import { supabase } from '../../../lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { parseProfileForm, profileToForm, type FarmerProfile, type FarmerProfileRepository } from './farmer-profile.model';
 
@@ -35,7 +36,6 @@ export function createFarmerProfileRepository(client: SupabaseClient): FarmerPro
 
 // No import-time Supabase/env dependency for isolated component tests.
 async function configuredRepository() {
-  const { supabase } = await import('../../../lib/supabase');
   return createFarmerProfileRepository(supabase);
 }
 export const farmerProfileRepository: FarmerProfileRepository = {

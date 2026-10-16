@@ -15,12 +15,13 @@ test('A integration via Auth / PostgREST / Storage HTTP', { skip: !enabled ? 'Re
   async function insert(table, value, client = clients.farmer1) { const r = await client.from(table).insert(value).select('id').single(); ok(r); return r.data.id; }
   try {
     for (const role of ['farmer1', 'farmer2', 'carrier1', 'carrier2', 'buyer', 'admin']) {
-      assert.ok(accounts[role]?.phone && accounts[role]?.password, `Missing dedicated ${role} credentials`);
+      assert.ok((accounts[role]?.phone || accounts[role]?.email) && accounts[role]?.password, `Missing dedicated ${role} credentials`);
       const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } }); clients[role] = client;
-      const login = await client.auth.signInWithPassword(accounts[role]); ok(login); assert.ok(login.data.user); ids[role] = login.data.user.id;
+      const login = await client.auth.signInWithPassword(accounts[role].email ? { email: accounts[role].email, password: accounts[role].password } : { phone: accounts[role].phone, password: accounts[role].password }); ok(login); assert.ok(login.data.user); ids[role] = login.data.user.id;
       const profile = await client.from('profiles').select('role').eq('id', ids[role]).single(); ok(profile);
       assert.equal(profile.data.role, role.replace(/\d$/, '').toUpperCase(), 'Dedicated account role mismatch');
     }
+    assert.equal(new Set(Object.values(ids)).size, 6, 'Use six distinct dedicated test accounts');
     for (const role of ['farmer1', 'farmer2', 'carrier1', 'carrier2']) {
       const table = role.startsWith('farmer') ? 'farmer_profiles' : 'carrier_profiles'; const client = clients[role];
       const existing = await client.from(table).select('user_id').eq('user_id', ids[role]).maybeSingle(); ok(existing);
@@ -29,6 +30,20 @@ test('A integration via Auth / PostgREST / Storage HTTP', { skip: !enabled ? 'Re
         ok(await client.from(table).insert(profile)); createdProfiles.push({ table, role });
       }
     }
+    await t.test('Farmer/Carrier profiles persist, reject invalid values and remain owner-only', async () => {
+      for (const role of ['farmer1', 'carrier1']) {
+        const table = role === 'farmer1' ? 'farmer_profiles' : 'carrier_profiles';
+        const column = role === 'farmer1' ? 'farm_name' : 'company_name'; const other = role === 'farmer1' ? 'farmer2' : 'carrier2';
+        const old = await clients[role].from(table).select(column).eq('user_id', ids[role]).single(); ok(old);
+        try {
+          const update = await clients[role].from(table).update({ [column]: tag }).eq('user_id', ids[role]).select(column).single(); ok(update); assert.equal(update.data[column], tag);
+          const read = await clients[role].from(table).select(column).eq('user_id', ids[role]).single(); ok(read); assert.equal(read.data[column], tag);
+          assert.ok((await clients[role].from(table).update({ [column]: '' }).eq('user_id', ids[role])).error);
+          const hidden = await clients[other].from(table).select('user_id').eq('user_id', ids[role]); ok(hidden); assert.deepEqual(hidden.data, []);
+          const forged = await clients[other].from(table).update({ [column]: 'forged' }).eq('user_id', ids[role]).select('user_id'); assert.ok(forged.error || forged.data?.length === 0);
+        } finally { ok(await clients[role].from(table).update({ [column]: old.data[column] }).eq('user_id', ids[role])); }
+      }
+    });
     const fruit = await clients.farmer1.from('fruit_types').select('id').eq('active', true).limit(1).single(); ok(fruit);
     const input = { title: tag, fruit_type_id: fruit.data.id, quantity_kg: 5000, price_vnd_per_kg: 65000, harvest_start: '2026-10-15', harvest_end: '2026-10-20', province: 'Test', status: 'DRAFT' };
     const id = randomUUID(); lotIds.push(id); ok(await clients.farmer1.from('lots').insert({ ...input, id }));

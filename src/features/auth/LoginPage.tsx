@@ -1,47 +1,31 @@
-import { useState } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
-import { explainError } from '../../lib/format';
 import { useAuth } from './AuthProvider';
-
+import { roleHome, SessionState } from './auth-routing';
+import { explainError } from '../../lib/format';
+import { Card, PageHeader, LoadingState } from '../../components/shared';
+import { Button, TextField } from '../../components/ui';
+import { Link } from 'react-router-dom';
+import { Leaf } from 'lucide-react';
 export function LoginPage() {
-  const { status, profile } = useAuth();
-  const navigate = useNavigate();
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  if (status === 'ready' && profile?.role) return <Navigate to={profile.role === 'ADMIN' ? '/admin' : profile.role === 'BUYER' ? '/buyer' : '/role-home'} replace />;
-
-  async function signIn(event: React.FormEvent) {
-    event.preventDefault();
-    const normalized = phone.trim().replace(/[\s.()-]/g, '');
-    if (!/^\+[1-9]\d{7,14}$/.test(normalized)) { setError('Nhập số điện thoại quốc tế, ví dụ +84901234567.'); return; }
-    setBusy(true); setError('');
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ phone: normalized, password });
-      if (signInError) throw signInError;
-      navigate('/', { replace: true });
-    } catch (cause) { setError(explainError(cause)); }
-    finally { setBusy(false); }
+  const { status, profile, signIn } = useAuth(); const navigate = useNavigate();
+  const [identifier, setIdentifier] = useState(''); const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const lock = useRef(false);
+  if (status === 'loading') return <LoadingState />;
+  if (status === 'error' || (status === 'ready' && !profile?.role)) return <SessionState />;
+  if (status === 'ready' && profile?.role) return <Navigate to={roleHome(profile.role)} replace />;
+  async function submit(event: FormEvent) {
+    event.preventDefault(); if (lock.current) return;
+    lock.current = true; setBusy(true); setError('');
+    try { await signIn(identifier, password); navigate('/role-home', { replace: true }); }
+    catch (cause) { setError(explainError(cause)); }
+    finally { lock.current = false; setBusy(false); }
   }
-
-  return <div className="login-shell">
-    <div className="login-aside">
-      <div className="brand"><span className="brand-icon">✳</span><span>LogStar<small>Kết nối nông sản Việt</small></span></div>
-      <div className="login-aside-copy"><span className="eyebrow light">Nền tảng kết nối nông nghiệp</span><h1>Tìm đúng nguồn hàng, đúng thời điểm.</h1><p>Quản lý nhu cầu thu mua và kết nối với nhà vườn qua dữ liệu minh bạch.</p></div>
-      <div className="login-aside-foot">LogStar · Nông sản Việt Nam</div>
-    </div>
-    <main className="login-main"><div className="login-card">
-      <span className="eyebrow">Chào mừng trở lại</span><h2>Đăng nhập</h2>
-      <p>Dùng tài khoản ứng dụng đã được cấp cho bạn.</p>
-      <form onSubmit={signIn}>
-        <label>Số điện thoại<input autoComplete="tel" inputMode="tel" placeholder="+84901234567" value={phone} onChange={e => setPhone(e.target.value)} required /></label>
-        <label>Mật khẩu<input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
-        {error && <p className="form-error" role="alert">{error}</p>}
-        <button className="button primary full" disabled={busy} type="submit">{busy ? 'Đang đăng nhập…' : 'Đăng nhập →'}</button>
-      </form>
-      <div className="login-note">Hồ sơ [DEMO] trong database là dữ liệu mẫu và chưa có mật khẩu đăng nhập.</div>
-    </div></main>
-  </div>;
+  return <main className="landing stack login-page"><Link to="/" className="brand public-brand"><Leaf size={28} aria-hidden="true" /><span>SmartFruit</span></Link><PageHeader eyebrow="Kết nối nông sản Việt" title="Đăng nhập" description="Dùng tài khoản được cấp để quản lý nhà vườn, thu mua hoặc vận tải." />
+    <Card><form className="stack" onSubmit={submit} noValidate>
+      <TextField label="Email hoặc số điện thoại" required autoComplete="username" placeholder="ban@example.com hoặc +84901234567" value={identifier} onChange={e => setIdentifier(e.target.value)} />
+      <TextField label="Mật khẩu" required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} />
+      {error && <p role="alert">{error}</p>}<Button type="submit" loading={busy}>Đăng nhập</Button>
+    </form></Card><p className="muted">Dùng mật khẩu của tài khoản ứng dụng đã được cấp, không phải mật khẩu Supabase Dashboard. Không gửi SMS/OTP.</p>
+  </main>;
 }

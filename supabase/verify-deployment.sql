@@ -36,3 +36,7 @@ where table_schema = 'public' and grantee in ('anon','PUBLIC')
     'marketplace_profiles','fruit_types','fruit_varieties','lots','lot_private_details',
     'buy_requests','vehicles','lot_images');
 -- Expected: zero rows for anonymous table grants; 12 RLS-enabled application tables.
+
+-- A image-lifecycle installation check (read-only; NULL means not installed).
+select to_regprocedure('public.replace_lot_image(uuid,text)') as replace_image_rpc,
+       to_regprocedure('public.delete_empty_lot(uuid)') as delete_empty_lot_rpc;

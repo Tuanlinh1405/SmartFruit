@@ -12,13 +12,17 @@ Ngày thiết kế: 14/10/2026. Project đích: `yyslykqpamnlqkvutrlm`.
 
 Project đã có initial schema chỉ áp migration bổ sung sau review, không chạy lại deploy.sql. File deploy.sql được generate lại cho cài đặt mới; việc generate không có nghĩa đã triển khai lên cloud. Test PGlite chạy toàn bộ migrations; khóa cạnh tranh và Storage HTTP phải nghiệm thu thêm trên môi trường test thực.
 
+Hai migration A/B hiện trùng prefix `202610150001`; chưa đổi version khi chưa xác nhận lịch sử project LogStar. Nếu lifecycle A chưa áp thì cấp version mới trước triển khai; không sửa migration hybrid đã áp. `supabase/verify-deployment.sql` chỉ đọc catalog và kiểm tra sự tồn tại RPC; không áp SQL.
+
 ### Môi trường test SDK phần A
 
 Chạy `npm run test:database` cho SQL/PGlite; dependency của suite được cài bằng `npm ci --ignore-scripts --prefix supabase/tests`.
 
-`npm run test:integration` mặc định skip. Để bật cần `RUN_A_LIVE=1`, `A_TEST_SUPABASE_URL`, `A_TEST_SUPABASE_KEY` là publishable key và `A_TEST_ACCOUNTS` là JSON ánh xạ farmer1/farmer2/carrier1/carrier2/buyer/admin tới phone/password của tài khoản test chuyên dụng. Không dùng account người dùng thật, không commit credentials hoặc đưa chúng vào VITE_*.
+`npm run test:integration` mặc định skip. Để bật cần `RUN_A_LIVE=1`, `A_TEST_SUPABASE_URL`, `A_TEST_SUPABASE_KEY` là publishable key và `A_TEST_ACCOUNTS` là JSON ánh xạ farmer1/farmer2/carrier1/carrier2/buyer/admin tới email/password hoặc phone/password của tài khoản test chuyên dụng. Không dùng account người dùng thật, không commit credentials hoặc đưa chúng vào VITE_*.
 
 Suite đăng nhập qua Auth HTTP, tạo dữ liệu có UUID/tag riêng, kiểm tra PostgREST/RLS/Storage/signed URL và cleanup trong finally. Không tạo user, không áp SQL, không reset DB chung. Cần áp migration bổ sung và cấp role đúng trước khi chạy; nếu bật nhưng thiếu cấu hình thì test fail, không tự chuyển sang mock.
+
+System test UI thật: `npm run test:system:live` dùng cùng A_TEST_*; runner tự bật RUN_A_LIVE, chỉ chạy project a-live. Tài khoản phải khác nhau, đúng role. Test gọi ứng dụng qua `/login`, tạo lô/ảnh và xe có định danh riêng, kiểm tra reload/login lại/quyền; tắt trace/screenshot/video và phục hồi profile sau test. Không dùng HTTP mock cho suite này. Thiếu cấu hình không tính Pass.
 
 Schema hoàn thiện phần dữ liệu F của TDD v0.4 và form trong bộ thiết kế `Description/`. SQL trong `supabase/migrations/202610140001_initial_schema.sql` là định nghĩa chính xác của tên cột, kiểu, constraints, indexes, grants và RLS. `supabase/deploy.sql` được ghép tự động từ migration và seed, dùng cho cài đặt ban đầu trong SQL Editor.
 

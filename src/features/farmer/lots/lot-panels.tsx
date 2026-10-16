@@ -13,22 +13,22 @@ import { lotImagesRepository, type LotImagesRepository } from './lot-images.api'
 import { lotKeys, useLotActions, useLotCatalog, useLotDetail, useLotList, useLotPrivate, useLotResources } from './use-lots';
 import { initialLotFilters, lotPageSize, lotStatuses, tradeMethods, type Lot, type LotCatalog, type LotInput, type LotListFilters, type LotPrivateRepository, type LotsRepository } from './lot.model';
 
-interface BaseProps { authenticatedUserId: string | null; repository?: LotsRepository; imagesRepository?: LotImagesRepository; onSavedLot?: (lotId: string) => void; }
+interface BaseProps { authenticatedUserId: string | null; repository?: LotsRepository; imagesRepository?: LotImagesRepository; onSavedLot?: (lotId: string) => void; onCompleteProfile?: () => void; onFindBuyers?: (lot: Lot) => void; onFindTransport?: (lot: Lot) => void; }
 const signedOut = <EmptyState title="Chưa đăng nhập" description="Vui lòng đăng nhập bằng tài khoản Farmer." />;
 const missingProfile = <EmptyState title="Chưa có hồ sơ nhà vườn" description="Hoàn thiện hồ sơ nhà vườn trước khi đăng lô hàng." />;
 
-// Integration points only. Production routes stay skeleton until B supplies Auth.
+// Independent panels are mounted under the shared Auth guard.
 export function LotsListPanel(props: BaseProps & { onOpen: (id: string) => void; onCreate: () => void }) {
   return <ListForUser key={props.authenticatedUserId ?? 'signed-out'} {...props} />;
 }
-function ListForUser({ authenticatedUserId: userId, repository, onOpen, onCreate }: BaseProps & { onOpen: (id: string) => void; onCreate: () => void }) {
+function ListForUser({ authenticatedUserId: userId, repository, onOpen, onCreate, onCompleteProfile }: BaseProps & { onOpen: (id: string) => void; onCreate: () => void }) {
   const [filters, setFilters] = useState({ ...initialLotFilters });
   const resources = useLotResources(userId, repository);
   const list = useLotList(resources.profile.data ? userId : null, filters, repository);
   if (!userId) return signedOut;
   if (resources.profile.isPending || resources.catalog.isPending) return <LoadingState />;
   if (resources.profile.isError || resources.catalog.isError) return <ErrorState message="Không thể tải hồ sơ hoặc danh mục." onRetry={() => { void resources.profile.refetch(); void resources.catalog.refetch(); }} />;
-  if (!resources.profile.data) return missingProfile;
+  if (!resources.profile.data) return <div className="stack">{missingProfile}{onCompleteProfile && <Button onClick={onCompleteProfile}>Hoàn thiện hồ sơ nhà vườn</Button>}</div>;
   function filter<K extends Exclude<keyof LotListFilters, 'page'>>(key: K, value: LotListFilters[K]) { setFilters(current => ({ ...current, [key]: value, page: 1 })); }
   return <div className="stack">
     <PageHeader title="Danh sách lô hàng" action={<Button onClick={onCreate}>Tạo lô hàng</Button>} />
@@ -56,7 +56,7 @@ function ListForUser({ authenticatedUserId: userId, repository, onOpen, onCreate
 export function LotDetailPanel(props: BaseProps & { lotId: string; privateRepository?: LotPrivateRepository; onEdit: (id: string) => void; onDeleted: () => void }) {
   return <DetailForUser key={`${props.authenticatedUserId}/${props.lotId}`} {...props} />;
 }
-function DetailForUser({ authenticatedUserId: userId, lotId, repository, imagesRepository = lotImagesRepository, privateRepository, onEdit, onDeleted }: BaseProps & { lotId: string; privateRepository?: LotPrivateRepository; onEdit: (id: string) => void; onDeleted: () => void }) {
+function DetailForUser({ authenticatedUserId: userId, lotId, repository, imagesRepository = lotImagesRepository, privateRepository, onEdit, onDeleted, onFindBuyers, onFindTransport }: BaseProps & { lotId: string; privateRepository?: LotPrivateRepository; onEdit: (id: string) => void; onDeleted: () => void }) {
   const query = useLotDetail(userId, lotId, repository); const actions = useLotActions(userId, repository);
   const client = useQueryClient();
   const catalog = useLotCatalog(userId, repository);
@@ -70,6 +70,7 @@ function DetailForUser({ authenticatedUserId: userId, lotId, repository, imagesR
       <p>{catalog.data?.fruits.find(item => item.id === lot.fruit_type_id)?.name} {catalog.data?.varieties.find(item => item.id === lot.variety_id)?.name}</p>
       <p>{lot.province} {lot.district}</p><p>{formatDate(lot.harvest_start)} – {formatDate(lot.harvest_end)}</p><p>{lot.grade}</p><p>{tradeMethods[lot.selling_method]}</p><p>{lot.description}</p><p>{lot.certifications.join(', ')} · Tự khai báo</p><p>{lot.packaging_options.join(', ')}</p><p>{lot.growing_area_code}</p>
       </div></Card>
+    <div className="row">{onFindBuyers && <Button variant="secondary" disabled={lot.status !== 'PUBLISHED'} title={lot.status !== 'PUBLISHED' ? 'Công bố lô trước khi matching.' : undefined} onClick={() => onFindBuyers(lot)}>Tìm người mua phù hợp</Button>}{onFindTransport && <Button variant="secondary" onClick={() => onFindTransport(lot)}>Tìm xe minh họa</Button>}</div>
     <LotImages userId={userId} lotId={lot.id} repository={imagesRepository} />
     <LotActions lot={lot} onStatus={async status => { await actions.mutateAsync({ kind: 'status', id: lot.id, status }); }} onDelete={async () => { await imagesRepository.deleteLot(userId, lot.id); client.removeQueries({ queryKey: lotKeys.all(userId) }); onDeleted(); }} />
     <LotPrivateCard userId={userId} lot={lot} repository={privateRepository} />
@@ -79,12 +80,12 @@ function DetailForUser({ authenticatedUserId: userId, lotId, repository, imagesR
 export function LotEditorPanel(props: BaseProps & { lotId?: string; privateRepository?: LotPrivateRepository }) {
   return <EditorForUser key={`${props.authenticatedUserId}/${props.lotId ?? 'new'}`} {...props} />;
 }
-function EditorForUser({ authenticatedUserId: userId, lotId, repository, imagesRepository, privateRepository, onSavedLot }: BaseProps & { lotId?: string; privateRepository?: LotPrivateRepository }) {
+function EditorForUser({ authenticatedUserId: userId, lotId, repository, imagesRepository, privateRepository, onSavedLot, onCompleteProfile }: BaseProps & { lotId?: string; privateRepository?: LotPrivateRepository }) {
   const resources = useLotResources(userId, repository); const detail = useLotDetail(userId, lotId ?? '', repository);
   if (!userId) return signedOut;
   if (resources.profile.isPending || resources.catalog.isPending || (lotId && detail.isPending)) return <LoadingState />;
   if (resources.profile.isError || resources.catalog.isError || (lotId && detail.isError)) return <ErrorState message="Không thể tải danh mục/hồ sơ hoặc không truy cập được lô." onRetry={() => { void resources.profile.refetch(); void resources.catalog.refetch(); if (lotId) void detail.refetch(); }} />;
-  if (!resources.profile.data) return missingProfile;
+  if (!resources.profile.data) return <div className="stack">{missingProfile}{onCompleteProfile && <Button onClick={onCompleteProfile}>Hoàn thiện hồ sơ nhà vườn</Button>}</div>;
   return <Editor userId={userId} initialLot={lotId ? detail.data! : null} catalog={resources.catalog.data!} repository={repository} imagesRepository={imagesRepository} privateRepository={privateRepository} onSavedLot={onSavedLot} />;
 }
 function Editor({ userId, initialLot, catalog, repository = lotsRepository, imagesRepository = lotImagesRepository, privateRepository, onSavedLot }: { userId: string; initialLot: Lot | null; catalog: LotCatalog; repository?: LotsRepository; imagesRepository?: LotImagesRepository; privateRepository?: LotPrivateRepository; onSavedLot?: (id: string) => void }) {

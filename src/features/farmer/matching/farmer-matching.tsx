@@ -1,3 +1,4 @@
+import { supabase } from '../../../lib/supabase';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -6,12 +7,7 @@ import { Select } from '../../../components/ui';
 import type { Lot } from '../lots/lot.model';
 import { lotColumns } from '../lots/lot.api';
 
-export interface BuyCandidate {
-  id: string; buyer_id: string; fruit_type_id: string; variety_id: string | null; title: string;
-  target_quantity_kg: number; min_lot_quantity_kg: number | null; allow_partial: boolean;
-  min_price_vnd_per_kg: number; max_price_vnd_per_kg: number;
-  required_start: string; required_end: string; preferred_provinces: string[];
-}
+export type BuyCandidate = import('../../matching/core').ScoringRequest & { buyer_id: string; title: string };
 export interface MatchResult { lotId: string; requestId: string; score: number; reasons: string[]; missingInformation: string[]; ruleVersion: string; suggestedQuantityKg?: number; }
 export type MatchScorer = (lot: Lot, requests: BuyCandidate[]) => MatchResult[] | Promise<MatchResult[]>;
 export interface PublicDealContext { partnerId: string; name: string; lotId: string; fruit: string; quantity: number; price: number; province: string; }
@@ -25,7 +21,7 @@ export function createFarmerMatchingRepository(client: SupabaseClient): FarmerMa
     async lots(userId) {
       await owner(userId); const rows: Lot[] = [];
       for (let offset = 0; offset <= 1000; offset += 100) {
-        const result = await client.from('lots').select(lotColumns, { count: 'exact' }).eq('farmer_id', userId).order('id').range(offset, offset + 99);
+        const result = await client.from('lots').select(lotColumns, { count: 'exact' }).eq('farmer_id', userId).eq('status', 'PUBLISHED').order('id').range(offset, offset + 99);
         if (result.error || !result.data || result.count === null) throw new Error('Không thể tải danh sách lô.');
         if (result.count > 1000) throw new Error('Có quá nhiều lô; hãy mở matching từ một lô cụ thể.');
         rows.push(...result.data as Lot[]); if (rows.length >= result.count) break;
@@ -34,11 +30,11 @@ export function createFarmerMatchingRepository(client: SupabaseClient): FarmerMa
     },
     async candidates(userId, lotId) {
       await owner(userId);
-      const record = await client.from('lots').select(lotColumns).eq('id', lotId).eq('farmer_id', userId).maybeSingle<Lot>();
-      if (record.error || !record.data) throw new Error('Không truy cập được lô.');
+      const record = await client.from('lots').select(lotColumns).eq('id', lotId).eq('farmer_id', userId).eq('status', 'PUBLISHED').maybeSingle<Lot>();
+      if (record.error || !record.data) throw new Error('Không truy cập được lô hoặc lô chưa được công bố.');
       const lot = record.data; const requests: BuyCandidate[] = [];
       for (let offset = 0; offset <= 1000; offset += 100) {
-        const result = await client.from('buy_requests').select('id,buyer_id,fruit_type_id,variety_id,title,target_quantity_kg,min_lot_quantity_kg,allow_partial,min_price_vnd_per_kg,max_price_vnd_per_kg,required_start,required_end,preferred_provinces', { count: 'exact' })
+        const result = await client.from('buy_requests').select('id,status,buyer_id,fruit_type_id,variety_id,title,target_quantity_kg,min_lot_quantity_kg,allow_partial,min_price_vnd_per_kg,max_price_vnd_per_kg,required_start,required_end,preferred_provinces', { count: 'exact' })
           .eq('status', 'OPEN').eq('fruit_type_id', lot.fruit_type_id).lte('required_start', lot.harvest_end).gte('required_end', lot.harvest_start).order('id').range(offset, offset + 99);
         if (result.error || !result.data || result.count === null) throw new Error('Không thể tải nhu cầu thu mua.');
         if (result.count > 1000) throw new Error('Quá nhiều ứng viên. Hãy thu hẹp loại quả/ngày thu hoạch trước khi matching.');
@@ -53,7 +49,7 @@ export function createFarmerMatchingRepository(client: SupabaseClient): FarmerMa
     },
   }; return repository;
 }
-async function configured() { const { supabase } = await import('../../../lib/supabase'); return createFarmerMatchingRepository(supabase); }
+async function configured() { return createFarmerMatchingRepository(supabase); }
 export const farmerMatchingRepository: FarmerMatchingRepository = { lots: async u => (await configured()).lots(u), candidates: async (u, id) => (await configured()).candidates(u, id) };
 export function validateMatches(lot: Lot, requests: BuyCandidate[], matches: MatchResult[]): void {
   if (!Array.isArray(matches)) throw new Error('Kết quả matching không đúng contract.');

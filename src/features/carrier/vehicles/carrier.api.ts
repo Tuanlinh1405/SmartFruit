@@ -1,3 +1,4 @@
+import { supabase } from '../../../lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { carrierProfile, validateVehicle, type CarrierProfileInput, type CarrierRepository, type Vehicle } from './vehicle.model';
 import { escapeLike } from '../../farmer/lots/lot.api';
@@ -37,7 +38,7 @@ export function createCarrierRepository(client: SupabaseClient): CarrierReposito
     },
   };
 }
-async function configured() { const { supabase } = await import('../../../lib/supabase'); return createCarrierRepository(supabase); }
+async function configured() { return createCarrierRepository(supabase); }
 export const carrierRepository: CarrierRepository = {
   profile: async u => (await configured()).profile(u), saveProfile: async (u, p) => (await configured()).saveProfile(u, p),
   list: async (u, f) => (await configured()).list(u, f), saveVehicle: async (u, v, id) => (await configured()).saveVehicle(u, v, id), remove: async (u, id) => (await configured()).remove(u, id),

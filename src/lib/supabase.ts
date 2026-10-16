@@ -1,28 +1,22 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
-const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
-
-if (!supabaseUrl || !publishableKey) {
-  throw new Error('Thiếu cấu hình Supabase. Chạy npm run setup:supabase rồi khởi động lại Vite.');
+let instance: SupabaseClient | undefined;
+function configuredClient(): SupabaseClient {
+  if (instance) return instance;
+  const url = import.meta.env.VITE_SUPABASE_URL?.trim();
+  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
+  if (!url || !key) throw new Error('Thiếu cấu hình Supabase. Chạy npm run setup:supabase rồi khởi động lại Vite.');
+  if (!key.startsWith('sb_publishable_')) throw new Error('Frontend SmartFruit chỉ dùng publishable key.');
+  instance = createClient(url, key, { db: { schema: 'public' }, auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+  return instance;
 }
-
-if (!publishableKey.startsWith('sb_publishable_')) {
-  throw new Error('Frontend SmartFruit chỉ dùng publishable key lấy từ cấu hình project.');
-}
-
-// Import this shared instance in both Farmer/Carrier and Buyer/Admin features.
-// The authenticated user and database RLS determine which records can be accessed.
-export const supabase = createClient(supabaseUrl, publishableKey, {
-  db: { schema: 'public' },
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
+// Defer configuration until first use, so public pages and test harness can boot
+// without credentials. Every consumer still shares one actual SDK client.
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, property) {
+    const client = configuredClient();
+    const value: unknown = Reflect.get(client, property, client);
+    return typeof value === 'function' ? value.bind(client) : value;
   },
 });
-
-// Both import styles use the same authenticated client instance.
-export function getSupabaseClient() {
-  return supabase;
-}
+export function getSupabaseClient() { return supabase; }

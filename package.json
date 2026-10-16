@@ -17,7 +17,9 @@
     "preview": "vite preview",
     "setup:supabase": "node scripts/setup-supabase.mjs",
     "check:supabase": "node scripts/check-supabase.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:system:live": "node scripts/run-live-system.mjs",
+    "auth:reset-password": "node scripts/reset-auth-password.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "5.3.0",

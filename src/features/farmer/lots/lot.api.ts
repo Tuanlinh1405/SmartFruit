@@ -1,3 +1,4 @@
+import { supabase } from '../../../lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { canChangeStatus, catalogErrors, lotPageSize, lotToForm, parseLotForm, parseQuantity, privateInput,
   type Lot, type LotCatalog, type LotInput, type LotListFilters, type LotPrivateInput,
@@ -127,7 +128,6 @@ export function createLotRepositories(client: SupabaseClient): { lots: LotsRepos
 }
 
 async function configured() {
-  const { supabase } = await import('../../../lib/supabase');
   return createLotRepositories(supabase);
 }
 export const lotsRepository: LotsRepository = {
