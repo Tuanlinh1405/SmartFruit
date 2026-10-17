@@ -1,4 +1,4 @@
-import { useId, useState, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ReactNode } from 'react';
+import { useId, useState, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ReactNode, type Ref } from 'react';
 
 interface FieldProps { label: string; error?: string; hint?: string; }
 function Field({ id, label, error, hint, required, children }: FieldProps & { id: string; required?: boolean; children: ReactNode }) {
@@ -20,7 +20,7 @@ export function Select({ label, error, hint, id: suppliedId, children, ...props 
   const generatedId = useId(); const id = suppliedId ?? generatedId;
   return <Field {...{ id, label, error, hint }} required={props.required}><select className="control" id={id} aria-invalid={!!error} aria-describedby={describedBy(id, hint, error)} {...props}>{children}</select></Field>;
 }
-export function TextArea({ label, error, hint, id: suppliedId, ...props }: FieldProps & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function TextArea({ label, error, hint, id: suppliedId, ...props }: FieldProps & TextareaHTMLAttributes<HTMLTextAreaElement> & { ref?: Ref<HTMLTextAreaElement> }) {
   const generatedId = useId(); const id = suppliedId ?? generatedId;
   return <Field {...{ id, label, error, hint }} required={props.required}><textarea className="control" id={id} aria-invalid={!!error} aria-describedby={describedBy(id, hint, error)} {...props} /></Field>;
 }

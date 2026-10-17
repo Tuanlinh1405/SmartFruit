@@ -63,6 +63,7 @@ Baseline đã được ghi nhận triển khai ngày 14/10/2026; tài liệu B g
 Không chạy lại `supabase/deploy.sql` trên project đã cài. File này chỉ dành cho cài mới, sinh bằng `node supabase/scripts/build-deploy.mjs`; việc generate không triển khai lên cloud. Pipeline vector/graph của B là prototype, không tự bật hybrid khi Edge Function/model/worker chưa sẵn sàng.
 
 - [UI chung, contract và inventory](docs/ui.md)
+- [Chatbot Farmer: cấu hình Gemini, triển khai và đánh giá](docs/farmer-chatbot.md)
 - [Schema, RLS và tài khoản](docs/database-schema.md)
 - [Biên bản database](docs/database-deployment.md)
 - [Cấu hình nhóm Supabase](docs/supabase-team-setup.md)

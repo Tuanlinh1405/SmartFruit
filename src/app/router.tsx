@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from '../features/auth/AuthProvider';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RoleGuard, RoleHome } from '../features/auth/auth-routing';
 import { SessionWorkspace } from './session-workspace';
+import { FarmerAssistantPanel } from '../features/farmer/assistant/farmer-assistant';
 import { RULE_VERSION } from '../features/matching/core';
 import { scoreFarmerRequests } from '../features/farmer/matching/shared-scorer';
 import { BuyerShell, AdminShell } from './Shell';
@@ -31,7 +32,8 @@ function FarmerCarrierFeature({ feature }: { feature: Feature }) {
 // Exported without BrowserRouter/AuthProvider for integration tests using real
 // routing with injected SDK dependencies. Production always uses AppRouter.
 export function ApplicationRoutes() {
-  return <Suspense fallback={<LoadingState />}><Routes>
+  const { status, profile } = useAuth();
+  return <><Suspense fallback={<LoadingState />}><Routes>
     <Route path="/" element={<StartPage />} />
     <Route path="/login" element={<LoginPage />} />
     {['/auth/login','/auth/register','/register'].map(path => <Route key={path} path={path} element={<Navigate to="/login" replace />} />)}
@@ -66,7 +68,7 @@ export function ApplicationRoutes() {
     <Route path="/403" element={<StatusPage code="403" />} /><Route path="/404" element={<StatusPage code="404" />} />
     {DevUi && <Route path="/dev/ui" element={<Suspense fallback={<LoadingState />}><DevUi /></Suspense>} />}
     <Route path="*" element={<StatusPage code="404" />} />
-  </Routes></Suspense>;
+  </Routes></Suspense><FarmerAssistantPanel enabled={status === 'ready' && profile?.role === 'FARMER'} /></>;
 }
 export function AppRouter() {
   return <BrowserRouter><AuthProvider><SessionWorkspace><ApplicationRoutes /></SessionWorkspace></AuthProvider></BrowserRouter>;

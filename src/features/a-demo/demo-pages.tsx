@@ -8,6 +8,7 @@ import { useADemo } from './demo-context';
 import { parsePrice, parseQuantity, formatQuantity } from '../farmer/lots/lot.model';
 import type { Vehicle } from '../carrier/vehicles/vehicle.model';
 import { Package, Handshake, Truck } from 'lucide-react';
+import { FarmerAssistantEntry } from '../farmer/assistant/farmer-assistant';
 
 function Frame({ title, children }: { title: string; children: ReactNode }) {
   const { reset } = useADemo(); return <div className="stack"><PageHeader title={title} action={<Button variant="secondary" onClick={reset}>Đặt lại minh họa</Button>} /><DemoNotice />{children}</div>;
@@ -25,6 +26,7 @@ export function DemoDashboard({ role }: { role: 'FARMER' | 'CARRIER' }) {
   const { state, reset } = useADemo(); const farmer = role === 'FARMER';
   return <div className="stack">
     <PageHeader eyebrow={`Tổng quan · ${farmer ? 'Nhà vườn' : 'Nhà xe'}`} title={farmer ? 'Mùa vụ sẵn sàng, kết nối người mua.' : 'Chuyến hàng tiếp nối, vững bước đường xa.'} description={farmer ? 'Quản lý lô nông sản và khám phá nhu cầu thu mua phù hợp.' : 'Quản lý đội xe và tìm yêu cầu vận chuyển phù hợp.'} action={<Link className="button button-accent" to={farmer ? '/farmer/lots/new' : '/carrier/vehicles'}>{farmer ? '＋ Tạo lô hàng' : 'Quản lý đội xe'}</Link>} />
+    {farmer && <FarmerAssistantEntry />}
     <DemoNotice />
     <section className="stat-grid" aria-label="Hoạt động minh họa">
       <section className="stat-card"><span className="stat-icon"><Package size={20} aria-hidden="true" /></span><h2>{farmer ? 'Lô hàng mẫu' : 'Yêu cầu xe mẫu'}</h2><strong>{farmer ? 3 : state.transports.length}</strong><small>Dữ liệu minh họa</small></section>
