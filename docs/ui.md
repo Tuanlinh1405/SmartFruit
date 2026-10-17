@@ -1,94 +1,38 @@
 # UI chung SmartFruit
 
-## Chuẩn giao diện Buyer dùng chung
+Nền UI lấy từ [PR #2 · Feature/UI skeleton](https://github.com/Tuanlinh1405/SmartFruit/pull/2), commit `47d988ad7c34c93148f40848da9ca00edd151f03`. Đã tích hợp với nghiệp vụ Dev B trên nhánh Linh, chưa merge PR trên GitHub. [Biên bản tích hợp](ui-integration.md).
 
-Buyer là mẫu thị giác cho toàn web. Buyer, Farmer và Carrier dùng chung `src/layouts/app-shell.tsx`, menu cấu hình tại `src/app/navigation.ts`. Admin giữ bố cục quản trị, dùng cùng font, token và panel; trang đầu, đăng nhập và trạng thái dùng cùng UI kit.
+## Thiết kế và cấu trúc
 
-Token nằm tại `src/styles/tokens.css`: nền #F6F7F2, chữ #17352B, primary #147C51, amber #F5AB24, sidebar gradient xanh đậm. Panel radius 17px, nút 11px, control 9px; shadow nhẹ. Typography dùng system sans-serif (ui-sans-serif/system-ui/Segoe UI), cùng stack với Buyer thực tế; không còn serif cho h1/brand và không tải font phụ thuộc mạng.
+Nền kem, panel trắng, sidebar xanh rừng; brand SmartFruit. Tokens trong `src/styles/tokens.css`: forest #15372A, leaf #1FA85C, cream #F6F5EE; primary #167843 cho nút chữ trắng. Fonts Fraunces Variable và Plus Jakarta Sans Variable tự host qua Fontsource, có tiếng Việt.
 
-`src/styles.css` chứa base và cấu trúc component trong CSS layer; `src/styles/unified.css` chứa diện mạo chung, shell, responsive và style cho portal. `src/styles/dashboard.css` chứa pattern dashboard dùng chung. `src/app/b-styles.css` chỉ giữ bố cục feature Buyer/Admin trong scope riêng. Không bọc shell chung bằng scope của feature.
+`src/styles.css` nhập Tailwind, tokens, UI kit và `features.css` theo thứ tự. `ui.css` giữ styles nền từ PR; `features.css` nối các trang nghiệp vụ hiện có vào cùng tokens. Không cần thay API để đổi layout.
 
-Heading h1 co giãn 1.8–2.55rem; control tối thiểu 44px, focus rõ và hỗ trợ reduced-motion. Nút accent dùng cho CTA nổi bật, primary cho tác vụ chính, secondary cho tác vụ phụ, danger cho hành động xóa. Không ghi màu/font mới trong feature khi có token phù hợp.
+## Tái sử dụng component
 
-## Ghép trang
+Import controls từ `src/components/ui`, Card/PageHeader/FormLayout từ `src/components/shared`. Component chung chỉ nhận dữ liệu/callback; Supabase và validation nghiệp vụ nằm trong feature. `/dev/ui` chỉ dùng khi chạy dev, không có trong production.
 
-Import UI từ `src/components/ui`, layout/content từ `src/components/shared`. Truyền dữ liệu và callback; component chung không import Supabase. Query/service thuộc feature. Tham khảo `/dev/ui` khi chạy `npm run dev`: hai mẫu local form/preview và filter/table, cùng trạng thái/overlays.
+- Button mặc định `type="button"`; nút lưu form phải có `type="submit"`. Loading khóa click.
+- TextField/Select/TextArea gắn label, hint, error. NumberWithUnit mô tả đơn vị; DateInput dùng native date, phần đọc dùng dd/mm/yyyy.
+- Modal/Drawer dùng Radix để giữ focus, hỗ trợ Escape; mở qua trigger trả focus tự động. Modal không có trigger trả về phần tử đang focus lúc mount; unmount khi đóng.
+- ConfirmDialog trong UI kit vẫn là ví dụ minh họa, chỉ dùng ở `/dev/ui`. Các thao tác thật gọi API của feature và xử lý loading/error riêng.
+- FileUpload chỉ chọn/validate file local, chưa upload. Không dùng như xác nhận ảnh đã lưu.
+- DataTable sort local, không mutate rows; mobile chuyển thành cards. Pagination server cần adapter riêng.
+- ToastProvider nằm trong AppProviders. React Query provider sẵn sàng cho feature mới; các hooks/API hiện có vẫn giữ nguyên.
 
-```tsx
-import { PageHeader, Card, FormLayout, DemoNotice } from '../../components/shared';
-import { Button, TextField } from '../../components/ui';
+## Shell và quyền
 
-// Ví dụ composition; onChange/onSubmit và validation thuộc feature.
-<div className="stack">
-  <PageHeader title="Tên trang" description="Mô tả ngắn" />
-  <DemoNotice />
-  <FormLayout preview={<Card title="Xem trước">Nội dung preview</Card>}>
-    <Card title="Thông tin">
-      <form className="stack-sm" onSubmit={handleSubmit}>
-        <TextField label="Tên" required value={name} error={error}
-          onChange={event => setName(event.target.value)} />
-        <Button type="submit" loading={saving}>Lưu</Button>
-      </form>
-    </Card>
-  </FormLayout>
-</div>
-```
+AppShell chung cho bốn role, nhận role từ route đã qua AuthProvider/RoleGuard. Không có bộ chọn role giả. Tên tài khoản và đăng xuất dùng Supabase thật; RLS tiếp tục kiểm tra quyền dữ liệu.
 
-`Button` mặc định type=button; nút submit phải truyền type=submit. Loading khóa click. Input gắn label, hint và error bằng ID tự sinh; NumberWithUnit gắn đơn vị vào accessible description. DateInput dùng native date: trình duyệt quyết định cách hiển thị trong input; phần đọc/preview dùng formatter dd/mm/yyyy.
+Desktop >=1024px sidebar 240px, tablet 768–1023px sidebar icon, mobile <768px dùng drawer đóng khi chuyển trang. Có skip link, breadcrumb và focus rõ. Form hai cột chuyển thành một cột trên mobile. `FormLayout` dùng class `form-layout`, lưới field dùng `form-grid` để tránh xung đột.
 
-## Interfaces và trạng thái
+Route chính theo PR: `/{role}/dashboard`, Buyer/Farmer `/chat`, Admin `/users`, `/lots`, `/requests`. Các URL cũ `/login`, `/buyer/negotiations`, `/farmer/negotiations`, `/admin/buyers`, `/admin/marketplace` tiếp tục hoạt động. Đăng ký/OTP đã bỏ. Bản đồ/vận chuyển/API bên ngoài hiển thị ghi chú hoãn.
 
-- `Role`, `UiEntry`, `FeatureLevel`, `DisplayStatus`: `src/types/ui.ts`; chưa tạo DTO nghiệp vụ hoặc thay database types.
-- `Column<T>`: id, label, render(row), sortValue(row) tùy chọn. DataTable nhận rows, columns, rowKey và caption; sort local không mutate rows. FilterBar controlled; feature lọc hoặc gọi service. Khi dataset lớn, thay adapter query trước khi dùng như pagination thật.
-- `Modal`/`Drawer`: title, description, trigger, children và open/onOpenChange nếu controlled. Dùng trigger để Radix trả focus; nếu mở programmatically không có trigger, feature phải quản lý điểm trả focus phù hợp.
-- `ConfirmDialog`: callback onConfirm, chỉ bản minh họa trong giai đoạn 2. Không dùng bản này cho xác nhận hành động nguy hiểm thật khi chưa đặc tả lại nội dung/variant.
-- `ToastProvider` đã nằm trong AppProviders; `useToast()` nhận message, có live announcement, đóng thủ công hoặc sau 6 giây.
-- `FileUpload` chỉ chọn/validate local file; defaults JPEG/PNG/WebP, 5MB. Không upload, không đổi database. `validateFile` dùng được riêng trong feature.
-- Badge trạng thái D luôn có chữ Minh họa; không gửi trạng thái DEMO vào bảng F. Loading/empty/error là component riêng; không thay API lỗi bằng mock.
+## Kiểm chứng
 
-## Shell, route và responsive
+`npm test` (hoặc `npm run test:unit`) chạy unit/component/route tests; `npm run build` kiểm tra TypeScript và build production. `npm run ui:inventory` sinh bảng dưới đây, cần Node 24 do script nhập TypeScript trực tiếp. Không có script Playwright system trong bản tích hợp này.
 
-Shell chung cho Buyer/Farmer/Carrier có sidebar rộng 244px, topbar 70px, account card và đăng xuất. Sidebar cuộn khi menu dài. Ở ≤850px, điều hướng chuyển thành Drawer/Radix có focus trap, Escape và trả focus; menu tự đóng khi chọn trang. Ở ≤630px, dashboard chuyển một cột. Form/preview chuyển một cột ở ≤850px; bảng có card mobile; chat có chuyển vùng trên màn hình nhỏ.
-
-Menu dùng `workspaceNavigation`, tách khỏi inventory trang/modal. Trang con tạo/xem/sửa lô vẫn active mục danh sách lô. Hồ sơ Farmer/Buyer đặt ở account card; hồ sơ Carrier trỏ về vehicles. Route và phân quyền giữ trong router/Auth guards; UI kit không import Supabase.
-
-Registry tại `src/app/ui-inventory.ts` vẫn dùng cho kiểm kê ID/trang; không dùng registry làm menu Buyer vì route thực tế khác một số mục cũ. Các route nghiệp vụ và redirect giữ tương thích. Shell có skip link và breadcrumb; portal dùng style toàn cục để không mất font/token khi render ngoài workspace.
-
-Kiểm tra hồi quy giao diện trong `tests/system/ui-unification.spec.ts`: viewport 320–1440px, hai phía breakpoint, menu mobile, portal và các trang feature. Ảnh dashboard được lưu trong output Playwright ở 1440px/390px.
-
-## Quy tắc mở rộng và review
-
-### Feature A đã nối Auth/scorer B
-
-Các panel hồ sơ/lô/ảnh, Carrier/xe và matching đã được mount bởi `AFeaturePage` dưới guard Farmer/Carrier. User ID lấy từ Auth đã resolve; `/login` là đường đăng nhập chung. Route list/new/detail/edit có callback điều hướng; thiếu hồ sơ có nút hoàn thiện hồ sơ.
-
-`SessionWorkspace` tạo cache mới và remount input/demo theo identity; logout, đổi account hoặc mất phiên không giữ dữ liệu phiên trước. Token refresh cùng user giữ form. `ADemoProvider` không ghi Supabase hoặc đồng bộ dữ liệu nhiều account.
-
-Matching Farmer dùng adapter gọi `rankRequestMatches` rule-only của B. Query key chứa user/lot/rule version. Scoring nhận projection công khai tối thiểu, chỉ lô PUBLISHED và nhu cầu OPEN; không có điểm fixture trong production.
-
-Từ detail/matching sang transport/chat D chỉ truyền snapshot whitelist công khai; không truyền floor/notes. UI D luôn có nhãn. CSS của Buyer/Admin được scope `.b-workspace`, không ghi đè các control/sidebar A.
-
-`npm run test:system` chạy main router với HTTP mock và harness độc lập ở port 4175/5175; không thay thế nghiệm thu database. Harness không có trong production. SDK suite `test:integration` mặc định skip; `test:system:live` yêu cầu tài khoản local, tắt trace/screenshot/video và cleanup đúng tag. Xem README và database-schema.md trước khi bật.
-
-Component/tokens mới cần review chung trước khi nhân rộng. PR UI ghi UI ID và kết quả kiểm tra responsive/typecheck/unit/system/build; không tự tạo ảnh bàn giao. Ghi khác biệt thiết kế trong phần Quyết định thiết kế của tài liệu này. Không thêm lint/CI. Không coi test skeleton là test nghiệp vụ.
-
-## Kiểm thử
-
-`npm run test:unit` kiểm tra controls, sorting, modal/tabs/focus, formatter và registry. `npm run test:system` mở cả production preview 4175 và dev server 5175; để hai port trống. Production không có `/dev/ui`; UI-kit tests dùng dev server. Giai đoạn 2 chưa yêu cầu screenshot; suite không chụp ảnh bàn giao, vẫn kiểm tra responsive. Trình duyệt cần Chromium từ `npx playwright install chromium`.
-
-Chưa có người thứ hai thử trực tiếp: việc tái sử dụng trên máy developer khác phải ghi Chưa kiểm chứng.
-
-## Quyết định thiết kế
-
-- Giữ brand SmartFruit theo repo hiện tại; kế thừa phong cách LogStar UI v1, không đổi schema hoặc project Supabase.
-- Primary #167843 thay leaf #1FA85C ở nền button có chữ trắng để đạt contrast >=4.5; leaf vẫn là token màu gốc. Muted #526157 và input border #87968B giúp đọc/phân biệt controls trên nền sáng.
-- Font self-host qua Fontsource có tiếng Việt, tránh phụ thuộc Google Fonts runtime. H1 dùng Fraunces; controls/headings nhỏ dùng Plus Jakarta Sans.
-- Dashboard/tiện ích D dùng fixtures có nhãn; dữ liệu mẫu không ghi vào bảng F. Các panel F dùng Supabase SDK sau Auth guard.
-- Modal là slot tại trang cha; không tạo route riêng. BUI-05 có mục tiêu F vì chi tiết lô là đọc thật; các modal giao dịch là D; OTP đã bỏ.
-- Mobile dùng drawer và table cards; tablet dùng sidebar icon. Auth/guards đã tích hợp; role từ profiles, quyền dữ liệu do RLS.
-- `/dev/ui` chỉ đăng ký và lazy-load khi import.meta.env.DEV; production truy cập đường dẫn này trả 404. Không public trang developer trong bản build.
-- Admin theo inventory đề xuất; chưa tuyên bố giống mockup gốc. Không thêm khóa tài khoản hoặc tài chính thật.
-- Date input native có format theo trình duyệt; các giá trị đọc/preview dùng dd/mm/yyyy và timezone Việt Nam.
+Kết quả và ảnh desktop/mobile nằm trong [biên bản tích hợp](ui-integration.md). Chưa kiểm chứng việc setup trên máy developer khác. Admin theo cấu trúc PR và nghiệp vụ đã có, chưa có xác nhận riêng rằng giống từng mockup gốc.
 
 ## Inventory màn hình
 

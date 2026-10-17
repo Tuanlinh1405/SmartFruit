@@ -4,9 +4,9 @@ import { RULE_VERSION } from '../../matching/core';
 import { testLot } from '../lots/lot.fixtures';
 import type { BuyCandidate } from './farmer-matching';
 const request: BuyCandidate = { id: 'r', status: 'OPEN', buyer_id: 'b', title: 'Mua Ri6', fruit_type_id: 'fruit-1', variety_id: null, target_quantity_kg: 5000, min_lot_quantity_kg: null, allow_partial: true, min_price_vnd_per_kg: 60000, max_price_vnd_per_kg: 70000, required_start: '2026-10-15', required_end: '2026-10-20', preferred_provinces: [] };
-test('shared scorer maps full and partial quantities, price/location and rule version', () => {
+test('shared scorer maps quantities and the shared price/quantity weights and rule version', () => {
   const lot = testLot({ status: 'PUBLISHED', quantity_kg: 2500 });
-  const partial = scoreFarmerRequests(lot, [request]); expect(partial).toEqual([expect.objectContaining({ lotId: lot.id, requestId: 'r', score: 82.5, suggestedQuantityKg: 2500, ruleVersion: RULE_VERSION, missingInformation: [] })]);
+  const partial = scoreFarmerRequests(lot, [request]); expect(partial).toEqual([expect.objectContaining({ lotId: lot.id, requestId: 'r', score: 76.67, suggestedQuantityKg: 2500, ruleVersion: RULE_VERSION, missingInformation: [] })]);
   expect(scoreFarmerRequests({ ...lot, quantity_kg: 5000 }, [request])).toEqual([expect.objectContaining({ score: 100, suggestedQuantityKg: 5000 })]);
   expect(scoreFarmerRequests(lot, [{ ...request, allow_partial: false }])).toEqual([]);
 });

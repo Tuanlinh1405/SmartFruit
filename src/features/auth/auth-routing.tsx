@@ -10,6 +10,7 @@ export function SessionState() {
   const [logoutError, setLogoutError] = useState('');
   if (status === 'loading') return <LoadingState />;
   if (status === 'signed-out') return <Navigate to="/login" replace />;
+  if (status === 'suspended') return <main className="landing stack"><h1>Tài khoản đang bị khóa</h1><p>Liên hệ quản trị viên để được hỗ trợ.</p><Button onClick={() => { void signOut().catch(() => setLogoutError('Không thể đăng xuất. Vui lòng thử lại.')); }}>Đăng xuất</Button>{logoutError && <p role="alert">{logoutError}</p>}</main>;
   return <main className="landing stack"><h1>{status === 'error' ? 'Chưa tải được hồ sơ' : 'Chờ cấp quyền'}</h1>
     {status === 'error' ? <ErrorState message={error ?? 'Không thể kiểm tra phiên.'} onRetry={retry} /> : <p>Tài khoản chưa được gán vai trò ứng dụng. Liên hệ chủ dự án để cấp quyền.</p>}
     {(!profile?.role || status === 'error') && <Button variant="secondary" onClick={() => { void signOut().catch(() => setLogoutError('Không thể đăng xuất. Vui lòng thử lại.')); }}>Đăng xuất</Button>}{logoutError && <p role="alert">{logoutError}</p>}

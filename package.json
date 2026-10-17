@@ -19,7 +19,10 @@
     "check:supabase": "node scripts/check-supabase.mjs",
     "test": "vitest run",
     "test:system:live": "node scripts/run-live-system.mjs",
-    "auth:reset-password": "node scripts/reset-auth-password.mjs"
+    "auth:reset-password": "node scripts/reset-auth-password.mjs",
+    "seed:test": "node scripts/seed-test-accounts.mjs",
+    "test:live": "node scripts/test-live-trading.mjs",
+    "ui:inventory": "node scripts/generate-ui-inventory.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "5.3.0",

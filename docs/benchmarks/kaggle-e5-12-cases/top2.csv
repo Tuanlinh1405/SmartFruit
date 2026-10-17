@@ -1,0 +1,25 @@
+﻿model,query,expected,top1,cosine_top1,top2,cosine_top2,target_rank
+small,Sầu riêng Ri6,Sầu riêng Ri6,Sầu riêng Ri6,0.946236,Sầu riêng Khổ qua xanh,0.892333,1.0
+small,Sầu riêng RD6,Không gán đích,Sầu riêng Ri6,0.928092,Sầu riêng Khổ qua xanh,0.891547,NaN
+small,Sầu riêng Dona,Sầu riêng Monthong,Sầu riêng Monthong,0.885456,Sầu riêng Khổ qua xanh,0.884150,1.0
+small,sau rieng ri6,Sầu riêng Ri6,Sầu riêng Ri6,0.884257,Nhãn Tiêu da bò,0.841326,1.0
+small,Sầu riêng Musang King,Sầu riêng Musang King,Sầu riêng Musang King,0.943864,Sầu riêng Monthong,0.888963,1.0
+small,"Cần Ri6, không mua Monthong",Sầu riêng Ri6,Sầu riêng Monthong,0.876722,Sầu riêng Ri6,0.875120,2.0
+small,Xoài Cát Chu,Xoài Cát Chu,Xoài Cát Chu,0.924259,Xoài Cát Hòa Lộc,0.885653,1.0
+small,"Xoài Cát Chu, không lấy Cát Hòa Lộc",Xoài Cát Chu,Xoài Cát Hòa Lộc,0.906973,Xoài Cát Chu,0.894269,2.0
+small,Bưởi Năm Roi,Bưởi Năm Roi,Bưởi Năm Roi,0.940968,Bưởi Diễn,0.882158,1.0
+small,Lúa ST25,Lúa ST25,Lúa ST25,0.964873,Lúa ST24,0.934232,1.0
+small,"Gạo ST25, không phải ST24",Lúa ST25,Lúa ST25,0.873021,Lúa ST24,0.859288,1.0
+small,Chuối Cavendish,Không gán đích,Xoài Cát Chu,0.851795,Xoài Keo,0.830734,NaN
+base,Sầu riêng Ri6,Sầu riêng Ri6,Sầu riêng Ri6,0.915612,Sầu riêng Chín Hóa,0.861174,1.0
+base,Sầu riêng RD6,Không gán đích,Sầu riêng Ri6,0.902955,Sầu riêng Chín Hóa,0.855951,NaN
+base,Sầu riêng Dona,Sầu riêng Monthong,Sầu riêng Monthong,0.855917,Sầu riêng Chín Hóa,0.851917,1.0
+base,sau rieng ri6,Sầu riêng Ri6,Sầu riêng Ri6,0.880795,Sầu riêng Chín Hóa,0.828277,1.0
+base,Sầu riêng Musang King,Sầu riêng Musang King,Sầu riêng Musang King,0.917346,Sầu riêng Monthong,0.866347,1.0
+base,"Cần Ri6, không mua Monthong",Sầu riêng Ri6,Sầu riêng Ri6,0.861075,Sầu riêng Monthong,0.838177,1.0
+base,Xoài Cát Chu,Xoài Cát Chu,Xoài Cát Chu,0.883517,Xoài Cát Hòa Lộc,0.861421,1.0
+base,"Xoài Cát Chu, không lấy Cát Hòa Lộc",Xoài Cát Chu,Xoài Cát Hòa Lộc,0.879088,Xoài Cát Chu,0.864590,2.0
+base,Bưởi Năm Roi,Bưởi Năm Roi,Bưởi Năm Roi,0.912111,Bưởi Đoan Hùng,0.858047,1.0
+base,Lúa ST25,Lúa ST25,Lúa ST25,0.937826,Lúa ST24,0.910117,1.0
+base,"Gạo ST25, không phải ST24",Lúa ST25,Lúa ST25,0.847937,Lúa ST24,0.845230,1.0
+base,Chuối Cavendish,Không gán đích,Xoài Cát Chu,0.812839,Nhãn Xuồng cơm vàng,0.809454,NaN

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import type { BuyRequest, FruitType, FruitVariety, Lot, MarketplaceProfile } from '../../lib/domain';
 import { tradeLabels } from '../../lib/domain';
@@ -7,8 +7,11 @@ import { explainError, formatDate, formatMoney, formatTonnes } from '../../lib/f
 import { loadCatalog } from '../catalog/api';
 import { listMyRequests } from '../buy-requests/api';
 import { lexicalRank, rankMatches } from '../matching/core';
+import { createNameMatcher, productSearchText } from '../matching/name-match';
 import { searchBuyerMatches, type MatchResponse } from '../matching/api';
 import { getPublishedLot, loadFarmerCards, loadLotImageUrls, loadPublishedLots } from './api';
+import { openConnection } from '../trading/api';
+import { Modal } from '../../components/ui/dialog';
 
 type LotCard = { lot: Lot; score: number | null; reasons: string[] };
 const hybridEnabled = import.meta.env.VITE_MATCHING_MODE === 'hybrid';
@@ -85,17 +88,23 @@ export function LotsPage() {
 
   const cards = useMemo<LotCard[]>(() => {
     if (hybridResponse) return hybridResponse.items.map(row => ({ lot: row.lot,
-      score: row.score, reasons: [...row.graphPaths, ...row.business.reasons] }));
+      score: row.score, reasons: [row.nameMatch?.reason ?? '',
+        row.cosineSimilarity == null ? '' : `Cosine E5: ${row.cosineSimilarity.toFixed(4)}.`,
+        ...row.graphPaths, ...row.business.reasons].filter(Boolean) }));
     if (tooMany) return [];
-    const ranks = lexicalRank(lots, keyword);
+    const catalog = { types, varieties };
+    const ranks = lexicalRank(lots, keyword, catalog);
     const pool = keyword.trim() ? lots.filter(lot => ranks.has(lot.id)) : lots;
     if (request && ['OPEN', 'DRAFT'].includes(request.status)) {
       // Explicit fallback until the vector/graph search endpoint is deployed.
-      return rankMatches(pool.map(lot => ({ lot, lexicalRank: ranks.get(lot.id) })), request, 'rule-only')
-        .map(row => ({ lot: row.lot, score: row.score, reasons: row.business.reasons }));
+      return rankMatches(pool.map(lot => ({ lot })), request, 'rule-only', { text: keyword, catalog })
+        .map(row => ({ lot: row.lot, score: row.score, reasons: [row.nameMatch.reason, ...row.business.reasons] }));
     }
-    return pool.map(lot => ({ lot, score: null, reasons: [] }));
-  }, [lots, keyword, request, tooMany, hybridResponse]);
+    const matchName = createNameMatcher(keyword);
+    return [...pool].sort((a, b) => (ranks.get(a.id) ?? 0) - (ranks.get(b.id) ?? 0))
+      .map(lot => ({ lot, score: null,
+        reasons: keyword.trim() ? [matchName(productSearchText(lot, catalog)).reason] : [] }));
+  }, [lots, keyword, request, tooMany, hybridResponse, types, varieties]);
   const resultCount = hybridResponse?.meta.resultCount ?? cards.length;
   const totalPages = Math.max(1, Math.ceil(resultCount / 12));
   const visible = hybridResponse ? cards : cards.slice((Math.min(page, totalPages) - 1) * 12,
@@ -109,14 +118,17 @@ export function LotsPage() {
       <label>Nhu cầu đang đối chiếu<select value={requestId} onChange={e => changeParam('requestId', e.target.value)}>
         <option value="">Duyệt tất cả lô</option>{requests.filter(row => ['OPEN', 'DRAFT'].includes(row.status)).map(row =>
           <option key={row.id} value={row.id}>{row.title} {row.status === 'DRAFT' ? '(nháp)' : ''}</option>)}</select></label>
-      <label>Tìm theo từ khóa<input type="search" placeholder="Tên nông sản, giống…" value={keyword}
+      <label>Tìm theo từ khóa<input type="search" placeholder="Tên nông sản, giống…" maxLength={200} value={keyword}
         onChange={e => changeParam('q', e.target.value)} /></label></div>
+      <p className="muted small-text">Ưu tiên tên/giống khớp từ hoặc gần khớp trước, sau đó xét giá và khối lượng. Khu vực chưa tham gia xếp hạng.</p>
       {requestId && !request && <p className="form-error">Nhu cầu chưa tải xong hoặc không thuộc tài khoản của bạn.</p>}
       {request?.status === 'DRAFT' && <p className="notice">Đang xem trước với nhu cầu nháp; nhà vườn chưa thấy yêu cầu này.</p>}
       <p className="muted">{hybridResponse?.meta.mode === 'hybrid'
-        ? 'Kết quả kết hợp vector ngữ nghĩa, từ khóa, quan hệ loại/giống và điều kiện giao dịch.'
-        : 'Điểm hiện tại dùng quy tắc giá · lượng · tỉnh. Kết quả ngữ nghĩa sẽ xuất hiện khi embedding sẵn sàng.'}</p>
-      {hybridResponse?.meta.truncated && <p className="notice">Tập ứng viên đã được giới hạn; hãy thêm điều kiện để tìm chính xác hơn.</p>}
+        ? 'Đã lấy tối đa 20 lô bằng cosine E5, sau đó xếp lại theo tên/giống, giá và lượng.'
+        : 'Đang so tên/giống bằng từ khóa và lỗi gõ gần đúng; điểm theo giá và lượng. E5 chưa khả dụng trong chế độ này.'}</p>
+      {hybridResponse?.meta.truncated && <p className="notice">{hybridResponse.meta.rankingScope === 'vector_top20'
+        ? 'Đang xếp lại trong top 20 vector; kết quả có thể ít hơn sau khi kiểm tra điều kiện.'
+        : 'Tập ứng viên đã được giới hạn; hãy thêm điều kiện để tìm chính xác hơn.'}</p>}
     </section>
     {error && <div className="notice error" role="alert">{error}</div>}
     {loading ? <div className="panel empty-state">Đang tải lô hàng…</div> : tooMany ?
@@ -133,9 +145,9 @@ export function LotsPage() {
           <div className="lot-facts"><span><small>Sản lượng</small><strong>{formatTonnes(lot.quantity_kg)}</strong></span>
             <span><small>Giá</small><strong>{formatMoney(lot.price_vnd_per_kg)}</strong></span>
             <span><small>Thu hoạch</small><strong>{formatDate(lot.harvest_start)} – {formatDate(lot.harvest_end)}</strong></span></div>
-          <div className="lot-actions">{score !== null && <span className="match-pill">{score.toFixed(1)} điểm · {hybridResponse?.meta.mode === 'hybrid' ? 'kết hợp' : 'theo quy tắc'}</span>}
+          <div className="lot-actions">{score !== null && <span className="match-pill">{score.toFixed(1)} điểm · {hybridResponse?.meta.mode === 'hybrid' ? 'E5/giá/lượng' : 'giá/lượng'}</span>}
             <button className="button primary" onClick={() => setSelectedLot(lot.id)}>Xem chi tiết</button>
-            {request && <p className="muted small-text">{reasons.join(' ')}</p>}</div>
+            {reasons.length > 0 && <p className="muted small-text">{reasons.join(' ')}</p>}</div>
         </article>)}</div>}
       {totalPages > 1 && <div className="pagination"><button className="button outline" disabled={page <= 1} onClick={() => changeParam('page', String(page - 1))}>← Trước</button>
         <span>Trang {Math.min(page, totalPages)} / {totalPages}</span><button className="button outline" disabled={page >= totalPages} onClick={() => changeParam('page', String(page + 1))}>Tiếp →</button></div>}</>}
@@ -144,6 +156,8 @@ export function LotsPage() {
 }
 
 function LotDetail({ id, request, farmer, onClose }: { id: string; request?: BuyRequest; farmer?: MarketplaceProfile; onClose: () => void }) {
+  const navigate = useNavigate();
+  const [connecting, setConnecting] = useState(false);
   const [lot, setLot] = useState<Lot | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [error, setError] = useState('');
@@ -156,13 +170,9 @@ function LotDetail({ id, request, farmer, onClose }: { id: string; request?: Buy
       try { const urls = await loadLotImageUrls(id); if (active) setImages(urls); }
       catch { if (active) setError('Chưa tải được ảnh lô hàng.'); }
     }).catch(cause => { if (active) setError(explainError(cause)); });
-    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', escape);
-    return () => { active = false; window.removeEventListener('keydown', escape); };
-  }, [id, onClose]);
-  return <div className="modal-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-    <section className="modal" role="dialog" aria-modal="true" aria-label="Chi tiết lô nông sản">
-      <div className="modal-header"><div><span className="eyebrow">Chi tiết lô nông sản</span><h2>{lot?.title || 'Đang tải…'}</h2><p>{farmer?.display_name || 'Nhà vườn'}</p></div><button className="icon-button" onClick={onClose} aria-label="Đóng">×</button></div>
+    return () => { active = false; };
+  }, [id]);
+  return <Modal open title={lot?.title || 'Chi tiết lô nông sản'} description={`${farmer?.display_name || 'Nhà vườn'} · Chi tiết lô nông sản`} className="lot-dialog" onOpenChange={open=>{if(!open)onClose();}}>
       {error && <p className="form-error" role="alert">{error}</p>}
       {lot && <><div className="modal-body"><div className="detail-grid"><div><small>Sản lượng</small><strong>{formatTonnes(lot.quantity_kg)}</strong></div>
         <div><small>Giá chào</small><strong>{formatMoney(lot.price_vnd_per_kg)}</strong></div>
@@ -176,6 +186,9 @@ function LotDetail({ id, request, farmer, onClose }: { id: string; request?: Buy
         {images.length > 0 && <div className="image-grid">{images.map(url => <img src={url} alt="Ảnh lô nông sản" key={url} />)}</div>}
         {images.length === 0 && <div className="image-placeholder">Chưa có ảnh được tải lên</div>}
       </div><div className="modal-footer"><button className="button outline" onClick={onClose}>Đóng</button>
-        <Link className="button accent" to={`/buyer/negotiations?lotId=${lot.id}${request ? `&requestId=${request.id}` : ''}`}>Kết nối · bản demo →</Link></div></>}
-    </section></div>;
+        <button className="button accent" disabled={connecting || Boolean(request && request.status !== 'OPEN')} onClick={async () => {
+          setConnecting(true); setError(''); try { const connectionId = await openConnection(lot.id, request?.id);
+            navigate(`/buyer/invitations?connectionId=${connectionId}`); } catch(cause) { setError(explainError(cause)); } finally { setConnecting(false); }
+        }}>{connecting ? 'Đang gửi…' : request && request.status !== 'OPEN' ? 'Cần công bố nhu cầu trước' : 'Gửi lời mời kết nối →'}</button></div></>}
+    </Modal>;
 }

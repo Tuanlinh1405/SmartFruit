@@ -20,7 +20,8 @@ const BuyerProfilePage = lazy(() => import('../features/buyer-profile/BuyerProfi
 const RequestListPage = lazy(() => import('../features/buy-requests/RequestListPage').then(module => ({ default: module.RequestListPage })));
 const RequestFormPage = lazy(() => import('../features/buy-requests/RequestFormPage').then(module => ({ default: module.RequestFormPage })));
 const LotsPage = lazy(() => import('../features/lots/LotsPage').then(module => ({ default: module.LotsPage })));
-const BuyerDemoPage = lazy(() => import('../features/demo/BuyerDemoPage').then(module => ({ default: module.BuyerDemoPage })));
+const TradePage = lazy(() => import('../features/trading/TradePage').then(module => ({ default: module.TradePage })));
+const DeferredPage = lazy(() => import('../features/deferred/DeferredPage').then(module => ({ default: module.DeferredPage })));
 const AdminPage = lazy(() => import('../features/admin/AdminPage').then(module => ({ default: module.AdminPage })));
 import './b-styles.css';
 const DevUi = import.meta.env.DEV ? lazy(() => import('../dev/ui-page')) : null;
@@ -41,6 +42,7 @@ export function ApplicationRoutes() {
     {(['FARMER','CARRIER'] as const).map(role => <Route key={role} element={<RoleGuard role={role} />}>
       <Route path={role === 'FARMER' ? '/farmer' : '/carrier'} element={<AppShell role={role} />}>
         <Route index element={<Navigate to="dashboard" replace />} />
+        {role === 'FARMER' && <><Route path="invitations" element={<TradePage view="invitations" />} /><Route path="negotiations" element={<TradePage view="negotiations" />} /></>}
         {pageInventory.filter(entry => entry.role === role && aDemoRoutes[entry.id]).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={aDemoRoutes[entry.id]} />)}
         {role === 'FARMER' ? <>
           <Route path="profile" element={<FarmerCarrierFeature feature="profile" />} />
@@ -54,11 +56,13 @@ export function ApplicationRoutes() {
       </Route>
     </Route>)}
     <Route element={<RoleGuard role="BUYER" />}><Route path="/buyer" element={<BuyerShell />}>
-      <Route index element={<BuyerDashboard />} /><Route path="dashboard" element={<Navigate to="/buyer" replace />} />
+      <Route index element={<Navigate to="dashboard" replace />} /><Route path="dashboard" element={<BuyerDashboard />} />
       <Route path="profile" element={<BuyerProfilePage />} /><Route path="requests" element={<RequestListPage />} />
       <Route path="requests/new" element={<RequestFormPage />} /><Route path="requests/:id/edit" element={<RequestFormPage />} />
-      <Route path="lots" element={<LotsPage />} /><Route path="chat" element={<Navigate to="/buyer/negotiations" replace />} />
-      {(['invitations','negotiations','transport','reviews','policy'] as const).map(kind => <Route key={kind} path={kind} element={<BuyerDemoPage kind={kind} />} />)}
+      <Route path="lots" element={<LotsPage />} /><Route path="chat" element={<TradePage view="negotiations" />} />
+      {(['invitations','negotiations','reviews'] as const).map(view => <Route key={view} path={view} element={<TradePage view={view} />} />)}
+      {(['transport','policy','map'] as const).map(kind => <Route key={kind} path={kind} element={<DeferredPage kind={kind} />} />)}
+      <Route path="notifications" element={<DeferredPage kind="policy" />} />
       <Route path="*" element={<StatusPage code="404" />} />
     </Route></Route>
     <Route element={<RoleGuard role="ADMIN" />}><Route path="/admin" element={<div className="b-workspace"><AdminShell /></div>}>

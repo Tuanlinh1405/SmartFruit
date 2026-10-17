@@ -5,7 +5,7 @@ import type { Role, UiEntry } from '../types/ui';
 // Reachable menu destinations are independent of the page/modal inventory.
 export type NavigationItem = Pick<UiEntry, 'path' | 'title' | 'icon'> & { end?: boolean };
 const buyer: NavigationItem[] = [
-  { path: '/buyer', title: 'Tổng quan', icon: LayoutDashboard, end: true },
+  { path: '/buyer/dashboard', title: 'Tổng quan', icon: LayoutDashboard, end: true },
   { path: '/buyer/requests', title: 'Yêu cầu thu mua', icon: Package },
   { path: '/buyer/lots', title: 'Tìm kiếm lô hàng', icon: Search },
   { path: '/buyer/invitations', title: 'Lời mời kết nối', icon: Mail },

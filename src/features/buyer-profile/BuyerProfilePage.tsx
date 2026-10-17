@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { getBuyerProfile, saveBuyerProfile, saveDisplayName } from './api';
 import { explainError } from '../../lib/format';
+import { TextField } from '../../components/ui/fields';
+import { Button } from '../../components/ui/button';
+import { PageHeader } from '../../components/shared/content';
 
 export function BuyerProfilePage() {
   const { session, profile, retry } = useAuth();
@@ -40,13 +43,13 @@ export function BuyerProfilePage() {
     finally { setSaving(false); }
   }
 
-  return <><div className="page-heading"><div><span className="eyebrow">Tài khoản</span><h1>Hồ sơ thương lái</h1><p>Thông tin tổ chức và tên hiển thị của bạn.</p></div></div>
+  return <><PageHeader eyebrow="Tài khoản" title="Hồ sơ thương lái" description="Thông tin tổ chức và tên hiển thị của bạn." />
     <section className="panel form-panel narrow">{loading ? <p>Đang tải hồ sơ…</p> : <form onSubmit={submit}>
-      <div className="form-grid"><label>Tên hiển thị *<input value={values.full_name} maxLength={160} onChange={e => setValues({ ...values, full_name: e.target.value })} /></label>
-        <label>Tên tổ chức *<input value={values.organization_name} maxLength={160} onChange={e => setValues({ ...values, organization_name: e.target.value })} /></label>
-        <label>Tỉnh / thành phố *<input value={values.province} maxLength={120} onChange={e => setValues({ ...values, province: e.target.value })} /></label>
-        <label>Địa chỉ riêng<input value={values.address} maxLength={500} onChange={e => setValues({ ...values, address: e.target.value })} /></label></div>
+      <div className="form-grid"><TextField label="Tên hiển thị" value={values.full_name} maxLength={160} onChange={e => setValues({ ...values, full_name: e.target.value })} required />
+        <TextField label="Tên tổ chức" value={values.organization_name} maxLength={160} onChange={e => setValues({ ...values, organization_name: e.target.value })} required />
+        <TextField label="Tỉnh / thành phố" value={values.province} maxLength={120} onChange={e => setValues({ ...values, province: e.target.value })} required />
+        <TextField label="Địa chỉ riêng" value={values.address} maxLength={500} onChange={e => setValues({ ...values, address: e.target.value })} /></div>
       {error && <p className="form-error" role="alert">{error}</p>}{notice && <p className="form-success" role="status">{notice}</p>}
-      <button className="button primary" disabled={saving}>{saving ? 'Đang lưu…' : 'Lưu hồ sơ'}</button>
+      <Button type="submit" loading={saving}>{saving ? 'Đang lưu…' : 'Lưu hồ sơ'}</Button>
     </form>}</section></>;
 }

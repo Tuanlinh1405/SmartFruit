@@ -9,6 +9,7 @@ export interface Profile {
   role: AppRole | null;
   full_name: string;
   phone_display: string | null;
+  is_suspended: boolean;
 }
 
 export interface BuyerProfile {

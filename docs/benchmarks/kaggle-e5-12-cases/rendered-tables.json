@@ -1,0 +1,398 @@
+{
+  "source": "https://www.kaggle.com/code/tunlnh/logstar-e5-12-variety-cases?scriptVersionId=358645506",
+  "precision": "Values copied from rendered tables (six decimal places).",
+  "tables": [
+    [
+      [
+        "",
+        "text",
+        "target",
+        "category"
+      ],
+      [
+        "0",
+        "Sầu riêng Ri6",
+        "durian-0",
+        "exact"
+      ],
+      [
+        "1",
+        "Sầu riêng RD6",
+        "None",
+        "ambiguous"
+      ],
+      [
+        "2",
+        "Sầu riêng Dona",
+        "durian-1",
+        "alias"
+      ],
+      [
+        "3",
+        "sau rieng ri6",
+        "durian-0",
+        "unaccented"
+      ],
+      [
+        "4",
+        "Sầu riêng Musang King",
+        "durian-2",
+        "exact"
+      ],
+      [
+        "5",
+        "Cần Ri6, không mua Monthong",
+        "durian-0",
+        "hard_context"
+      ],
+      [
+        "6",
+        "Xoài Cát Chu",
+        "mango-1",
+        "exact"
+      ],
+      [
+        "7",
+        "Xoài Cát Chu, không lấy Cát Hòa Lộc",
+        "mango-1",
+        "hard_context"
+      ],
+      [
+        "8",
+        "Bưởi Năm Roi",
+        "pomelo-1",
+        "exact"
+      ],
+      [
+        "9",
+        "Lúa ST25",
+        "rice-1",
+        "exact"
+      ],
+      [
+        "10",
+        "Gạo ST25, không phải ST24",
+        "rice-1",
+        "hard_context"
+      ],
+      [
+        "11",
+        "Chuối Cavendish",
+        "None",
+        "out_of_catalog"
+      ]
+    ],
+    [
+      [
+        "",
+        "model",
+        "top1_correct",
+        "labelled_queries",
+        "top1_accuracy",
+        "hit_at_3",
+        "mrr",
+        "device",
+        "encode_all_seconds"
+      ],
+      [
+        "0",
+        "small",
+        "8",
+        "10",
+        "0.8",
+        "1.0",
+        "0.90",
+        "cpu",
+        "0.563611"
+      ],
+      [
+        "1",
+        "base",
+        "9",
+        "10",
+        "0.9",
+        "1.0",
+        "0.95",
+        "cpu",
+        "1.105418"
+      ]
+    ],
+    [
+      [
+        "",
+        "model",
+        "query",
+        "expected",
+        "top1",
+        "cosine_top1",
+        "top2",
+        "cosine_top2",
+        "target_rank"
+      ],
+      [
+        "0",
+        "small",
+        "Sầu riêng Ri6",
+        "Sầu riêng Ri6",
+        "Sầu riêng Ri6",
+        "0.946236",
+        "Sầu riêng Khổ qua xanh",
+        "0.892333",
+        "1.0"
+      ],
+      [
+        "1",
+        "small",
+        "Sầu riêng RD6",
+        "Không gán đích",
+        "Sầu riêng Ri6",
+        "0.928092",
+        "Sầu riêng Khổ qua xanh",
+        "0.891547",
+        "NaN"
+      ],
+      [
+        "2",
+        "small",
+        "Sầu riêng Dona",
+        "Sầu riêng Monthong",
+        "Sầu riêng Monthong",
+        "0.885456",
+        "Sầu riêng Khổ qua xanh",
+        "0.884150",
+        "1.0"
+      ],
+      [
+        "3",
+        "small",
+        "sau rieng ri6",
+        "Sầu riêng Ri6",
+        "Sầu riêng Ri6",
+        "0.884257",
+        "Nhãn Tiêu da bò",
+        "0.841326",
+        "1.0"
+      ],
+      [
+        "4",
+        "small",
+        "Sầu riêng Musang King",
+        "Sầu riêng Musang King",
+        "Sầu riêng Musang King",
+        "0.943864",
+        "Sầu riêng Monthong",
+        "0.888963",
+        "1.0"
+      ],
+      [
+        "5",
+        "small",
+        "Cần Ri6, không mua Monthong",
+        "Sầu riêng Ri6",
+        "Sầu riêng Monthong",
+        "0.876722",
+        "Sầu riêng Ri6",
+        "0.875120",
+        "2.0"
+      ],
+      [
+        "6",
+        "small",
+        "Xoài Cát Chu",
+        "Xoài Cát Chu",
+        "Xoài Cát Chu",
+        "0.924259",
+        "Xoài Cát Hòa Lộc",
+        "0.885653",
+        "1.0"
+      ],
+      [
+        "7",
+        "small",
+        "Xoài Cát Chu, không lấy Cát Hòa Lộc",
+        "Xoài Cát Chu",
+        "Xoài Cát Hòa Lộc",
+        "0.906973",
+        "Xoài Cát Chu",
+        "0.894269",
+        "2.0"
+      ],
+      [
+        "8",
+        "small",
+        "Bưởi Năm Roi",
+        "Bưởi Năm Roi",
+        "Bưởi Năm Roi",
+        "0.940968",
+        "Bưởi Diễn",
+        "0.882158",
+        "1.0"
+      ],
+      [
+        "9",
+        "small",
+        "Lúa ST25",
+        "Lúa ST25",
+        "Lúa ST25",
+        "0.964873",
+        "Lúa ST24",
+        "0.934232",
+        "1.0"
+      ],
+      [
+        "10",
+        "small",
+        "Gạo ST25, không phải ST24",
+        "Lúa ST25",
+        "Lúa ST25",
+        "0.873021",
+        "Lúa ST24",
+        "0.859288",
+        "1.0"
+      ],
+      [
+        "11",
+        "small",
+        "Chuối Cavendish",
+        "Không gán đích",
+        "Xoài Cát Chu",
+        "0.851795",
+        "Xoài Keo",
+        "0.830734",
+        "NaN"
+      ],
+      [
+        "12",
+        "base",
+        "Sầu riêng Ri6",
+        "Sầu riêng Ri6",
+        "Sầu riêng Ri6",
+        "0.915612",
+        "Sầu riêng Chín Hóa",
+        "0.861174",
+        "1.0"
+      ],
+      [
+        "13",
+        "base",
+        "Sầu riêng RD6",
+        "Không gán đích",
+        "Sầu riêng Ri6",
+        "0.902955",
+        "Sầu riêng Chín Hóa",
+        "0.855951",
+        "NaN"
+      ],
+      [
+        "14",
+        "base",
+        "Sầu riêng Dona",
+        "Sầu riêng Monthong",
+        "Sầu riêng Monthong",
+        "0.855917",
+        "Sầu riêng Chín Hóa",
+        "0.851917",
+        "1.0"
+      ],
+      [
+        "15",
+        "base",
+        "sau rieng ri6",
+        "Sầu riêng Ri6",
+        "Sầu riêng Ri6",
+        "0.880795",
+        "Sầu riêng Chín Hóa",
+        "0.828277",
+        "1.0"
+      ],
+      [
+        "16",
+        "base",
+        "Sầu riêng Musang King",
+        "Sầu riêng Musang King",
+        "Sầu riêng Musang King",
+        "0.917346",
+        "Sầu riêng Monthong",
+        "0.866347",
+        "1.0"
+      ],
+      [
+        "17",
+        "base",
+        "Cần Ri6, không mua Monthong",
+        "Sầu riêng Ri6",
+        "Sầu riêng Ri6",
+        "0.861075",
+        "Sầu riêng Monthong",
+        "0.838177",
+        "1.0"
+      ],
+      [
+        "18",
+        "base",
+        "Xoài Cát Chu",
+        "Xoài Cát Chu",
+        "Xoài Cát Chu",
+        "0.883517",
+        "Xoài Cát Hòa Lộc",
+        "0.861421",
+        "1.0"
+      ],
+      [
+        "19",
+        "base",
+        "Xoài Cát Chu, không lấy Cát Hòa Lộc",
+        "Xoài Cát Chu",
+        "Xoài Cát Hòa Lộc",
+        "0.879088",
+        "Xoài Cát Chu",
+        "0.864590",
+        "2.0"
+      ],
+      [
+        "20",
+        "base",
+        "Bưởi Năm Roi",
+        "Bưởi Năm Roi",
+        "Bưởi Năm Roi",
+        "0.912111",
+        "Bưởi Đoan Hùng",
+        "0.858047",
+        "1.0"
+      ],
+      [
+        "21",
+        "base",
+        "Lúa ST25",
+        "Lúa ST25",
+        "Lúa ST25",
+        "0.937826",
+        "Lúa ST24",
+        "0.910117",
+        "1.0"
+      ],
+      [
+        "22",
+        "base",
+        "Gạo ST25, không phải ST24",
+        "Lúa ST25",
+        "Lúa ST25",
+        "0.847937",
+        "Lúa ST24",
+        "0.845230",
+        "1.0"
+      ],
+      [
+        "23",
+        "base",
+        "Chuối Cavendish",
+        "Không gán đích",
+        "Xoài Cát Chu",
+        "0.812839",
+        "Nhãn Xuồng cơm vàng",
+        "0.809454",
+        "NaN"
+      ]
+    ]
+  ]
+}

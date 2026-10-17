@@ -11,5 +11,6 @@ export interface UiEntry {
   role?: Role;
   owner: 'A' | 'B';
   level: FeatureLevel;
+  status?: 'live' | 'partial' | 'deferred';
   icon?: LucideIcon;
 }

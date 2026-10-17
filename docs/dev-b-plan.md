@@ -2,6 +2,8 @@
 
 Ngày lập: 14/10/2026. Đây là kế hoạch thực hiện, chưa phải mã ứng dụng hoặc xác nhận phê duyệt Scope.
 
+Trạng thái hiện hành 15/10/2026: đã triển khai Auth/Buyer/Admin và luồng giao dịch bằng dữ liệu thật, seed đủ role test. Xem [kết quả thực hiện và phần hoãn](implementation-status.md); các mục demo/chưa code trong kế hoạch này là lịch sử tại thời điểm lập.
+
 Cập nhật 15/10/2026: [kế hoạch code UI, backend và thuật toán](code-implementation-plan.md) là backlog triển khai hiện tại, có công thức matching đề xuất, tiêu chí nghiệm thu và ước lượng mới. Tài liệu này giữ inventory màn hình và phân chia Scope làm căn cứ.
 
 Cập nhật hướng matching theo yêu cầu người dùng: [vector + graph + điều kiện giao dịch](vector-graph-matching-plan.md) thay cách triển khai B-06 chỉ tính điểm phía client. B-06 và lịch bảy ngày bên dưới là baseline/lịch sử; dùng backlog M0–M6 và ước lượng mới trong plan vector/graph khi triển khai. Phạm vi UI Buyer/Admin giữ nguyên.

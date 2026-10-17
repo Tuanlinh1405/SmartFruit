@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node verify-schema.mjs"
+    "test": "node verify-schema.mjs --deploy && node verify-trading.mjs",
+    "test:trading": "node verify-trading.mjs",
+    "test:vector": "node verify-vector-top20.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.10",

@@ -5,7 +5,7 @@ import type { Profile } from '../../lib/domain';
 import { explainError } from '../../lib/format';
 import { passwordCredentials } from './password-credentials';
 
-type Snapshot = { session: Session | null; profile: Profile | null; status: 'loading' | 'signed-out' | 'ready' | 'error'; error: string | null };
+type Snapshot = { session: Session | null; profile: Profile | null; status: 'loading' | 'signed-out' | 'ready' | 'error' | 'suspended'; error: string | null };
 export type AuthState = Snapshot & { retry: () => void; signOut: () => Promise<void>; signIn: (identifier: string, password: string) => Promise<void> };
 const initial: Snapshot = { session: null, profile: null, status: 'loading', error: null };
 const Context = createContext<AuthState | null>(null);
@@ -25,13 +25,13 @@ export function AuthProvider({ children, client = supabase }: { children: ReactN
       }
       publish({ ...initial, session });
       try {
-        const result = await client.from('profiles').select('id,role,full_name,phone_display').eq('id', session.user.id).maybeSingle<Profile>();
+        const result = await client.from('profiles').select('id,role,full_name,phone_display,is_suspended').eq('id', session.user.id).maybeSingle<Profile>();
         if (!alive || ticket !== generation.current) return;
         if (result.error) throw result.error;
         if (!result.data || result.data.id !== session.user.id) throw new Error('Chưa có hồ sơ ứng dụng cho tài khoản này.');
         const roles = ['FARMER', 'BUYER', 'CARRIER', 'ADMIN'];
         if (result.data.role !== null && !roles.includes(result.data.role)) throw new Error('Vai trò ứng dụng không hợp lệ.');
-        publish({ session, profile: result.data, status: 'ready', error: null });
+        publish({ session, profile: result.data, status: result.data.is_suspended ? 'suspended' : 'ready', error: null });
       } catch (cause) {
         if (alive && ticket === generation.current) publish({ session, profile: null, status: 'error', error: explainError(cause) });
       }

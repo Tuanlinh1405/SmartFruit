@@ -1,0 +1,297 @@
+{
+  "source": "https://www.kaggle.com/code/tunlnh/logstar-qwen-embedding-12-cases?scriptVersionId=358653978",
+  "precision": "Copied from rendered Kaggle tables; six decimal places.",
+  "tables": [
+    [
+      [
+        "",
+        "text",
+        "target",
+        "category"
+      ],
+      [
+        "0",
+        "Sầu riêng Ri6",
+        "durian-0",
+        "exact"
+      ],
+      [
+        "1",
+        "Sầu riêng RD6",
+        "None",
+        "ambiguous"
+      ],
+      [
+        "2",
+        "Sầu riêng Dona",
+        "durian-1",
+        "alias"
+      ],
+      [
+        "3",
+        "sau rieng ri6",
+        "durian-0",
+        "unaccented"
+      ],
+      [
+        "4",
+        "Sầu riêng Musang King",
+        "durian-2",
+        "exact"
+      ],
+      [
+        "5",
+        "Cần Ri6, không mua Monthong",
+        "durian-0",
+        "hard_context"
+      ],
+      [
+        "6",
+        "Xoài Cát Chu",
+        "mango-1",
+        "exact"
+      ],
+      [
+        "7",
+        "Xoài Cát Chu, không lấy Cát Hòa Lộc",
+        "mango-1",
+        "hard_context"
+      ],
+      [
+        "8",
+        "Bưởi Năm Roi",
+        "pomelo-1",
+        "exact"
+      ],
+      [
+        "9",
+        "Lúa ST25",
+        "rice-1",
+        "exact"
+      ],
+      [
+        "10",
+        "Gạo ST25, không phải ST24",
+        "rice-1",
+        "hard_context"
+      ],
+      [
+        "11",
+        "Chuối Cavendish",
+        "None",
+        "out_of_catalog"
+      ]
+    ],
+    [
+      [
+        "",
+        "model",
+        "top1_correct",
+        "labelled_queries",
+        "top1_accuracy",
+        "hit_at_3",
+        "mrr",
+        "source"
+      ],
+      [
+        "0",
+        "small",
+        "8",
+        "10",
+        "0.8",
+        "1.0",
+        "0.900000",
+        "Archived E5 Kaggle Version 1 (not rerun)"
+      ],
+      [
+        "1",
+        "base",
+        "9",
+        "10",
+        "0.9",
+        "1.0",
+        "0.950000",
+        "Archived E5 Kaggle Version 1 (not rerun)"
+      ],
+      [
+        "2",
+        "qwen3-embedding-0.6b",
+        "8",
+        "10",
+        "0.8",
+        "1.0",
+        "0.883333",
+        "Current Qwen Kaggle run"
+      ]
+    ],
+    [
+      [
+        "",
+        "model",
+        "top1_correct",
+        "labelled_queries",
+        "top1_accuracy",
+        "hit_at_3",
+        "mrr",
+        "device",
+        "encode_all_seconds"
+      ],
+      [
+        "0",
+        "qwen3-embedding-0.6b",
+        "8",
+        "10",
+        "0.8",
+        "1.0",
+        "0.883333",
+        "cpu",
+        "8.686203"
+      ]
+    ],
+    [
+      [
+        "",
+        "model",
+        "query",
+        "expected",
+        "top1",
+        "cosine_top1",
+        "top2",
+        "cosine_top2",
+        "target_rank"
+      ],
+      [
+        "0",
+        "qwen3-embedding-0.6b",
+        "Sầu riêng Ri6",
+        "Sầu riêng Ri6",
+        "Sầu riêng Ri6",
+        "0.773666",
+        "Sầu riêng Musang King",
+        "0.588065",
+        "1.0"
+      ],
+      [
+        "1",
+        "qwen3-embedding-0.6b",
+        "Sầu riêng RD6",
+        "Không gán đích",
+        "Sầu riêng Ri6",
+        "0.712132",
+        "Sầu riêng Musang King",
+        "0.561334",
+        "NaN"
+      ],
+      [
+        "2",
+        "qwen3-embedding-0.6b",
+        "Sầu riêng Dona",
+        "Sầu riêng Monthong",
+        "Sầu riêng Ri6",
+        "0.595665",
+        "Sầu riêng Musang King",
+        "0.574941",
+        "3.0"
+      ],
+      [
+        "3",
+        "qwen3-embedding-0.6b",
+        "sau rieng ri6",
+        "Sầu riêng Ri6",
+        "Sầu riêng Ri6",
+        "0.673947",
+        "Sầu riêng Musang King",
+        "0.541690",
+        "1.0"
+      ],
+      [
+        "4",
+        "qwen3-embedding-0.6b",
+        "Sầu riêng Musang King",
+        "Sầu riêng Musang King",
+        "Sầu riêng Musang King",
+        "0.755451",
+        "Sầu riêng Monthong",
+        "0.585140",
+        "1.0"
+      ],
+      [
+        "5",
+        "qwen3-embedding-0.6b",
+        "Cần Ri6, không mua Monthong",
+        "Sầu riêng Ri6",
+        "Sầu riêng Ri6",
+        "0.602187",
+        "Sầu riêng Monthong",
+        "0.593375",
+        "1.0"
+      ],
+      [
+        "6",
+        "qwen3-embedding-0.6b",
+        "Xoài Cát Chu",
+        "Xoài Cát Chu",
+        "Xoài Cát Chu",
+        "0.659092",
+        "Xoài Cát Hòa Lộc",
+        "0.573576",
+        "1.0"
+      ],
+      [
+        "7",
+        "qwen3-embedding-0.6b",
+        "Xoài Cát Chu, không lấy Cát Hòa Lộc",
+        "Xoài Cát Chu",
+        "Xoài Cát Hòa Lộc",
+        "0.650550",
+        "Xoài Cát Chu",
+        "0.638215",
+        "2.0"
+      ],
+      [
+        "8",
+        "qwen3-embedding-0.6b",
+        "Bưởi Năm Roi",
+        "Bưởi Năm Roi",
+        "Bưởi Năm Roi",
+        "0.650683",
+        "Bưởi Đoan Hùng",
+        "0.490727",
+        "1.0"
+      ],
+      [
+        "9",
+        "qwen3-embedding-0.6b",
+        "Lúa ST25",
+        "Lúa ST25",
+        "Lúa ST25",
+        "0.712402",
+        "Lúa ST24",
+        "0.590864",
+        "1.0"
+      ],
+      [
+        "10",
+        "qwen3-embedding-0.6b",
+        "Gạo ST25, không phải ST24",
+        "Lúa ST25",
+        "Lúa ST25",
+        "0.689547",
+        "Lúa ST24",
+        "0.619417",
+        "1.0"
+      ],
+      [
+        "11",
+        "qwen3-embedding-0.6b",
+        "Chuối Cavendish",
+        "Không gán đích",
+        "Bưởi Diễn",
+        "0.434500",
+        "Bưởi Da xanh",
+        "0.426083",
+        "NaN"
+      ]
+    ]
+  ]
+}

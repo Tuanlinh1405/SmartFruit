@@ -22,6 +22,15 @@ function sdk(options: { initial?: Session | null; loading?: Promise<unknown>; re
   return { client: client as unknown as SupabaseClient, read, emit: (s: Session | null, e: AuthChangeEvent = 'SIGNED_IN') => act(() => { callback(e, s); }) };
 }
 function Probe() { const a = useAuth(); return <><p data-testid="auth">{a.status}:{a.profile?.id}:{a.profile?.role}</p><button onClick={a.retry}>retry</button><button onClick={() => { void a.signOut(); }}>logout</button></>; }
+
+test('suspended accounts cannot open their role workspace', async () => {
+  const api = sdk({ initial: session('blocked'), read: async id => ({ data: { id, role: 'FARMER', full_name: id, is_suspended: true }, error: null }) });
+  render(<MemoryRouter><AuthProvider client={api.client}><Routes><Route path="/login" element={<p>Login</p>} /><Route element={<RoleGuard role="FARMER" />}><Route path="/" element={<p>Protected workspace</p>} /></Route></Routes></AuthProvider></MemoryRouter>);
+  expect(await screen.findByRole('heading', { name: 'Tài khoản đang bị khóa' })).toBeVisible();
+  expect(screen.queryByText('Protected workspace')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Đăng xuất' }));
+  await waitFor(() => expect(api.client.auth.signOut).toHaveBeenCalledOnce());
+});
 test('initial session waits for getSession, then role; no signed-out flash', async () => {
   const pending = deferred<unknown>(); const api = sdk({ loading: pending.promise });
   render(<AuthProvider client={api.client}><Probe /></AuthProvider>);
