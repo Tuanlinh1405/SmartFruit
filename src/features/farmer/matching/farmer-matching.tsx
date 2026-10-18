@@ -1,16 +1,16 @@
 import { supabase } from '../../../lib/supabase';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Card, EmptyState, ErrorState, LoadingState, PageHeader } from '../../../components/shared';
 import { Select } from '../../../components/ui';
 import type { Lot } from '../lots/lot.model';
 import { lotColumns } from '../lots/lot.api';
+import { explainError } from '../../../lib/format';
 
 export type BuyCandidate = import('../../matching/core').ScoringRequest & { buyer_id: string; title: string };
 export interface MatchResult { lotId: string; requestId: string; score: number; reasons: string[]; missingInformation: string[]; ruleVersion: string; suggestedQuantityKg?: number; }
 export type MatchScorer = (lot: Lot, requests: BuyCandidate[]) => MatchResult[] | Promise<MatchResult[]>;
-export interface PublicDealContext { partnerId: string; name: string; lotId: string; fruit: string; quantity: number; price: number; province: string; }
 export interface FarmerMatchingRepository {
   lots(userId: string): Promise<Lot[]>;
   candidates(userId: string, lotId: string): Promise<{ lot: Lot; requests: BuyCandidate[]; partners: { user_id: string; display_name: string; province: string | null }[] }>;
@@ -60,8 +60,18 @@ export function validateMatches(lot: Lot, requests: BuyCandidate[], matches: Mat
     seen.add(result.requestId);
   }
 }
-export function FarmerMatchingPanel(props: { authenticatedUserId: string | null; repository?: FarmerMatchingRepository; scorer?: MatchScorer; scoringVersion?: string; initialLotId?: string; onConnect: (lotId: string, buyerId: string, context: PublicDealContext) => void }) { return <ForUser key={props.authenticatedUserId} {...props} />; }
-function ForUser({ authenticatedUserId: userId, repository = farmerMatchingRepository, scorer, scoringVersion = 'shared', initialLotId = '', onConnect }: { authenticatedUserId: string | null; repository?: FarmerMatchingRepository; scorer?: MatchScorer; scoringVersion?: string; initialLotId?: string; onConnect: (lotId: string, buyerId: string, context: PublicDealContext) => void }) {
+export function FarmerMatchingPanel(props: { authenticatedUserId: string | null; repository?: FarmerMatchingRepository; scorer?: MatchScorer; scoringVersion?: string; initialLotId?: string; onConnect: (lotId: string, requestId: string) => Promise<void> }) { return <ForUser key={props.authenticatedUserId} {...props} />; }
+function ForUser({ authenticatedUserId: userId, repository = farmerMatchingRepository, scorer, scoringVersion = 'shared', initialLotId = '', onConnect }: { authenticatedUserId: string | null; repository?: FarmerMatchingRepository; scorer?: MatchScorer; scoringVersion?: string; initialLotId?: string; onConnect: (lotId: string, requestId: string) => Promise<void> }) {
+  const sending = useRef(false);
+  const [connecting, setConnecting] = useState<string | null>(null);
+  const [connectError, setConnectError] = useState('');
+  async function connect(lotId: string, requestId: string) {
+    if (sending.current) return;
+    sending.current = true; setConnecting(requestId); setConnectError('');
+    try { await onConnect(lotId, requestId); }
+    catch (cause) { setConnectError(explainError(cause)); }
+    finally { sending.current = false; setConnecting(null); }
+  }
   const [id, setId] = useState(initialLotId); const [page, setPage] = useState(1);
   const lots = useQuery({ queryKey: ['farmer-matching-lots', userId], enabled: !!userId, queryFn: () => repository.lots(userId!), retry: false });
   const result = useQuery({ queryKey: ['farmer-matches', userId, id, scoringVersion], enabled: !!userId && !!id && !!scorer, retry: false, queryFn: async () => {
@@ -71,9 +81,10 @@ function ForUser({ authenticatedUserId: userId, repository = farmerMatchingRepos
   return <div className="stack"><PageHeader title="Người mua phù hợp" description="Điểm gợi ý theo tiêu chí, không đảm bảo giao dịch." />
     {!scorer && <EmptyState title="Chưa có quy tắc matching dùng chung" description="Chờ module matching được bàn giao. Không hiển thị điểm mẫu như kết quả thực." />}
     {lots.isPending ? <LoadingState /> : lots.isError ? <ErrorState message="Không thể tải lô để matching." onRetry={() => { void lots.refetch(); }} /> : <Select label="Chọn lô cần matching" value={id} onChange={e => { setId(e.target.value); setPage(1); }}><option value="">Chọn lô</option>{lots.data.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}</Select>}
+    {connectError && <p role="alert">{connectError}</p>}
     {!id && <EmptyState title="Chưa chọn lô" />}
     {id && scorer && (result.isPending ? <LoadingState /> : result.isError ? <ErrorState message={result.error.message} onRetry={() => { void result.refetch(); }} /> : !result.data.matches.length ? <EmptyState title="Không có người mua phù hợp" description="Thử thay đổi thông tin lô hoặc ngày thu hoạch." /> : <>
-      {result.data.matches.slice((page - 1) * 20, page * 20).map(match => { const request = result.data.requests.find(r => r.id === match.requestId)!; return <Card key={match.requestId} title={result.data.partners.find(p => p.user_id === request.buyer_id)?.display_name ?? 'Đối tác thu mua'}><p>Phù hợp {match.score}% · Quy tắc {match.ruleVersion}</p><ul>{match.reasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul><p>{request.title} · {request.allow_partial ? 'Chấp nhận một phần' : 'Yêu cầu đủ lượng'}</p><p>{match.suggestedQuantityKg !== undefined && `${match.suggestedQuantityKg} kg đề xuất`}</p><p>{match.missingInformation.join('; ')}</p><button className="button button-secondary" onClick={() => onConnect(id, request.buyer_id, { partnerId: request.buyer_id, name: result.data.partners.find(p => p.user_id === request.buyer_id)?.display_name ?? 'Đối tác thu mua', lotId: id, fruit: result.data.lot.title, quantity: match.suggestedQuantityKg ?? result.data.lot.quantity_kg, price: result.data.lot.price_vnd_per_kg, province: result.data.lot.province })}>Trao đổi minh họa</button></Card>; })}
+      {result.data.matches.slice((page - 1) * 20, page * 20).map(match => { const request = result.data.requests.find(r => r.id === match.requestId)!; return <Card key={match.requestId} title={result.data.partners.find(p => p.user_id === request.buyer_id)?.display_name ?? 'Đối tác thu mua'}><p>Phù hợp {match.score}% · Quy tắc {match.ruleVersion}</p><ul>{match.reasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul><p>{request.title} · {request.allow_partial ? 'Chấp nhận một phần' : 'Yêu cầu đủ lượng'}</p><p>{match.suggestedQuantityKg !== undefined && `${match.suggestedQuantityKg} kg đề xuất`}</p><p>{match.missingInformation.join('; ')}</p><button className="button button-secondary" disabled={connecting !== null} onClick={() => { void connect(id, request.id); }}>{connecting === request.id ? 'Đang gửi…' : 'Gửi lời mời kết nối'}</button></Card>; })}
       <div className="row"><button className="button button-secondary" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Trang trước</button><p>Trang {page}</p><button className="button button-secondary" disabled={page * 20 >= result.data.matches.length} onClick={() => setPage(p => p + 1)}>Trang sau</button></div>
     </>)}
   </div>;

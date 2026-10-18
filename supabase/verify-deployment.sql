@@ -39,4 +39,5 @@ where table_schema = 'public' and grantee in ('anon','PUBLIC')
 
 -- A image-lifecycle installation check (read-only; NULL means not installed).
 select to_regprocedure('public.replace_lot_image(uuid,text)') as replace_image_rpc,
-       to_regprocedure('public.delete_empty_lot(uuid)') as delete_empty_lot_rpc;
+       to_regprocedure('public.delete_empty_lot(uuid)') as delete_empty_lot_rpc,
+       to_regprocedure('public.prepare_lot_deletion(uuid)') as prepare_lot_deletion_rpc;

@@ -42,7 +42,7 @@ export function ApplicationRoutes() {
     {(['FARMER','CARRIER'] as const).map(role => <Route key={role} element={<RoleGuard role={role} />}>
       <Route path={role === 'FARMER' ? '/farmer' : '/carrier'} element={<AppShell role={role} />}>
         <Route index element={<Navigate to="dashboard" replace />} />
-        {role === 'FARMER' && <><Route path="invitations" element={<TradePage view="invitations" />} /><Route path="negotiations" element={<TradePage view="negotiations" />} /></>}
+        {role === 'FARMER' && <><Route path="invitations" element={<TradePage view="invitations" />} /><Route path="negotiations" element={<TradePage view="negotiations" />} /><Route path="chat" element={<TradePage view="negotiations" />} /><Route path="reviews" element={<TradePage view="reviews" />} /></>}
         {pageInventory.filter(entry => entry.role === role && aDemoRoutes[entry.id]).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={aDemoRoutes[entry.id]} />)}
         {role === 'FARMER' ? <>
           <Route path="profile" element={<FarmerCarrierFeature feature="profile" />} />

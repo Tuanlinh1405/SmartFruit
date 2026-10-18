@@ -72,7 +72,16 @@ function DetailForUser({ authenticatedUserId: userId, lotId, repository, imagesR
       </div></Card>
     <div className="row">{onFindBuyers && <Button variant="secondary" disabled={lot.status !== 'PUBLISHED'} title={lot.status !== 'PUBLISHED' ? 'Công bố lô trước khi matching.' : undefined} onClick={() => onFindBuyers(lot)}>Tìm người mua phù hợp</Button>}{onFindTransport && <Button variant="secondary" onClick={() => onFindTransport(lot)}>Tìm xe minh họa</Button>}</div>
     <LotImages userId={userId} lotId={lot.id} repository={imagesRepository} />
-    <LotActions lot={lot} onStatus={async status => { await actions.mutateAsync({ kind: 'status', id: lot.id, status }); }} onDelete={async () => { await imagesRepository.deleteLot(userId, lot.id); client.removeQueries({ queryKey: lotKeys.all(userId) }); onDeleted(); }} />
+    <LotActions lot={lot} onStatus={async status => { await actions.mutateAsync({ kind: 'status', id: lot.id, status }); }} onDelete={async () => {
+      try { await imagesRepository.deleteLot(userId, lot.id); }
+      catch (error) {
+        // Preparation may have closed the lot before a Storage failure.
+        void client.invalidateQueries({ queryKey: lotKeys.all(userId) });
+        void client.invalidateQueries({ queryKey: ['lot-images', userId, lot.id] });
+        throw error;
+      }
+      client.removeQueries({ queryKey: lotKeys.all(userId) }); onDeleted();
+    }} />
     <LotPrivateCard userId={userId} lot={lot} repository={privateRepository} />
   </div>;
 }

@@ -18,7 +18,8 @@ export function TradePage({ view }: { view: 'invitations' | 'negotiations' | 're
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const selected = connections.find(row => row.id === params.get('connectionId')) || connections.find(row => row.status === 'ACCEPTED');
+  const requestedId = params.get('connectionId');
+  const selected = requestedId !== null ? connections.find(row => row.id === requestedId) : connections.find(row => row.status === 'ACCEPTED');
   const refresh = useCallback(async () => setConnections(await listConnections(userId)), [userId]);
   useEffect(() => {
     let active = true;
@@ -41,16 +42,19 @@ export function TradePage({ view }: { view: 'invitations' | 'negotiations' | 're
           <span className="status-pill">{labels[row.status]}</span><div className="admin-card-actions">
             {row.status === 'PENDING' && (row.initiated_by === userId ? <button className="button outline" disabled={busy} onClick={() => void decide(row, 'CANCELLED')}>Hủy lời mời</button> :
               <><button className="button primary" disabled={busy} onClick={() => void decide(row, 'ACCEPTED')}>Đồng ý</button><button className="button outline" disabled={busy} onClick={() => void decide(row, 'DECLINED')}>Từ chối</button></>)}
-            {row.status === 'ACCEPTED' && <Link className="button primary" to={`${prefix}/chat?connectionId=${row.id}`}>Mở hội thoại →</Link>}</div></article>)}</div> :
+            {row.status === 'ACCEPTED' && <Link className="button primary" to={`${prefix}/negotiations?connectionId=${encodeURIComponent(row.id)}`}>Mở hội thoại →</Link>}</div></article>)}</div> :
       view === 'reviews' ? <Reviews userId={userId} connections={connections} /> :
       <div className="chat-layout"><aside className="panel chat-list"><h2>Hội thoại</h2>{connections.filter(row => row.status === 'ACCEPTED').map(row =>
         <button className={`conversation ${selected?.id === row.id ? 'selected' : ''}`} key={row.id} onClick={() => setParams({ connectionId: row.id })}><strong>{row.partnerName}</strong><span>{row.lot_title}</span></button>)}
         {!connections.some(row => row.status === 'ACCEPTED') && <p className="muted">Hai bên cần đồng ý kết nối trước khi trao đổi.</p>}</aside>
-        {selected?.status === 'ACCEPTED' ? <Thread key={selected.id} connection={selected} userId={userId} /> : <section className="panel empty-state">Chọn một hội thoại đã kết nối.</section>}</div>}
+        {selected?.status === 'ACCEPTED' ? <Thread key={selected.id} connection={selected} userId={userId} prefix={prefix} /> : <section className="panel empty-state" role="status">
+          {requestedId !== null && !selected ? 'Không tìm thấy kết nối hoặc bạn không có quyền truy cập.' : selected ? `Kết nối ${labels[selected.status].toLocaleLowerCase('vi-VN')}. Chỉ trao đổi sau khi lời mời được đồng ý.` : 'Chọn một hội thoại đã kết nối.'}
+          {selected && <Link to={`${prefix}/invitations?connectionId=${encodeURIComponent(selected.id)}`}>Xem lời mời kết nối</Link>}
+        </section>}</div>}
   </>;
 }
 
-function Thread({ connection, userId }: { connection: Connection; userId: string }) {
+function Thread({ connection, userId, prefix }: { connection: Connection; userId: string; prefix: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [agreement, setAgreement] = useState<Agreement | null>(null);
@@ -87,7 +91,7 @@ function Thread({ connection, userId }: { connection: Connection; userId: string
       {agreement ? <><span className="status-pill">{labels[agreement.status]}</span><p>{formatTonnes(agreement.quantity_kg)} · {formatMoney(agreement.price_vnd_per_kg)}</p><p>Ngày lấy hàng: {formatDate(agreement.delivery_date)}</p>
         <p className="muted">Buyer: {agreement.buyer_completed_at ? 'đã xác nhận' : 'chưa xác nhận'} · Nhà vườn: {agreement.farmer_completed_at ? 'đã xác nhận' : 'chưa xác nhận'}</p>
         <button className="button primary full" disabled={busy || Boolean(ownCompletion)} onClick={() => void act(() => completeAgreement(agreement.id))}>{ownCompletion ? 'Bạn đã xác nhận hoàn tất' : 'Xác nhận đã hoàn tất giao dịch'}</button>
-        <p className="muted">Chỉ đánh giá khi cả hai bên đã xác nhận hoàn tất.</p></> :
+        {agreement.status === 'COMPLETED' ? <Link className="button primary" to={`${prefix}/reviews`}>Đánh giá giao dịch</Link> : <p className="muted">Chỉ đánh giá khi cả hai bên đã xác nhận hoàn tất.</p>}</> :
         <form onSubmit={event => { event.preventDefault(); void act(() => proposeOffer(connection.id, Number(price), Number(tonnes) * 1000, date)); }}>
           <label>Giá đề nghị (VND/kg)<input type="number" min="1" step="1" value={price} onChange={event => setPrice(event.target.value)} required /></label>
           <label>Khối lượng (tấn)<input type="number" min="0.001" step="0.001" value={tonnes} onChange={event => setTonnes(event.target.value)} required /></label>

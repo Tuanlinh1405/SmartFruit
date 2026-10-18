@@ -12,7 +12,7 @@ export default defineConfig({
   reporter: 'list',
   use: { baseURL: 'http://127.0.0.1:4175', trace: 'retain-on-failure' },
   projects: [
-    ...(!live ? [{ name: 'production', testMatch: /(?:start|skeleton|a-demo|a-connected|ui-unification|farmer-assistant)\.spec\.ts/, use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:4175' } }] : []),
+    ...(!live ? [{ name: 'production', testMatch: /(?:start|skeleton|a-demo|a-connected|ui-unification|farmer-assistant|trading)\.spec\.ts/, use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:4175' } }] : []),
     ...(live ? [{ name: 'a-live', testMatch: /a-live\.spec\.ts/, use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:4175', trace: 'off' as const, screenshot: 'off' as const, video: 'off' as const } }] : []),
     ...(!live ? [{ name: 'ui-kit-dev', testMatch: /(?:ui-kit|a-harness)\.spec\.ts/, use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:5175' } }] : []),
   ],

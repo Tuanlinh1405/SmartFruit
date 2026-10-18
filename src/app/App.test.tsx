@@ -37,6 +37,16 @@ describe('Dev A shell connected to authenticated features',()=>{
     show(path);expect(await screen.findByRole('heading',{name:title})).toBeVisible();
     if(path.includes('connectionId'))expect(window.location.search).toBe('?connectionId=c1');
   });
+  it.each(['invitations', 'negotiations', 'chat', 'reviews'])('connects Farmer %s to real trading and preserves the selected ID', async view => {
+    auth.profile.role = 'FARMER';
+    const path = `/farmer/${view}?connectionId=c1`;
+    show(path);
+    expect(await screen.findByRole('heading', { name: `Giao dịch ${view === 'chat' ? 'negotiations' : view}` })).toBeVisible();
+    expect(window.location.search).toBe('?connectionId=c1');
+    const nav = screen.getByRole('navigation', { name: 'Điều hướng Nhà vườn' });
+    expect(within(nav).getByRole('link', { name: 'Lời mời kết nối' })).toHaveAttribute('href', '/farmer/invitations');
+    expect(within(nav).getByRole('link', { name: 'Đàm phán' })).toHaveAttribute('href', '/farmer/negotiations');
+  });
   it.each([['FARMER','/farmer/matches','Dev A matches','Nhà vườn'],['CARRIER','/carrier/vehicles','Dev A vehicles','Nhà xe'],
     ['ADMIN','/admin/users','Admin thật','Quản trị']])('uses the same protected shell for %s',async(role,path,title,label)=>{
     auth.profile.role=role;show(path);expect(await screen.findByRole('heading',{name:title})).toBeVisible();

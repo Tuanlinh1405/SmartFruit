@@ -48,7 +48,7 @@ function Harness() {
     {(page === 'new' || page === 'edit') && <LotEditorPanel authenticatedUserId={user} repository={repository} privateRepository={privateRepository} imagesRepository={imageRepository} lotId={page === 'edit' ? current : undefined} />}
     {page === 'detail' && <LotDetailPanel authenticatedUserId={user} lotId={current} repository={repository} privateRepository={privateRepository} imagesRepository={imageRepository} onEdit={() => setPage('edit')} onDeleted={() => setPage('lots')} />}
     {page === 'carrier' && <CarrierPanel authenticatedUserId={user} repository={carrierRepo} />}
-    {page === 'matching' && <FarmerMatchingPanel authenticatedUserId={user} repository={matchingRepo} scorer={testScorer} onConnect={() => setPage('lots')} />}
+    {page === 'matching' && <FarmerMatchingPanel authenticatedUserId={user} repository={matchingRepo} scorer={testScorer} onConnect={async () => { setPage('lots'); }} />}
   </main>;
 }
 createRoot(document.getElementById('root')!).render(<AppProviders><MemoryRouter><Harness /></MemoryRouter></AppProviders>);

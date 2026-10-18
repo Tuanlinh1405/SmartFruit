@@ -129,9 +129,9 @@ try {
     values ('${lot}',${quote(objectPath)},0),('${draftLot}',${quote(draftPath)},0);
   `);
 
-  await check('all 18 application and hybrid-search tables have RLS', async () => {
+  await check('all application tables have RLS', async () => {
     const r = await db.query("select count(*)::integer n, bool_and(relrowsecurity) secured from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'");
-    assert.equal(r.rows[0].n, 18); assert.equal(r.rows[0].secured, true);
+    assert.equal(r.rows[0].n, process.argv.includes('--deploy') ? 18 : 23); assert.equal(r.rows[0].secured, true);
   });
   await check('deployment verification queries run successfully', async () => {
     await db.exec(await readFile(path.join(root, 'verify-deployment.sql'), 'utf8'));
@@ -275,9 +275,13 @@ try {
   await check('all SECURITY DEFINER functions pin an empty search path',async()=>{
     const r=await db.query("select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='logstar_private' and p.prosecdef and not coalesce(p.proconfig @> array['search_path=\"\"'],false)");assert.deepEqual(r.rows,[]);
   });
-  await check('only lifecycle RPCs are SECURITY DEFINER APIs, with safe search_path and no anonymous grants',async()=>{
+  await check('public SECURITY DEFINER APIs match the allowlist, with safe search_path and no anonymous grants',async()=>{
     const r=await db.query("select p.proname,p.proconfig,has_function_privilege('anon',p.oid,'EXECUTE') as anon_access from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prosecdef order by p.proname");
-    const expected = ['delete_empty_lot','replace_lot_image'];
+    const expected = process.argv.includes('--deploy') ? ['delete_empty_lot','replace_lot_image'] : [
+      'admin_close_listing','admin_directory','admin_marketplace','admin_trade_overview','admin_update_member',
+      'complete_trade_agreement','delete_empty_lot','open_trade_connection','prepare_lot_deletion',
+      'propose_trade_offer','replace_lot_image','respond_trade_connection','respond_trade_offer','send_trade_message','submit_trade_review',
+    ];
     assert.deepEqual(r.rows.map(x=>x.proname),expected);
     for(const x of r.rows){assert.ok(x.proconfig.includes('search_path=""'));assert.equal(x.anon_access,false);}
   });

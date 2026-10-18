@@ -62,9 +62,33 @@ test('failed link cleans file, failed cleanup remains recoverable, and cannot de
   s.failRemove(); await expect(s.repo.upload(u, l, file())).rejects.toThrow('chưa dọn'); expect(s.objects.size).toBe(1);
   const linked = setup(); await linked.repo.upload(u, l, file()); expect(await linked.repo.cleanup(u, l)).toBe(0); expect(linked.objects.size).toBe(1);
 });
-test('deleteLot unlinks and removes first, RPC fails closed and path/auth refuse before queries', async () => {
+test('deleteLot prepares before cleanup and path/auth refuse before queries', async () => {
   const s = setup(); await s.repo.upload(u, l, file()); await s.repo.deleteLot(u, l); expect(s.rows()).toHaveLength(0); expect(s.objects.size).toBe(0); expect(s.rpc).toHaveBeenLastCalledWith('delete_empty_lot', { lot_id: l });
-  s.failRpc(); await expect(s.repo.deleteLot(u, l)).rejects.toThrow('Chưa xóa lô');
+  expect(s.rpc).toHaveBeenNthCalledWith(1, 'prepare_lot_deletion', { lot_id: l });
+  s.failRpc(); await expect(s.repo.deleteLot(u, l)).rejects.toThrow('Chưa xác nhận');
   await expect(s.repo.cleanup(u, '../foreign')).rejects.toThrow('Định danh');
   await expect(s.repo.list('30000000-0000-4000-8000-000000000099', l)).rejects.toThrow('Phiên');
+});
+
+test.each([
+  ['PGRST202', 'Máy chủ chưa cập nhật'], ['23503', 'lịch sử kết nối'], ['42501', 'không có quyền'],
+])('preparation failure %s preserves linked photos and orphan objects', async (code, message) => {
+  const s = setup(); await s.repo.upload(u, l, file()); s.objects.add(`${u}/${l}/orphan.png`);
+  const original = [...s.rows()]; const paths = [...s.objects];
+  s.rpc.mockResolvedValueOnce({ error: { code } });
+  await expect(s.repo.deleteLot(u, l)).rejects.toMatchObject({ code, message: expect.stringContaining(message) });
+  expect(s.rows()).toEqual(original); expect([...s.objects]).toEqual(paths);
+  expect(s.bucket.remove).not.toHaveBeenCalled(); expect(s.rpc).toHaveBeenCalledTimes(1);
+});
+
+test('failed cleanup stops before final deletion and can be retried', async () => {
+  const s = setup(); await s.repo.upload(u, l, file()); s.failRemove();
+  await expect(s.repo.deleteLot(u, l)).rejects.toThrow('chưa dọn');
+  expect(s.objects.size).toBe(1); expect(s.rpc).toHaveBeenCalledTimes(1);
+});
+
+test('final RPC retains its error code and explains a concurrent upload', async () => {
+  const s = setup();
+  s.rpc.mockResolvedValueOnce({ error: null }).mockResolvedValueOnce({ error: { code: '23514' } });
+  await expect(s.repo.deleteLot(u, l)).rejects.toMatchObject({ code: '23514', message: expect.stringContaining('ảnh đang tải') });
 });

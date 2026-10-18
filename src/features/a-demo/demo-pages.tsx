@@ -19,7 +19,7 @@ function MapList({ farmerMap = false }: { farmerMap?: boolean }) {
   return <div className="stack-sm"><div className="row"><Select label="Khu vực" value={province} onChange={e => setProvince(e.target.value)}><option value="">Tất cả</option><option>Tiền Giang</option><option>Long An</option><option>Đồng Tháp</option></Select><Select label="Loại quả minh họa" value={fruit} onChange={e => setFruit(e.target.value)}><option value="">Tất cả</option><option>Sầu riêng</option><option>Mít</option></Select><Button variant="secondary" onClick={() => setMap(v => !v)}>{map ? 'Chỉ xem danh sách' : 'Xem sơ đồ'}</Button></div>
     {map && <svg viewBox="0 0 400 140" role="img" aria-label="Sơ đồ khu vực minh họa" style={{ width: '100%', maxHeight: 180 }}><rect width="400" height="140" rx="12" fill="var(--mist)" /><path d="M20 110 Q100 10 200 80 T380 40" fill="none" stroke="var(--forest)" strokeWidth="2" />{rows.map((row, i) => <g key={row.id}><circle cx={90 + i * 180} cy={65} r="7" fill="var(--primary)" /><text x={45 + i * 180} y="100" fontSize="12" fill="var(--ink)">{row.province}</text></g>)}</svg>}
     <p className="muted">Sơ đồ minh họa khu vực, không phải bản đồ địa lý hoặc vị trí trực tiếp.</p>
-    {!rows.length ? <EmptyState title="Không có đối tác minh họa phù hợp" /> : rows.map(row => <Card key={row.id} title={farmerMap ? row.name : `Vùng ${row.province}`}><p>{row.fruit} · {row.province}</p>{farmerMap && <Link to={`/farmer/chat?partnerId=${row.id}`}>Trao đổi minh họa với {row.name}</Link>}</Card>)}
+    {!rows.length ? <EmptyState title="Không có đối tác minh họa phù hợp" /> : rows.map(row => <Card key={row.id} title={farmerMap ? row.name : `Vùng ${row.province}`}><p>{row.fruit} · {row.province}</p></Card>)}
   </div>;
 }
 export function DemoDashboard({ role }: { role: 'FARMER' | 'CARRIER' }) {
@@ -38,7 +38,7 @@ export function DemoDashboard({ role }: { role: 'FARMER' | 'CARRIER' }) {
       <section className="panel demo-panel"><span className="badge badge-demo">Minh họa</span><h2>Tiến trình vận chuyển</h2><div className="timeline"><span className="done">Tạo yêu cầu</span><span>Báo giá</span><span>Nhận chuyến</span></div><p>Khám phá luồng vận chuyển mẫu. Chưa kết nối GPS hoặc giao dịch thật.</p><Link className="text-link" to={farmer ? '/farmer/transport' : '/carrier/tracking'}>Xem vận chuyển →</Link></section>
     </div>
     <Card title={farmer ? 'Khu vực thu mua' : 'Tuyến hoạt động'}><MapList farmerMap={farmer} /></Card>
-    <div className="row"><Link className="text-link" to={farmer ? '/farmer/reviews' : '/carrier/reviews'}>Xem đánh giá minh họa →</Link><Button variant="secondary" onClick={reset}>Đặt lại minh họa</Button></div>
+    <div className="row"><Link className="text-link" to={farmer ? '/farmer/reviews' : '/carrier/reviews'}>{farmer ? 'Xem đánh giá giao dịch →' : 'Xem đánh giá minh họa →'}</Link><Button variant="secondary" onClick={reset}>Đặt lại minh họa</Button></div>
   </div>;
 }
 export function FarmerTransport() {

@@ -10,6 +10,18 @@ export interface LotImagesRepository {
   deleteLot(userId: string, lotId: string): Promise<void>;
 }
 const extensions: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+export function lotDeletionError(cause: { code?: string; message?: string }): Error {
+  const message = cause.code === 'PGRST202' || cause.code === '42883'
+    ? 'Máy chủ chưa cập nhật chức năng xóa lô. Vui lòng liên hệ quản trị viên; chưa thể xóa lô.'
+    : cause.code === '23503'
+      ? 'Lô đã có lịch sử kết nối; hãy đóng lô để giữ lịch sử.'
+      : cause.code === '42501'
+        ? 'Bạn không có quyền xóa lô hoặc phiên đăng nhập đã hết hạn.'
+        : cause.code === '23514'
+          ? 'Lô chưa xóa vì còn file ảnh hoặc có ảnh đang tải lên. Lô được giữ lại; hãy tải lại và thử tiếp.'
+          : 'Chưa xác nhận được việc xóa lô. Hãy kiểm tra kết nối mạng, tải lại và thử tiếp.';
+  return Object.assign(new Error(message, { cause }), { code: cause.code });
+}
 export function validateLotPhoto(file: File): void {
   if (!extensions[file.type] || file.size === 0 || file.size > 5 * 1024 * 1024) throw new Error('Chọn ảnh JPEG/PNG/WebP, dung lượng lớn hơn 0 và tối đa 5 MiB.');
 }
@@ -103,10 +115,13 @@ export function createLotImagesRepository(client: SupabaseClient): LotImagesRepo
     },
     async deleteLot(userId, lotId) {
       await owner(userId, lotId);
+      // Fail before touching photos when the backend is unavailable or history must be retained.
+      const prepared = await client.rpc('prepare_lot_deletion', { lot_id: lotId });
+      if (prepared.error) throw lotDeletionError(prepared.error);
       for (const image of await links(lotId)) await repository.remove(userId, lotId, image);
       await repository.cleanup(userId, lotId);
       const result = await client.rpc('delete_empty_lot', { lot_id: lotId });
-      if (result.error) throw new Error('Chưa xóa lô. Có thể còn ảnh hoặc thao tác tải ảnh đồng thời; hãy tải lại và thử tiếp.');
+      if (result.error) throw lotDeletionError(result.error);
     },
   };
   return repository;

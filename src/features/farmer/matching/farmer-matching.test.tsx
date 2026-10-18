@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { expect, test, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -30,14 +30,29 @@ test('contract rejects foreign IDs, duplicate matches, invalid scores/quantities
   for (const value of [{ ...match, lotId: 'foreign' }, { ...match, requestId: 'foreign' }, { ...match, score: 101 }, { ...match, suggestedQuantityKg: 999999 }]) expect(() => validateMatches(testLot(), [request], [value])).toThrow();
   expect(() => validateMatches(testLot(), [request], [match, match])).toThrow();
 });
-test('connect passes only public deal context, not arbitrary fields from lot rows', async () => {
+test('connect passes only lot and request IDs, not private fields', async () => {
   const repository = repo();
   repository.candidates = async () => ({ lot: { ...testLot(), internal_notes: 'PRIVATE', price_floor_vnd_per_kg: 1000 } as ReturnType<typeof testLot>, requests: [request], partners: [{ user_id: 'b', display_name: 'Buyer công khai', province: null }] });
   const connect = vi.fn(); const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   render(<QueryClientProvider client={client}><FarmerMatchingPanel authenticatedUserId="u" repository={repository} scorer={() => [match]} onConnect={connect} initialLotId="lot-1" /></QueryClientProvider>);
-  await userEvent.click(await screen.findByRole('button', { name: 'Trao đổi minh họa' }));
-  expect(connect).toHaveBeenCalledWith('lot-1', 'b', { partnerId: 'b', name: 'Buyer công khai', lotId: 'lot-1', fruit: 'Lô Ri6', quantity: 1000, price: 65000, province: 'Tiền Giang' });
+  await userEvent.click(await screen.findByRole('button', { name: 'Gửi lời mời kết nối' }));
+  expect(connect).toHaveBeenCalledWith('lot-1', 'r');
 });
+test('connection failure stays on matching and allows retry without duplicate submissions', async () => {
+  let reject!: (reason: Error) => void;
+  const connect = vi.fn().mockImplementationOnce(() => new Promise<void>((_resolve, fail) => { reject = fail; })).mockResolvedValue(undefined);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  render(<QueryClientProvider client={client}><FarmerMatchingPanel authenticatedUserId="u" repository={repo()} scorer={() => [match]} initialLotId="lot-1" onConnect={connect} /></QueryClientProvider>);
+  const button = await screen.findByRole('button', { name: 'Gửi lời mời kết nối' });
+  fireEvent.click(button); fireEvent.click(button);
+  expect(connect).toHaveBeenCalledTimes(1); expect(button).toBeDisabled();
+  reject(new Error('Không gửi được lời mời'));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Không gửi được lời mời');
+  await userEvent.click(screen.getByRole('button', { name: 'Gửi lời mời kết nối' }));
+  await waitFor(() => expect(connect).toHaveBeenCalledTimes(2));
+  expect(connect).toHaveBeenLastCalledWith('lot-1', 'r');
+});
+
 test('candidate adapter refuses oversize sets instead of scoring a truncated first page; public projection only', async () => {
   const projections: string[] = []; let table = '';
   const from = vi.fn((name: string) => { table = name; const current = name;

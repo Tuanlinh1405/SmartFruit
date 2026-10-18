@@ -32,6 +32,11 @@ try {
   await db.exec(await readFile(new URL('migrations/202610140001_initial_schema.sql',root),'utf8'));
   await db.exec(await readFile(new URL('seed.sql',root),'utf8'));
   await db.exec(await readFile(new URL('migrations/202610150002_trading.sql',root),'utf8'));
+  await db.exec(await readFile(new URL('migrations/202610150001_lot_image_lifecycle.sql',root),'utf8'));
+  const repair = await readFile(new URL('migrations/202610180001_lot_deletion_repair.sql',root),'utf8');
+  await db.exec('drop function public.delete_empty_lot(uuid); drop function public.replace_lot_image(uuid,text); drop trigger prevent_lot_delete_with_files on public.lots;');
+  await db.exec(repair);
+  await db.exec(repair); // Repair can safely be retried after an ambiguous deployment result.
   for(const [name,id] of Object.entries(ids)) {
     await db.query('insert into auth.users(id,raw_app_meta_data,raw_user_meta_data) values($1,$2,$3)',
       [id,{app_role:name.replace('2','').toUpperCase()},{full_name:name}]);
@@ -123,5 +128,44 @@ try {
     await denied('admin','select public.admin_update_member($1,$2,$3,$4,true)',[ids.admin,'Admin','Admin','Đồng Nai']);
     const row=(await as('admin','select role from public.profiles where id=$1',[ids.admin]))[0]; assert.equal(row.role,'ADMIN');
   });
-  console.log(`${passed} trading database checks passed.`);
+  await check('history blocks preparation without changing lot status or photos',async()=>{
+    const historyPhoto=`${ids.farmer}/${lot}/history.png`;
+    await db.query("insert into storage.objects(bucket_id,name) values('lot-images',$1)",[historyPhoto]);
+    await as('farmer','insert into public.lot_images(lot_id,storage_path,sort_order) values($1,$2,0)',[lot,historyPhoto]);
+    for (const status of ['PENDING','ACCEPTED','CANCELLED','DECLINED']) {
+      await db.query('update public.trade_connections set status=$1 where id=$2',[status,connection]);
+      await denied('farmer','select public.prepare_lot_deletion($1)',[lot],['23503']);
+    }
+    await db.query("update public.trade_connections set status='ACCEPTED' where id=$1",[connection]);
+    assert.equal((await db.query('select status from public.lots where id=$1',[lot])).rows[0].status,'PUBLISHED');
+    assert.equal((await db.query('select count(*)::int n from public.trade_agreements')).rows[0].n,1);
+    assert.equal((await db.query('select count(*)::int n from public.lot_images where lot_id=$1',[lot])).rows[0].n,1);
+    assert.equal((await db.query('select count(*)::int n from storage.objects where name=$1',[historyPhoto])).rows[0].n,1);
+  });
+  const disposable='82000000-0000-4000-8000-000000000002';
+  await db.query(`insert into public.lots(id,farmer_id,fruit_type_id,variety_id,title,quantity_kg,price_vnd_per_kg,harvest_start,harvest_end,province,status)
+    select $1,farmer_id,fruit_type_id,variety_id,'Delete test',quantity_kg,price_vnd_per_kg,harvest_start,harvest_end,province,'PUBLISHED'
+    from public.lots where id=$2`,[disposable,lot]);
+  const path=`${ids.farmer}/${disposable}/photo.png`;
+  await db.query("insert into storage.objects(bucket_id,name) values('lot-images',$1)",[path]);
+  await as('farmer','insert into public.lot_images(lot_id,storage_path,sort_order) values($1,$2,0)',[disposable,path]);
+  await check('preparation denies other owners and roles without touching images',async()=>{
+    for(const user of ['anon','buyer2','carrier','admin','farmer2']) await denied(user,'select public.prepare_lot_deletion($1)',[disposable]);
+    assert.equal((await db.query('select count(*)::int n from public.lot_images where lot_id=$1',[disposable])).rows[0].n,1);
+  });
+  await check('preparation closes a lot and blocks new invitations',async()=>{
+    await as('farmer','select public.prepare_lot_deletion($1)',[disposable]);
+    assert.equal((await db.query('select status from public.lots where id=$1',[disposable])).rows[0].status,'CLOSED');
+    await denied('buyer2','select public.open_trade_connection($1,null)',[disposable]);
+  });
+  await check('linked and orphan images block final deletion; retry succeeds after Storage cleanup',async()=>{
+    await denied('farmer','select public.delete_empty_lot($1)',[disposable]);
+    await as('farmer','delete from public.lot_images where lot_id=$1',[disposable]);
+    await denied('farmer','select public.delete_empty_lot($1)',[disposable]);
+    await as('farmer',"delete from storage.objects where bucket_id='lot-images' and name=$1",[path]);
+    await as('farmer','select public.prepare_lot_deletion($1)',[disposable]);
+    await as('farmer','select public.delete_empty_lot($1)',[disposable]);
+    assert.equal((await db.query('select * from public.lots where id=$1',[disposable])).rows.length,0);
+  });
+  console.log(`${passed} trading and lot deletion database checks passed.`);
 } finally { await db.close(); }

@@ -1,5 +1,16 @@
 # Biên bản triển khai database LogStar
 
+## Bản sửa xóa lô ngày 18/10/2026
+
+- Migration tăng dần: `supabase/migrations/202610180001_lot_deletion_repair.sql`. Chạy sau migration trading, trong SQL Editor của project hiện tại; không chạy lại `deploy.sql` trên database đang có dữ liệu.
+- Migration khôi phục RPC thay ảnh/xóa lô, trigger chặn xóa còn file và thêm `prepare_lot_deletion(uuid)`. Toàn bộ cài đặt nằm trong một transaction, có thể chạy lại và gửi thông báo tải lại schema PostgREST.
+- Chuẩn bị xóa khóa lô, kiểm tra chủ sở hữu/role và mọi lịch sử kết nối; chỉ lô không có lịch sử mới được đóng để dọn ảnh. Lô có lịch sử giữ nguyên và báo người dùng đóng lô.
+- Áp migration database trước khi phát hành frontend. Frontend mới sẽ chặn trước khi dọn ảnh nếu RPC chưa được cài.
+- Xác minh: chạy `supabase/verify-deployment.sql`, ba RPC lifecycle phải khác NULL; sau đó `node scripts/test-live-lot-deletion.mjs`. Script dùng Farmer trong `tmp/test-accounts.json`, chỉ tạo/xóa lô nghiệm thu mới; nếu lỗi giữa chừng, giữ lô test và in ID để điều tra.
+- Kiểm tra local: `npm run typecheck`, `npm run test:database`, `npx vitest run src/features/farmer/lots --pool=threads --maxWorkers=2`, `npx playwright test tests/system/a-connected.spec.ts --project=production`.
+- Người dùng đã chạy migration trong SQL Editor. Ngày 18/10/2026, nghiệm thu HTTP trên Supabase thật đạt: ba RPC lifecycle đã được expose, chuẩn bị xóa chuyển lô sang CLOSED, chặn xóa khi còn ảnh liên kết hoặc file mồ côi, dọn Storage rồi xóa lô thành công.
+- Lô nghiệm thu mới `3c36e17e-7dd1-48df-a93a-ac64b060d804` và hai file test đã được xóa trong luồng nghiệm thu; không thao tác xóa lô có sẵn. Kiểm tra HTTP trước triển khai từng trả `PGRST202`; sau migration lỗi thiếu RPC đã được giải quyết. Kiểm tra chạy đua giữa hai phiên upload/xóa chưa được nghiệm thu trên cloud.
+
 Ngày: 14/10/2026 (Asia/Bangkok).
 
 Cập nhật 15/10/2026: đã áp thêm migration hybrid và `202610150002_trading.sql` trên cùng project. Năm bảng giao dịch đều bật RLS, đã kiểm tra HTTP bằng 7 tài khoản đủ role; xem [biên bản tính năng và kiểm thử hiện hành](implementation-status.md#triển-khai-và-kiểm-thử). Phần bên dưới ghi lại triển khai baseline ngày 14/10.

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { installMockApi, loginAs, logout } from './support/mock-api';
 test.beforeEach(async ({ page }, info) => { await installMockApi(page); await loginAs(page, info.title.toLowerCase().includes('/carrier/') || info.title.startsWith('carrier ') ? 'CARRIER' : 'FARMER'); });
-const pages = ['/farmer/dashboard', '/farmer/transport', '/farmer/chat', '/farmer/reviews', '/farmer/prices', '/farmer/weather', '/farmer/map', '/farmer/notifications', '/carrier/dashboard', '/carrier/requests', '/carrier/tracking', '/carrier/reviews'];
+const pages = ['/farmer/dashboard', '/farmer/transport', '/farmer/prices', '/farmer/weather', '/farmer/map', '/farmer/notifications', '/carrier/dashboard', '/carrier/requests', '/carrier/tracking', '/carrier/reviews'];
 for (const width of [1440, 768, 390]) for (const route of pages) test(`A demo responsive ${route} at ${width}`, async ({ page }) => {
   const errors: string[] = []; const remote: string[] = []; page.on('pageerror', e => errors.push(e.message)); page.on('request', r => { if (r.url().includes('supabase.co')) remote.push(r.url()); });
   await page.setViewportSize({ width, height: 960 }); await page.goto(route); await expect(page.getByRole('heading', { level: 1 })).toBeVisible(); await expect(page.getByText('Dữ liệu minh họa; thao tác chỉ thay đổi trạng thái local, không tạo giao dịch thật.', { exact: true })).toBeVisible();
@@ -19,13 +19,7 @@ test('Farmer transport → Carrier quotation → tracking isolates demo state ac
   await expect(page.getByText('Nhận chuyến minh họa · Đã đạt', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Đặt lại minh họa', exact: true }).click(); await expect(page.getByText('Chưa chọn chuyến', { exact: true })).toBeVisible();
 });
-test('chat mobile list/conversation/detail, local message, confirm and reset', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 960 }); await page.goto('/farmer/chat'); await page.getByRole('button', { name: 'Vựa An Phú', exact: true }).click();
-  await page.getByLabel('Tin nhắn minh họa').fill('Trao đổi giờ thu hoạch'); await page.getByRole('button', { name: 'Gửi minh họa', exact: true }).click(); await expect(page.getByRole('region', { name: 'Tin nhắn', exact: true })).toContainText('Trao đổi giờ thu hoạch');
-  await page.getByRole('button', { name: 'Thông tin trao đổi', exact: true }).click(); await page.getByRole('button', { name: 'Xác nhận đàm phán minh họa', exact: true }).click(); await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận minh họa', exact: true }).click(); await expect(page.getByText('Đã xác nhận minh họa.')).toBeVisible();
-  await page.getByRole('button', { name: 'Đặt lại minh họa', exact: true }).click(); await expect(page.getByRole('button', { name: 'Vựa An Phú', exact: true })).toBeVisible();
-});
-for (const role of ['farmer', 'carrier']) test(`${role} reviews empty, validation and submit`, async ({ page }) => {
+for (const role of ['carrier']) test(`${role} reviews empty, validation and submit`, async ({ page }) => {
   await page.goto(`/${role}/reviews`); await page.getByLabel('Nhóm đánh giá').selectOption('sent'); await expect(page.getByText('Chưa có đánh giá', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Gửi đánh giá minh họa', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('Chọn từ'); await page.getByLabel('Số sao').selectOption('5'); await page.getByLabel('Nhận xét').fill('Đúng hẹn'); await page.getByRole('button', { name: 'Gửi đánh giá minh họa', exact: true }).click(); await expect(page.getByText('Đúng hẹn', { exact: true })).toBeVisible();
 });
