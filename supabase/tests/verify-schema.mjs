@@ -276,14 +276,15 @@ try {
     const r=await db.query("select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='logstar_private' and p.prosecdef and not coalesce(p.proconfig @> array['search_path=\"\"'],false)");assert.deepEqual(r.rows,[]);
   });
   await check('public SECURITY DEFINER APIs match the allowlist, with safe search_path and no anonymous grants',async()=>{
-    const r=await db.query("select p.proname,p.proconfig,has_function_privilege('anon',p.oid,'EXECUTE') as anon_access from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prosecdef order by p.proname");
+    const r=await db.query("select p.proname,p.proconfig,has_function_privilege('anon',p.oid,'EXECUTE') as anon_access,has_function_privilege('authenticated',p.oid,'EXECUTE') as authenticated_access from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prosecdef order by p.proname");
     const expected = process.argv.includes('--deploy') ? ['delete_empty_lot','replace_lot_image'] : [
       'admin_close_listing','admin_directory','admin_marketplace','admin_trade_overview','admin_update_member',
-      'complete_trade_agreement','delete_empty_lot','open_trade_connection','prepare_lot_deletion',
+      'complete_trade_agreement','delete_empty_lot','embedding_query_cache','embedding_worker_claim','embedding_worker_finish','embedding_worker_status','open_trade_connection','prepare_lot_deletion',
       'propose_trade_offer','replace_lot_image','respond_trade_connection','respond_trade_offer','send_trade_message','submit_trade_review',
     ];
     assert.deepEqual(r.rows.map(x=>x.proname),expected);
     for(const x of r.rows){assert.ok(x.proconfig.includes('search_path=""'));assert.equal(x.anon_access,false);}
+    for(const x of r.rows.filter(x=>x.proname.startsWith('embedding_'))) assert.equal(x.authenticated_access,false);
   });
   if(!process.argv.includes('--deploy')) {
     await check('image lifecycle RPC rejects other owners and roles',async()=>{
