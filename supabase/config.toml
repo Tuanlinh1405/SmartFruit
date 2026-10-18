@@ -1,0 +1,8 @@
+project_id = "yyslykqpamnlqkvutrlm"
+
+# Both handlers validate their credentials themselves. No unauthenticated search/worker.
+[functions.search-matches]
+verify_jwt = false
+
+[functions.process-embeddings]
+verify_jwt = false

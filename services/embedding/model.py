@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+import os
 from typing import Any
 
 MODEL_ID = "intfloat/multilingual-e5-base"
@@ -10,12 +11,27 @@ MODEL_VERSION = "multilingual-e5-base-v1"
 DIMENSIONS = 768
 
 
+def validate_vectors(values, count: int) -> list[list[float]]:
+    vectors = [[float(value) for value in row] for row in values]
+    if len(vectors) != count or any(
+        len(vector) != DIMENSIONS or not all(math.isfinite(value) for value in vector)
+        or math.sqrt(sum(value * value for value in vector)) < 1e-12
+        for vector in vectors
+    ):
+        raise ValueError("model returned invalid vectors")
+    norms = [math.sqrt(sum(value * value for value in vector)) for vector in vectors]
+    return [[value / norm for value in vector] for vector, norm in zip(vectors, norms)]
+
+
 class Encoder:
     def __init__(self, model: Any | None = None) -> None:
         if model is None:
             from sentence_transformers import SentenceTransformer
 
-            model = SentenceTransformer(MODEL_ID, revision=MODEL_REVISION)
+            model = SentenceTransformer(MODEL_ID, revision=MODEL_REVISION,
+                                        device=os.environ.get("EMBEDDING_DEVICE", "cpu"),
+                                        trust_remote_code=False)
+            model.max_seq_length = 512
         self.model = model
 
     def encode(self, texts: list[str], kind: str) -> list[list[float]]:
@@ -30,10 +46,4 @@ class Encoder:
             convert_to_numpy=True,
             show_progress_bar=False,
         )
-        vectors = [[float(value) for value in row] for row in values]
-        if len(vectors) != len(texts) or any(
-            len(vector) != DIMENSIONS or not all(math.isfinite(value) for value in vector)
-            for vector in vectors
-        ):
-            raise ValueError("model returned a non-finite or wrong-size vector")
-        return vectors
+        return validate_vectors(values, len(texts))
