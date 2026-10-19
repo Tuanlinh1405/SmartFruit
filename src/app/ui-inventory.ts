@@ -40,7 +40,7 @@ export const uiInventory: UiEntry[] = [
   ]),
   { id:'AUTH-01',title:'Đăng nhập',path:'/auth/login',kind:'page',owner:'B',level:'F' },
   { id:'AUTH-02',title:'Đăng ký',path:'/register',kind:'page',owner:'B',level:'F' },
-  modal('AUTH-03','OTP minh họa (chưa triển khai)','/auth/register',undefined,'B'),
+  modal('AUTH-03','OTP minh họa (chưa triển khai)','/register',undefined,'B'),
   { id:'AUTH-04',title:'Không có quyền / không tìm thấy',path:'/403',kind:'page',owner:'B',level:'U' },
 ];
 export const pageInventory = uiInventory.filter(entry => entry.kind === 'page');

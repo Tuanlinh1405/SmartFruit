@@ -1,4 +1,10 @@
-# Trạng thái triển khai ngày 15/10/2026
+# Trạng thái triển khai
+
+## Nghiệm thu ngày 19/10/2026
+
+Trạng thái và bằng chứng mới nhất nằm trong [biên bản nghiệm thu trước bàn giao](handover-acceptance-2026-10-19.md). Farmer CRUD lô/ảnh và Carrier CRUD xe đã dùng dữ liệu thật. Buyer E5 hybrid đã được kiểm tra trên cloud; màn hình matching Farmer hiện dùng rule-only. Không dùng các ghi chú chưa deploy/chưa thực hiện của bản chụp 15/10 bên dưới để suy ra trạng thái hiện tại. Đăng ký email đã bổ sung và RPC đã cài; người dùng đã xác nhận nhận/xác nhận email và vào đúng vai trò trên cloud ngày 19/10.
+
+## Bản chụp và quyết định ngày 15/10/2026
 
 Yêu cầu hiện hành: dùng tài khoản test email/mật khẩu, chuyển tính năng đang mô phỏng sang dữ liệu thật; hoãn các tích hợp bên ngoài như vận chuyển. OTP và đăng ký demo đã bỏ.
 
