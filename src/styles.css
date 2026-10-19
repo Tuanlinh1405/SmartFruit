@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" source("./");
 @import "./styles/tokens.css";
 @import "./styles/unified.css";
 @import "./styles/features.css";

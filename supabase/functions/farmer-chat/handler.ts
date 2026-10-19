@@ -2,7 +2,7 @@ import { parseChatInput } from '../../../src/features/farmer/assistant/contract.
 import { ChatError, defaultModel, generateAnswer } from './service.ts';
 
 export interface ChatHandlerOptions {
-  authenticate: (jwt: string) => Promise<{ role: string | null } | null>;
+  authenticate: (jwt: string) => Promise<{ role: string | null; isSuspended?: boolean } | null>;
   apiKey?: string; model?: string; allowedOrigins: string[]; fetcher?: typeof fetch;
   log?: (event: Record<string, unknown>) => void;
 }
@@ -27,7 +27,7 @@ export function createChatHandler(options: ChatHandlerOptions) {
       if (!match) throw new ChatError('UNAUTHENTICATED', 401, 'Vui lòng đăng nhập lại để hỏi trợ lý.');
       const identity = await options.authenticate(match[1]);
       if (!identity) throw new ChatError('UNAUTHENTICATED', 401, 'Phiên đăng nhập đã hết hạn.');
-      if (identity.role !== 'FARMER') throw new ChatError('FORBIDDEN', 403, 'Trợ lý chỉ dành cho tài khoản nhà vườn.');
+      if (identity.role !== 'FARMER' || identity.isSuspended) throw new ChatError('FORBIDDEN', 403, 'Trợ lý chỉ dành cho tài khoản nhà vườn đang hoạt động.');
       const body = await request.text();
       if (new TextEncoder().encode(body).length > 10_000) throw new ChatError('BAD_REQUEST', 400, 'Câu hỏi quá dài.');
       let value: unknown;

@@ -41,7 +41,7 @@ for (const width of [1440,768,390]) test(`Farmer production routes with mocked H
   await page.reload(); await expect(page.getByLabel('Giá sàn riêng (đ/kg)')).toHaveValue('60000');
   await page.getByRole('button', { name: 'Xem chi tiết lô' }).click(); const detailUrl = page.url();
   await page.getByRole('button', { name: 'Tìm xe minh họa' }).click(); await expect(page.getByText(/Ngữ cảnh công khai: Lô UI chính/)).toBeVisible(); await expect(page.getByLabel(/^Khối lượng/)).toHaveValue('1'); await expect(page.locator('main')).not.toContainText('PRIVATE UI TEST');
-  await page.goto(detailUrl); await page.getByRole('button', { name: 'Tìm người mua phù hợp' }).click(); await expect(page.getByText('Buyer công khai test')).toBeVisible(); await expect(page.getByText(/Phù hợp 58%/)).toBeVisible();
+  await page.goto(detailUrl); await page.getByRole('button', { name: 'Tìm người mua phù hợp' }).click(); await expect(page.getByText('Buyer công khai test')).toBeVisible(); await expect(page.getByText(/Phù hợp 58 điểm/)).toBeVisible();
   await page.getByRole('button', { name: 'Gửi lời mời kết nối' }).click(); await expect(page).toHaveURL(/\/farmer\/invitations/); await expect(page.locator('main')).not.toContainText('PRIVATE UI TEST');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.goto(detailUrl); await page.getByRole('button', { name: 'Đóng lô', exact: true }).click(); await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click(); await expect(page.getByRole('button', { name: 'Tìm người mua phù hợp' })).toBeDisabled();

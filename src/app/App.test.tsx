@@ -48,8 +48,9 @@ describe('Dev A shell connected to authenticated features',()=>{
     expect(within(nav).getByRole('link', { name: 'Đàm phán' })).toHaveAttribute('href', '/farmer/negotiations');
   });
   it.each([['FARMER','/farmer/matches','Dev A matches','Nhà vườn'],['CARRIER','/carrier/vehicles','Dev A vehicles','Nhà xe'],
+    ['CARRIER','/carrier/profile','Dev A vehicles','Nhà xe'],['CARRIER','/carrier/transport','Vận chuyển','Nhà xe'],
     ['ADMIN','/admin/users','Admin thật','Quản trị']])('uses the same protected shell for %s',async(role,path,title,label)=>{
-    auth.profile.role=role;show(path);expect(await screen.findByRole('heading',{name:title})).toBeVisible();
+    auth.profile.role=role;show(path);expect(await screen.findByRole('heading',{name:title,level:1})).toBeVisible();
     expect(screen.getByRole('navigation',{name:`Điều hướng ${label}`})).toBeVisible();
   });
   it('does not grant another role by entering its UI path',async()=>{

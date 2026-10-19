@@ -20,7 +20,7 @@ for (const width of [1440, 768, 390]) {
     await page.getByRole('button', { name: 'Xóa ảnh 1', exact: true }).click(); await expect(page.getByText('Chưa có ảnh đã lưu.')).toBeVisible();
     await page.getByLabel('Giá sàn riêng (đ/kg)').fill('60000'); await page.getByLabel('Ghi chú nội bộ').fill('PRIVATE TEST'); await page.getByRole('button', { name: 'Lưu thông tin riêng', exact: true }).click();
     await expect(page.getByText('Đã lưu thông tin riêng.')).toBeVisible(); await expect(page.getByRole('complementary', { name: 'Xem trước' })).not.toContainText('PRIVATE TEST');
-    await page.getByRole('button', { name: 'Harness matching', exact: true }).click(); await page.getByLabel('Chọn lô cần matching').selectOption('40000000-0000-4000-8000-000000000001'); await expect(page.getByText(/Phù hợp 86%/)).toBeVisible();
+    await page.getByRole('button', { name: 'Harness matching', exact: true }).click(); await page.getByLabel('Chọn lô cần matching').selectOption('40000000-0000-4000-8000-000000000001'); await expect(page.getByText(/Phù hợp 86 điểm/)).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true); expect(requests).toEqual([]);
   });
   test(`Carrier independent create/edit/active/delete UI at ${width}`, async ({ page }) => {

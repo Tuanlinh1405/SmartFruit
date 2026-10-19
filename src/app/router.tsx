@@ -5,7 +5,7 @@ import { pageInventory } from './ui-inventory';
 import { AppShell } from '../layouts/app-shell';
 import { StatusPage } from './skeleton-page';
 import { LoadingState } from '../components/shared';
-import { aDemoRoutes } from '../features/a-demo/demo-routes';
+import { RoleDashboard } from '../features/workspace/RoleDashboard';
 const AFeaturePage = lazy(() => import('../features/a-feature-page').then(module => ({ default: module.AFeaturePage })));
 import { AuthProvider, useAuth } from '../features/auth/AuthProvider';
 import { LoginPage } from '../features/auth/LoginPage';
@@ -29,7 +29,7 @@ const DevUi = import.meta.env.DEV ? lazy(() => import('../dev/ui-page')) : null;
 type Feature = import('react').ComponentProps<typeof AFeaturePage>['feature'];
 function FarmerCarrierFeature({ feature }: { feature: Feature }) {
   const { session } = useAuth();
-  return <AFeaturePage feature={feature} authenticatedUserId={session!.user.id} scorer={scoreFarmerRequests} scoringVersion={`${RULE_VERSION}:rule-only`} />;
+  return <AFeaturePage feature={feature} authenticatedUserId={session!.user.id} scorer={scoreFarmerRequests} scoringVersion={`${RULE_VERSION}:${import.meta.env.VITE_MATCHING_MODE}`} />;
 }
 // Exported without BrowserRouter/AuthProvider for integration tests using real
 // routing with injected SDK dependencies. Production always uses AppRouter.
@@ -46,7 +46,8 @@ export function ApplicationRoutes() {
       <Route path={role === 'FARMER' ? '/farmer' : '/carrier'} element={<AppShell role={role} />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         {role === 'FARMER' && <><Route path="invitations" element={<TradePage view="invitations" />} /><Route path="negotiations" element={<TradePage view="negotiations" />} /><Route path="chat" element={<TradePage view="negotiations" />} /><Route path="reviews" element={<TradePage view="reviews" />} /></>}
-        {pageInventory.filter(entry => entry.role === role && aDemoRoutes[entry.id]).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={aDemoRoutes[entry.id]} />)}
+        <Route path="dashboard" element={<RoleDashboard role={role} />} />
+        {pageInventory.filter(entry => entry.role === role && ['FUI-06','FUI-10','FUI-11','FUI-12','FUI-13','CUI-03','CUI-05','CUI-06'].includes(entry.id)).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={<DeferredPage kind={({ 'FUI-06':'transport','FUI-10':'prices','FUI-11':'weather','FUI-12':'map','FUI-13':'policy','CUI-03':'transport','CUI-05':'tracking','CUI-06':'carrier-reviews' } as Record<string,string>)[entry.id]} />} />)}
         {role === 'FARMER' ? <>
           <Route path="profile" element={<FarmerCarrierFeature feature="profile" />} />
           <Route path="lots" element={<FarmerCarrierFeature feature="lots" />} />
@@ -54,7 +55,7 @@ export function ApplicationRoutes() {
           <Route path="lots/:id" element={<FarmerCarrierFeature feature="detail" />} />
           <Route path="lots/:id/edit" element={<FarmerCarrierFeature feature="edit" />} />
           <Route path="matches" element={<FarmerCarrierFeature feature="matches" />} />
-        </> : <Route path="vehicles" element={<FarmerCarrierFeature feature="vehicles" />} />}
+        </> : <><Route path="vehicles" element={<FarmerCarrierFeature feature="vehicles" />} /><Route path="profile" element={<Navigate to="/carrier/vehicles" replace />} /><Route path="transport" element={<Navigate to="/carrier/requests" replace />} /></>}
         <Route path="*" element={<StatusPage code="404" />} />
       </Route>
     </Route>)}
@@ -78,5 +79,5 @@ export function ApplicationRoutes() {
   </Routes></Suspense><FarmerAssistantPanel enabled={status === 'ready' && profile?.role === 'FARMER'} /></>;
 }
 export function AppRouter() {
-  return <BrowserRouter><AuthProvider><SessionWorkspace><ApplicationRoutes /></SessionWorkspace></AuthProvider></BrowserRouter>;
+  return <BrowserRouter basename={import.meta.env.BASE_URL}><AuthProvider><SessionWorkspace><ApplicationRoutes /></SessionWorkspace></AuthProvider></BrowserRouter>;
 }

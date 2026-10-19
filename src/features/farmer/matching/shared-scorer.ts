@@ -4,6 +4,6 @@ import type { MatchScorer } from './farmer-matching';
 export const scoreFarmerRequests = ((lot, requests) =>
   rankRequestMatches(requests.map(request => ({ request })), lot, 'rule-only').map(result => ({
     lotId: lot.id, requestId: result.request.id, score: result.score,
-    reasons: result.business.reasons, missingInformation: [], ruleVersion: result.ruleVersion,
+    reasons: [result.nameMatch.reason, ...result.business.reasons], missingInformation: [], ruleVersion: result.ruleVersion,
     suggestedQuantityKg: result.business.contributionKg,
   }))) satisfies MatchScorer;
