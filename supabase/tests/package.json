@@ -1,0 +1,15 @@
+{
+  "name": "logstar-database-verification",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node verify-schema.mjs --deploy && node verify-schema.mjs && node verify-trading.mjs && node verify-registration.mjs",
+    "test:trading": "node verify-trading.mjs",
+    "test:vector": "node verify-vector-top20.mjs",
+    "test:embedding": "node verify-embedding-maintenance.mjs && node verify-hosted-worker.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.10",
+    "@electric-sql/pglite-pgvector": "0.0.11"
+  }
+}

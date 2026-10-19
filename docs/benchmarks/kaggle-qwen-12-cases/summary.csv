@@ -1,0 +1,2 @@
+﻿model,top1_correct,labelled_queries,top1_accuracy,hit_at_3,mrr,device,encode_all_seconds
+qwen3-embedding-0.6b,8,10,0.8,1.0,0.883333,cpu,8.686203

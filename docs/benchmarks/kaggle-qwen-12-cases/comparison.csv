@@ -1,0 +1,4 @@
+﻿model,top1_correct,labelled_queries,top1_accuracy,hit_at_3,mrr,source
+small,8,10,0.8,1.0,0.900000,Archived E5 Kaggle Version 1 (not rerun)
+base,9,10,0.9,1.0,0.950000,Archived E5 Kaggle Version 1 (not rerun)
+qwen3-embedding-0.6b,8,10,0.8,1.0,0.883333,Current Qwen Kaggle run

@@ -1,0 +1,36 @@
+.assistant-entry { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; background: linear-gradient(115deg, #ecf6e7, #fffefb); }
+.assistant-entry > div { flex: 1 1 240px; min-width: 0; }
+.assistant-entry h2 { margin: 0 0 .35rem; }
+.assistant-entry p { color: var(--muted); font-size: .89rem; }
+.assistant-mark { width: 48px; height: 48px; border-radius: 14px; background: var(--mist); color: var(--primary); display: grid; place-items: center; flex: none; }
+.farmer-assistant-dialog { width: min(480px, 100vw); display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: var(--radius) 0 0 var(--radius); }
+.farmer-assistant-dialog .dialog-head, .farmer-assistant-dialog .dialog-description { margin: 0; flex: none; }
+.farmer-assistant-dialog .dialog-description { font-size: .77rem; background: #fff9e9; border: 1px solid #f3dfae; border-radius: 9px; padding: 10px; }
+.assistant-toolbar, .assistant-compose-footer { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+.assistant-toolbar .button { font-size: .75rem; padding: 8px; }
+.assistant-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; flex: none; }
+.assistant-controls > :last-child { grid-column: 1 / -1; }
+.assistant-controls .control { padding: 8px; }
+.assistant-thread { flex: 1 1 auto; min-height: 110px; overflow-y: auto; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 16px; padding: 4px; }
+.assistant-welcome { margin: auto 0; text-align: center; color: var(--muted); display: grid; gap: 10px; justify-items: center; padding: 20px 8px; }
+.assistant-welcome svg { color: var(--primary); }
+.assistant-welcome p { font-size: .85rem; }
+.assistant-question, .assistant-answer { padding: 12px; border: 1px solid var(--border); border-radius: 12px; }
+.assistant-question { background: var(--mist); margin: 0 0 8px 24px; }
+.assistant-answer { background: var(--surface); margin-right: 12px; }
+.assistant-exchange p { white-space: pre-wrap; margin-top: 6px; font-size: .88rem; }
+.assistant-exchange small { color: var(--muted); font-size: .72rem; }
+.assistant-exchange ul { list-style: disc; padding-left: 18px; margin: 8px 0; font-size: .85rem; }
+.assistant-sources { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 10px; font-size: .75rem; }
+.assistant-sources small { display: block; }
+.assistant-sources a { text-decoration: underline; }
+.assistant-compose { display: grid; gap: 8px; flex: none; border-top: 1px solid var(--border); padding-top: 10px; }
+.assistant-compose textarea { resize: vertical; max-height: 130px; }
+.assistant-suggestions { display: flex; flex-wrap: wrap; gap: 6px; }
+.assistant-suggestions .button { font-size: .71rem; padding: 8px; text-align: left; }
+.assistant-compose-footer small, .assistant-pending { color: var(--muted); font-size: .8rem; }
+.assistant-error { color: var(--danger); background: #fff2ef; border-radius: 9px; padding: 10px; font-size: .8rem; }
+.assistant-error small { display: block; overflow-wrap: anywhere; }
+@media (max-width: 850px) { .farmer-assistant-dialog { width: 100vw; border-radius: 0; } }
+@media (max-width: 630px) { .assistant-entry > .button { width: 100%; } }
+@media (max-height: 740px) { .farmer-assistant-dialog { display: block; } .farmer-assistant-dialog > * { margin-bottom: 12px; } .assistant-thread { max-height: 250px; } }

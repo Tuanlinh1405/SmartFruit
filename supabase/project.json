@@ -1,0 +1,9 @@
+{
+  "name": "LogStar",
+  "ref": "yyslykqpamnlqkvutrlm",
+  "url": "https://yyslykqpamnlqkvutrlm.supabase.co",
+  "region": "ap-northeast-2",
+  "schema": "public",
+  "imageBucket": "lot-images",
+  "dashboard": "https://supabase.com/dashboard/project/yyslykqpamnlqkvutrlm"
+}

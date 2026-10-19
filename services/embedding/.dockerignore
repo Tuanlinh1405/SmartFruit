@@ -1,0 +1,7 @@
+*
+!requirements.txt
+!api.py
+!model.py
+!worker.py
+!maintenance.py
+!Dockerfile
