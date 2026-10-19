@@ -60,8 +60,12 @@ describe('Dev A shell connected to authenticated features',()=>{
     auth.status='signed-out';show('/buyer/lots');expect(await screen.findByRole('heading',{name:'Đăng nhập'})).toBeVisible();
     expect(screen.queryByRole('navigation',{name:'Điều hướng Thương lái'})).not.toBeInTheDocument();
   });
-  it('keeps map work deferred and registration/OTP disabled',async()=>{
+  it('keeps map work deferred and SMS OTP absent',async()=>{
     show('/buyer/map');expect(await screen.findByText(/Bản đồ, tọa độ và khoảng cách được hoãn/)).toBeVisible();
     expect(screen.queryByText(/OTP minh họa/)).not.toBeInTheDocument();
+  });
+  it.each(['/register','/auth/register'])('opens real registration through %s',async(path)=>{
+    auth.status='signed-out';show(path);expect(await screen.findByRole('heading',{name:'Đăng ký tài khoản'})).toBeVisible();
+    expect(screen.getByRole('combobox',{name:/Bạn tham gia/})).toBeVisible();
   });
 });

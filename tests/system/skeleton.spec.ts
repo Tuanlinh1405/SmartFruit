@@ -6,8 +6,13 @@ for (const entry of pageInventory.filter(e => e.role)) test(`${entry.id} require
   await expect(page.getByRole('button', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await page.reload(); await expect(page.getByRole('button', { name: 'Đăng nhập', exact: true })).toBeVisible();
 });
-for (const path of ['/auth/login','/auth/register','/register']) test(`legacy Auth path ${path} redirects to login`, async ({ page }) => {
+for (const path of ['/auth/login']) test(`legacy Auth path ${path} redirects to login`, async ({ page }) => {
   await installMockApi(page); await page.goto(path); await expect(page).toHaveURL(/\/login$/);
+});
+for (const path of ['/auth/register','/register']) test(`registration route ${path} survives refresh`, async ({ page }) => {
+  await installMockApi(page); await page.goto(path); await expect(page).toHaveURL(/\/register$/);
+  await expect(page.getByRole('heading',{name:'Đăng ký tài khoản'})).toBeVisible();await page.reload();
+  await expect(page.getByRole('button',{name:'Tạo tài khoản'})).toBeVisible();
 });
 test('unknown routes and dev UI stay unavailable in production', async ({ page }) => {
   await page.goto('/dev/ui'); await expect(page.getByRole('heading', { name: 'Không tìm thấy trang' })).toBeVisible();

@@ -41,3 +41,6 @@ where table_schema = 'public' and grantee in ('anon','PUBLIC')
 select to_regprocedure('public.replace_lot_image(uuid,text)') as replace_image_rpc,
        to_regprocedure('public.delete_empty_lot(uuid)') as delete_empty_lot_rpc,
        to_regprocedure('public.prepare_lot_deletion(uuid)') as prepare_lot_deletion_rpc;
+
+-- Email signup enrollment; authenticated only, never an anonymous/admin-grant API.
+select to_regprocedure('public.complete_registration()') as registration_rpc;

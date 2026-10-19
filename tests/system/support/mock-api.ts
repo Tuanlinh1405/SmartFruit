@@ -5,7 +5,7 @@ export type TestRole = 'FARMER' | 'CARRIER' | 'BUYER' | 'ADMIN';
 export const testIds = { FARMER: '30000000-0000-4000-8000-000000000001', CARRIER: '30000000-0000-4000-8000-000000000003', BUYER: '30000000-0000-4000-8000-000000000005', ADMIN: '30000000-0000-4000-8000-000000000006' };
 type Row = Record<string, unknown>;
 const phones: Record<TestRole, string> = { FARMER: '+84900000001', CARRIER: '+84900000003', BUYER: '+84900000005', ADMIN: '+84900000006' };
-export async function installMockApi(page: Page, sharedDatabase?: Record<string, Row[]>) {
+export async function installMockApi(page: Page, sharedDatabase?: Record<string, Row[]>, signupMode: 'confirm' | 'immediate' | 'error' = 'confirm') {
   let role: TestRole = 'FARMER'; let active = false; let failPublish = 0; let failConnection = false;
   const calls: { method: string; table: string; body: Row | null }[] = [];
   const database: Record<string, Row[]> = sharedDatabase ?? {
@@ -17,12 +17,25 @@ export async function installMockApi(page: Page, sharedDatabase?: Record<string,
     buy_requests: [{ id: '50000000-0000-4000-8000-000000000001', buyer_id: testIds.BUYER, status: 'OPEN', fruit_type_id: 'fruit-1', variety_id: null, title: 'Mua Ri6 test', target_quantity_kg: 10000, min_lot_quantity_kg: null, allow_partial: true, min_price_vnd_per_kg: 60000, max_price_vnd_per_kg: 70000, required_start: '2026-10-15', required_end: '2026-10-20', preferred_provinces: [], preferred_districts: [], quality_requirements: [], packaging_options: [], buying_method: 'PARTIAL', transport_by: 'UNDECIDED', notes: '', grade: null, created_at: '2026-10-17T00:00:00Z', updated_at: '2026-10-17T00:00:00Z' }],
     marketplace_profiles: [{ user_id: testIds.BUYER, display_name: 'Buyer công khai test', province: 'Tiền Giang', role: 'BUYER' }, { user_id: testIds.FARMER, display_name: 'Farmer công khai test', province: 'Tiền Giang', role: 'FARMER' }],
   };
-  function user() { return { id: testIds[role], aud: 'authenticated', role: 'authenticated', phone: phones[role], app_metadata: { provider: 'phone' }, user_metadata: {}, created_at: '2026-10-15T00:00:00Z' }; }
+  let registrationMetadata: Row | null = null;
+  function user() { return { id: testIds[role], aud: 'authenticated', role: 'authenticated', phone: phones[role], app_metadata: { provider: 'phone' }, user_metadata: registrationMetadata ?? {}, created_at: '2026-10-15T00:00:00Z' }; }
   await page.route('http://127.0.0.1:54321/**', async route => {
     const request = route.request(); const url = new URL(request.url()); const method = request.method();
-    const headers = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-expose-headers': 'content-range', 'content-type': 'application/json' };
+    const headers = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-expose-headers': 'content-range,x-supabase-api-version', 'content-type': 'application/json', 'x-supabase-api-version': '2024-01-01' };
     const send = (value: unknown, status = 200, extra = {}) => route.fulfill({ status, headers: { ...headers, ...extra }, body: JSON.stringify(value) });
     if (method === 'OPTIONS') return route.fulfill({ status: 204, headers: { ...headers, 'access-control-allow-methods': 'GET,POST,PATCH,DELETE,HEAD,OPTIONS' } });
+    if (url.pathname.endsWith('/signup')) {
+      const body = request.postDataJSON() as { email: string; data: Row };
+      calls.push({ method, table: 'auth_signup', body: { email: body.email, data: body.data } });
+      if (signupMode === 'error') return send({ code: 'signup_disabled', msg: 'Signups disabled' }, 422);
+      if (!['FARMER','BUYER','CARRIER'].includes(String(body.data.registration_role))) return send({ code: 'validation_failed', msg: 'Invalid role' }, 400);
+      role = body.data.registration_role as TestRole; registrationMetadata = body.data;
+      Object.assign(database.profiles.find(row => row.id === testIds[role])!, { role: null, full_name: body.data.full_name });
+      if (signupMode === 'confirm') return send({ ...user(), email: body.email });
+      active = true;
+      const token = `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ sub: testIds[role], exp: Math.floor(Date.now()/1000)+3600, role: 'authenticated' })).toString('base64url')}.test-signature`;
+      return send({ access_token: token, token_type: 'bearer', expires_in: 3600, refresh_token: `test-refresh-${role}`, user: user() });
+    }
     if (url.pathname.endsWith('/token')) {
       const body = request.postDataJSON() as { phone?: string; email?: string }; const found = (Object.keys(phones) as TestRole[]).find(r => phones[r] === body.phone || `${r.toLowerCase()}@example.test` === body.email);
       if (!found) return send({ message: 'Invalid credentials' }, 400);
@@ -49,6 +62,12 @@ export async function installMockApi(page: Page, sharedDatabase?: Record<string,
       calls.push({ method, table: rpc, body: args });
       const actor = testIds[role];
       const denied = () => send({ message: 'Thao tác không được phép hoặc trạng thái đã thay đổi.' }, 403);
+      if (rpc === 'complete_registration') {
+        const profile = database.profiles.find(row => row.id === actor);
+        if (!active || !profile || profile.is_suspended || !registrationMetadata || !['FARMER','BUYER','CARRIER'].includes(String(registrationMetadata.registration_role))) return denied();
+        if (profile.role === null) profile.role = registrationMetadata.registration_role;
+        return send(profile.role);
+      }
       if (rpc === 'buyer_market_summary' && active && role === 'BUYER') return send([]);
       if (!active || !['BUYER', 'FARMER'].includes(role)) return denied();
       if (rpc === 'open_trade_connection') {

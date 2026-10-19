@@ -2,6 +2,8 @@
 
 Yêu cầu hiện hành: dùng tài khoản test email/mật khẩu, chuyển tính năng đang mô phỏng sang dữ liệu thật; hoãn các tích hợp bên ngoài như vận chuyển. OTP và đăng ký demo đã bỏ.
 
+Cập nhật 19/10/2026: bổ sung đăng ký email/mật khẩu thật theo yêu cầu mới, cho Farmer/Buyer/Carrier; xem [luồng đăng ký và migration cần áp dụng](registration.md). SMS OTP vẫn chưa triển khai. Kết quả local/mock không thay thế nghiệm thu email xác nhận và cấp role trên cloud.
+
 ## Tích hợp UI Dev A
 
 Đã lấy nền từ PR #2 `Feature/UI skeleton` (commit `47d988a`) và ghép Auth/Buyer/Admin/giao dịch/workspace thật vào shell chung trên nhánh `Linh`. Giữ các đường dẫn cũ, thêm menu/route theo PR; sau khi gộp tên nông sản, 91 test và build đạt. Chi tiết, ảnh và giới hạn QA tại [biên bản tích hợp UI](ui-integration.md). Chưa merge PR UI trên GitHub.

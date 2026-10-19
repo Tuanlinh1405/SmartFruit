@@ -26,7 +26,7 @@ AppShell chung cho bốn role, nhận role từ route đã qua AuthProvider/Role
 
 Desktop >=1024px sidebar 240px, tablet 768–1023px sidebar icon, mobile <768px dùng drawer đóng khi chuyển trang. Có skip link, breadcrumb và focus rõ. Form hai cột chuyển thành một cột trên mobile. `FormLayout` dùng class `form-layout`, lưới field dùng `form-grid` để tránh xung đột.
 
-Route chính theo PR: `/{role}/dashboard`, Buyer/Farmer `/chat`, Admin `/users`, `/lots`, `/requests`. Các URL cũ `/login`, `/buyer/negotiations`, `/farmer/negotiations`, `/admin/buyers`, `/admin/marketplace` tiếp tục hoạt động. Đăng ký/OTP đã bỏ. Bản đồ/vận chuyển/API bên ngoài hiển thị ghi chú hoãn.
+Route chính theo PR: `/{role}/dashboard`, Buyer/Farmer `/chat`, Admin `/users`, `/lots`, `/requests`. Các URL cũ `/login`, `/buyer/negotiations`, `/farmer/negotiations`, `/admin/buyers`, `/admin/marketplace` tiếp tục hoạt động. Đăng ký email/mật khẩu mở tại `/register`; SMS OTP chưa triển khai. Bản đồ/vận chuyển/API bên ngoài hiển thị ghi chú hoãn.
 
 ## Kiểm chứng
 
@@ -84,10 +84,10 @@ F/D/U là phạm vi tính năng; trạng thái đã nối code không có nghĩa
 | AUI-05 | Yêu cầu xe | /admin/transports | page | B | D | Code B đã mount; đối chiếu route B/README |
 | AUI-06 | Giá / chính sách / cấu hình | /admin/settings | page | B | U | Code B đã mount; đối chiếu route B/README |
 | AUTH-01 | Đăng nhập | /auth/login | page | B | F | Login chung; /auth/login là alias |
-| AUTH-02 | Đăng ký | /auth/register | page | B | D | Đã bỏ; chuyển /login |
-| AUTH-03 | OTP minh họa (chưa triển khai) | /auth/register | modal | B | D | Đã bỏ; chuyển /login |
+| AUTH-02 | Đăng ký | /register | page | B | F | Email/mật khẩu, 3 vai trò thường; cần migration cấp role |
+| AUTH-03 | OTP minh họa (chưa triển khai) | /auth/register | modal | B | D | Không có SMS OTP; URL cũ mở đăng ký email |
 | AUTH-04 | Không có quyền / không tìm thấy | /403 | page | B | U | UI trạng thái |
 
-AUTH-02/03 giữ ID lịch sử nhưng đăng ký/OTP đã bỏ theo quyết định 15/10/2026. AUTH-04 là UI trạng thái. Buyer/Admin giữ route code Linh; registry cũ cần đối chiếu trước khi đánh dấu toàn bộ B hoàn tất.
+AUTH-02 được bổ sung lại ngày 19/10/2026 theo yêu cầu đăng ký thật; `/auth/register` là alias. AUTH-03 vẫn chưa triển khai SMS OTP. AUTH-04 là UI trạng thái. Buyer/Admin giữ route code Linh; registry cũ cần đối chiếu trước khi đánh dấu toàn bộ B hoàn tất.
 FUI-13/BUI-13 gộp thông báo/chính sách mức U trong nền này; khi điền feature, phần thông báo fixtures là D, phần văn bản chưa có nghiệp vụ là U.
 <!-- UI-INVENTORY:END -->

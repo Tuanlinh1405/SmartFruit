@@ -4,9 +4,10 @@ import { supabase } from '../../lib/supabase';
 import type { Profile } from '../../lib/domain';
 import { explainError } from '../../lib/format';
 import { passwordCredentials } from './password-credentials';
+import { registrationCredentials, registrationRoles, type RegistrationInput } from './registration';
 
 type Snapshot = { session: Session | null; profile: Profile | null; status: 'loading' | 'signed-out' | 'ready' | 'error' | 'suspended'; error: string | null };
-export type AuthState = Snapshot & { retry: () => void; signOut: () => Promise<void>; signIn: (identifier: string, password: string) => Promise<void> };
+export type AuthState = Snapshot & { retry: () => void; signOut: () => Promise<void>; signIn: (identifier: string, password: string) => Promise<void>; signUp: (input: RegistrationInput) => Promise<{ needsEmailConfirmation: boolean }> };
 const initial: Snapshot = { session: null, profile: null, status: 'loading', error: null };
 const Context = createContext<AuthState | null>(null);
 export function AuthProvider({ children, client = supabase }: { children: ReactNode; client?: SupabaseClient }) {
@@ -25,10 +26,21 @@ export function AuthProvider({ children, client = supabase }: { children: ReactN
       }
       publish({ ...initial, session });
       try {
-        const result = await client.from('profiles').select('id,role,full_name,phone_display,is_suspended').eq('id', session.user.id).maybeSingle<Profile>();
+        const readProfile = () => client.from('profiles').select('id,role,full_name,phone_display,is_suspended').eq('id', session.user.id).maybeSingle<Profile>();
+        let result = await readProfile();
         if (!alive || ticket !== generation.current) return;
         if (result.error) throw result.error;
         if (!result.data || result.data.id !== session.user.id) throw new Error('Chưa có hồ sơ ứng dụng cho tài khoản này.');
+        if (!result.data.role && !result.data.is_suspended && Object.hasOwn(registrationRoles, session.user.user_metadata?.registration_role ?? '')) {
+          const enrolled = await client.rpc('complete_registration');
+          if (!alive || ticket !== generation.current) return;
+          if (enrolled.error) throw new Error(enrolled.error.code === 'PGRST202'
+            ? 'Tài khoản đã được tạo nhưng máy chủ chưa cập nhật chức năng cấp vai trò đăng ký. Liên hệ quản trị viên.'
+            : 'Chưa hoàn tất vai trò đăng ký. Hãy xác nhận email rồi thử tải lại.');
+          result = await readProfile();
+          if (!alive || ticket !== generation.current) return;
+          if (result.error || !result.data?.role) throw new Error('Chưa tải được vai trò đăng ký. Vui lòng thử lại.');
+        }
         const roles = ['FARMER', 'BUYER', 'CARRIER', 'ADMIN'];
         if (result.data.role !== null && !roles.includes(result.data.role)) throw new Error('Vai trò ứng dụng không hợp lệ.');
         publish({ session, profile: result.data, status: result.data.is_suspended ? 'suspended' : 'ready', error: null });
@@ -63,6 +75,13 @@ export function AuthProvider({ children, client = supabase }: { children: ReactN
   const signIn = useCallback(async (identifier: string, password: string) => {
     const { error } = await client.auth.signInWithPassword(passwordCredentials(identifier, password)); if (error) throw error;
   }, [client]);
-  return <Context.Provider value={{ ...state, retry, signOut, signIn }}>{children}</Context.Provider>;
+  const signUp = useCallback(async (input: RegistrationInput) => {
+    const credentials = registrationCredentials(input);
+    const { data, error } = await client.auth.signUp({ ...credentials, options: { ...credentials.options, emailRedirectTo: `${window.location.origin}/role-home` } });
+    if (error) throw error;
+    if (!data.user) throw new Error('Registration returned no user');
+    return { needsEmailConfirmation: !data.session };
+  }, [client]);
+  return <Context.Provider value={{ ...state, retry, signOut, signIn, signUp }}>{children}</Context.Provider>;
 }
 export function useAuth() { const value = useContext(Context); if (!value) throw new Error('AuthProvider is missing'); return value; }

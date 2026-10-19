@@ -67,7 +67,7 @@ try {
     grant usage on schema public, auth, storage, extensions to anon, authenticated, service_role;
     create table auth.users (
       id uuid primary key, phone text, email text unique,
-      raw_app_meta_data jsonb default '{}', raw_user_meta_data jsonb default '{}'
+      raw_app_meta_data jsonb default '{}', raw_user_meta_data jsonb default '{}', email_confirmed_at timestamptz
     );
     create function auth.uid() returns uuid language sql stable as $$
       select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
@@ -279,7 +279,7 @@ try {
     const r=await db.query("select p.proname,p.proconfig,has_function_privilege('anon',p.oid,'EXECUTE') as anon_access,has_function_privilege('authenticated',p.oid,'EXECUTE') as authenticated_access from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prosecdef order by p.proname");
     const expected = process.argv.includes('--deploy') ? ['delete_empty_lot','replace_lot_image'] : [
       'admin_close_listing','admin_directory','admin_marketplace','admin_trade_overview','admin_update_member',
-      'complete_trade_agreement','delete_empty_lot','embedding_query_cache','embedding_worker_claim','embedding_worker_finish','embedding_worker_status','open_trade_connection','prepare_lot_deletion',
+      'complete_registration','complete_trade_agreement','delete_empty_lot','embedding_query_cache','embedding_worker_claim','embedding_worker_finish','embedding_worker_status','open_trade_connection','prepare_lot_deletion',
       'propose_trade_offer','replace_lot_image','respond_trade_connection','respond_trade_offer','send_trade_message','submit_trade_review',
     ];
     assert.deepEqual(r.rows.map(x=>x.proname),expected);

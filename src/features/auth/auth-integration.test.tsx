@@ -10,7 +10,7 @@ import { SessionWorkspace } from '../../app/session-workspace';
 import { useADemo } from '../a-demo/demo-context';
 const session = (id: string) => ({ user: { id }, access_token: `token-${id}` } as Session);
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(r => { resolve = r; }); return { promise, resolve }; }
-function sdk(options: { initial?: Session | null; loading?: Promise<unknown>; read?: (id: string) => Promise<unknown> } = {}) {
+function sdk(options: { initial?: Session | null; loading?: Promise<unknown>; read?: (id: string) => Promise<unknown>; rpc?: () => Promise<unknown> } = {}) {
   let callback: (event: AuthChangeEvent, session: Session | null) => void = () => {};
   const read = vi.fn(options.read ?? (async (id: string) => ({ data: { id, role: 'FARMER', full_name: id }, error: null })));
   const client = { auth: {
@@ -18,10 +18,42 @@ function sdk(options: { initial?: Session | null; loading?: Promise<unknown>; re
     onAuthStateChange: vi.fn((cb: typeof callback) => { callback = cb; return { data: { subscription: { unsubscribe: vi.fn() } } }; }),
     signOut: vi.fn(async () => { callback('SIGNED_OUT', null); return { error: null }; }),
     signInWithPassword: vi.fn(),
-  }, from: () => ({ select: () => ({ eq: (_key: string, id: string) => ({ maybeSingle: () => read(id) }) }) }) };
+    signUp: vi.fn(),
+  }, rpc: vi.fn(options.rpc), from: () => ({ select: () => ({ eq: (_key: string, id: string) => ({ maybeSingle: () => read(id) }) }) }) };
   return { client: client as unknown as SupabaseClient, read, emit: (s: Session | null, e: AuthChangeEvent = 'SIGNED_IN') => act(() => { callback(e, s); }) };
 }
 function Probe() { const a = useAuth(); return <><p data-testid="auth">{a.status}:{a.profile?.id}:{a.profile?.role}</p><button onClick={a.retry}>retry</button><button onClick={() => { void a.signOut(); }}>logout</button></>; }
+
+test('confirmed signup claims a pending role via RPC then reloads the server profile', async()=>{
+  const registered={...session('new'),user:{...session('new').user,user_metadata:{registration_role:'BUYER'}}} as Session;
+  let enrolled=false;
+  const api=sdk({initial:registered,read:async id=>({data:{id,role:enrolled?'BUYER':null},error:null}),rpc:async()=>{enrolled=true;return {data:'BUYER',error:null};}});
+  render(<AuthProvider client={api.client}><Probe/></AuthProvider>);
+  await waitFor(()=>expect(screen.getByTestId('auth')).toHaveTextContent('ready:new:BUYER'));
+  expect(api.client.rpc).toHaveBeenCalledWith('complete_registration');expect(api.read).toHaveBeenCalledTimes(2);
+});
+test('a missing enrollment RPC is an error, never a client-side role grant',async()=>{
+  const registered={...session('new'),user:{...session('new').user,user_metadata:{registration_role:'FARMER'}}} as Session;
+  const api=sdk({initial:registered,read:async id=>({data:{id,role:null},error:null}),rpc:async()=>({data:null,error:{code:'PGRST202'}})});
+  render(<AuthProvider client={api.client}><Probe/></AuthProvider>);
+  await waitFor(()=>expect(screen.getByTestId('auth')).toHaveTextContent('error:'));
+  expect(screen.getByTestId('auth')).not.toHaveTextContent('FARMER');
+});
+test('an enrollment response cannot restore a logged-out session',async()=>{
+  const pending=deferred<unknown>();const registered={...session('new'),user:{...session('new').user,user_metadata:{registration_role:'FARMER'}}} as Session;
+  const api=sdk({initial:registered,read:async id=>({data:{id,role:null},error:null}),rpc:()=>pending.promise});
+  render(<AuthProvider client={api.client}><Probe/></AuthProvider>);
+  await waitFor(()=>expect(api.client.rpc).toHaveBeenCalledOnce());api.emit(null);
+  await act(async()=>pending.resolve({data:'FARMER',error:null}));
+  expect(screen.getByTestId('auth')).toHaveTextContent('signed-out');
+});
+function SignupProbe(){const {signUp}=useAuth();const [result,setResult]=useState('');return <><button onClick={()=>void signUp({fullName:' Test ',email:' USER@example.com ',password:'Password123',confirmation:'Password123',role:'CARRIER'}).then(value=>setResult(String(value.needsEmailConfirmation)))}>signup</button><p>{result}</p></>;}
+test('signup sends ordinary role intent and a same-origin confirmation callback to Auth',async()=>{
+  const api=sdk();vi.mocked(api.client.auth.signUp).mockResolvedValue({data:{user:{id:'new'} as Session['user'],session:null},error:null});
+  render(<AuthProvider client={api.client}><SignupProbe/></AuthProvider>);
+  fireEvent.click(screen.getByRole('button',{name:'signup'}));expect(await screen.findByText('true')).toBeVisible();
+  expect(api.client.auth.signUp).toHaveBeenCalledWith({email:'user@example.com',password:'Password123',options:{data:{full_name:'Test',registration_role:'CARRIER'},emailRedirectTo:`${window.location.origin}/role-home`}});
+});
 
 test('suspended accounts cannot open their role workspace', async () => {
   const api = sdk({ initial: session('blocked'), read: async id => ({ data: { id, role: 'FARMER', full_name: id, is_suspended: true }, error: null }) });

@@ -9,6 +9,7 @@ import { aDemoRoutes } from '../features/a-demo/demo-routes';
 const AFeaturePage = lazy(() => import('../features/a-feature-page').then(module => ({ default: module.AFeaturePage })));
 import { AuthProvider, useAuth } from '../features/auth/AuthProvider';
 import { LoginPage } from '../features/auth/LoginPage';
+import { RegisterPage } from '../features/auth/RegisterPage';
 import { RoleGuard, RoleHome } from '../features/auth/auth-routing';
 import { SessionWorkspace } from './session-workspace';
 import { FarmerAssistantPanel } from '../features/farmer/assistant/farmer-assistant';
@@ -37,7 +38,9 @@ export function ApplicationRoutes() {
   return <><Suspense fallback={<LoadingState />}><Routes>
     <Route path="/" element={<StartPage />} />
     <Route path="/login" element={<LoginPage />} />
-    {['/auth/login','/auth/register','/register'].map(path => <Route key={path} path={path} element={<Navigate to="/login" replace />} />)}
+    <Route path="/register" element={<RegisterPage />} />
+    <Route path="/auth/register" element={<Navigate to="/register" replace />} />
+    <Route path="/auth/login" element={<Navigate to="/login" replace />} />
     <Route path="/role-home" element={<RoleHome />} />
     {(['FARMER','CARRIER'] as const).map(role => <Route key={role} element={<RoleGuard role={role} />}>
       <Route path={role === 'FARMER' ? '/farmer' : '/carrier'} element={<AppShell role={role} />}>
