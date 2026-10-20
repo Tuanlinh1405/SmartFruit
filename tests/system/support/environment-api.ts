@@ -1,7 +1,11 @@
 import type { Page } from '@playwright/test';
 export async function installEnvironmentApi(page:Page) {
-  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6Xl8AAAAASUVORK5CYII=','base64');
-  await page.route('https://tile.openstreetmap.org/**',route=>route.fulfill({contentType:'image/png',body:png}));
+  // A self-contained vector style keeps regular UI tests independent of the
+  // public provider while exercising the actual MapLibre renderer and worker.
+  await page.route('https://tiles.openfreemap.org/**',route=>route.fulfill({json:{
+    version:8,sources:{land:{type:'geojson',data:{type:'Feature',properties:{},geometry:{type:'Polygon',coordinates:[[[100,5],[115,5],[115,25],[100,25],[100,5]]]}}}},
+    layers:[{id:'water',type:'background',paint:{'background-color':'#9ebdff'}},{id:'land',type:'fill',source:'land',paint:{'fill-color':'#f8f4f0'}}],
+  }}));
   await page.route('https://geocoding-api.open-meteo.com/**',route=>{
     const lookup=new URL(route.request().url()).searchParams.get('id');
     if(lookup)return route.fulfill({json:{id:Number(lookup),name:lookup==='13494360'?'Đồng Tháp':'Không khớp',latitude:10.4,longitude:106.3,country_code:'VN',feature_code:'ADM1'}});

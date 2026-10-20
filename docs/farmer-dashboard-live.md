@@ -10,8 +10,8 @@ Cập nhật 19/10/2026 cho mục đích demo/đồ án. Không migration hoặc
 - Dự báo Open-Meteo có nhiệt độ, độ ẩm, gió, khả năng mưa và ba ngày dự báo, timezone `Asia/Ho_Chi_Minh`. Cache dự báo trong memory 15 phút; cache geocoding trong browser 24 giờ. Không polling 5 giây. Lỗi khi làm mới giữ dữ liệu cũ với timestamp nếu có; không tạo dự báo mẫu.
 - Bản đồ đọc các trường công khai của nhu cầu `OPEN` chưa hết hạn, phân trang 100 dòng, dừng ở 1.000 và báo rõ nếu còn dữ liệu. Gom theo `preferred_provinces`, khử trùng từng ID mỗi vùng; tổng không cộng trùng nhu cầu nhiều vùng.
 - Không có tỉnh → nhóm Không giới hạn khu vực. Không dùng tỉnh trụ sở Buyer để thay thế. Không đổi địa danh cũ sang tỉnh mới. Vùng chưa định vị được vẫn ở danh sách.
-- Leaflet + tiles OpenStreetMap qua HTTPS; marker là điểm đại diện tỉnh, không phải địa chỉ kho. Bấm marker mở thông tin; nút trong popup lọc danh sách. Có lọc loại quả/tỉnh và chế độ chỉ xem danh sách. Tiles lỗi không làm mất danh sách.
-- Giữ attribution, không offline/prefetch. URL tiles có thể cấu hình bằng `VITE_MAP_TILE_URL`; khi đổi nhà cung cấp phải cập nhật attribution trong component cho đúng giấy phép.
+- Leaflet + nền vector OpenFreeMap qua MapLibre GL và HTTPS; marker là điểm đại diện tỉnh, không phải địa chỉ kho. Bấm marker mở thông tin; nút trong popup lọc danh sách. Có lọc loại quả/tỉnh và chế độ chỉ xem danh sách. Tiles lỗi không làm mất danh sách.
+- Giữ attribution, không offline/prefetch. Style JSON có thể cấu hình bằng `VITE_MAP_STYLE_URL` (mặc định `https://tiles.openfreemap.org/styles/liberty`); `VITE_MAP_TILE_URL` cũ không còn sử dụng; khi đổi nhà cung cấp phải cập nhật attribution trong component cho đúng giấy phép.
 
 ## Chi tiết quan trọng về địa danh
 
@@ -41,3 +41,7 @@ Kết quả chi tiết của đợt này xem [biên bản tích hợp](openroute
 4. Đóng nhu cầu ở Buyer, bấm Tải lại khu vực ở Farmer; nhu cầu biến mất.
 5. Địa danh không khớp vẫn có trong danh sách, không có marker giả. Chặn request tiles trong DevTools để kiểm tra danh sách còn dùng được.
 6. Mở Hỏi trợ lý, gửi câu mẫu, xem nguồn và requestId khi lỗi. Khi CORS lỗi kiểm tra origin deploy trong Supabase Secrets.
+
+## Nguồn nền bản đồ
+
+Đã chuyển khỏi máy chủ raster `tile.openstreetmap.org` sang OpenFreeMap; dữ liệu địa lý vẫn là OpenStreetMap. Không cần API key. Worker MapLibre được đóng gói cùng Vite, không tải mã thực thi từ CDN. Giữ attribution OpenFreeMap/OpenMapTiles/OpenStreetMap. Lỗi style, tiles, font, sprite hoặc WebGL sẽ hiện cảnh báo; có nút thử lại và tự thử lại khi kết nối mạng trở lại. Danh sách và marker Leaflet không phụ thuộc việc nền tải thành công.
