@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { Leaf } from 'lucide-react';
+import { BrandMark } from '../../components/brand-mark';
 import { Card, LoadingState, PageHeader } from '../../components/shared';
 import { Button, Select, TextField } from '../../components/ui';
 import { useAuth } from './AuthProvider';
@@ -26,7 +26,7 @@ export function RegisterPage() {
     } catch (cause) { setError(registrationError(cause)); }
     finally { locked.current = false; setBusy(false); }
   }
-  return <main className="landing stack login-page"><Link to="/" className="brand public-brand"><Leaf size={28} aria-hidden="true" /><span>SmartFruit</span></Link>
+  return <main className="landing stack login-page"><Link to="/" className="brand public-brand"><BrandMark /><span>onlmallfruit</span></Link>
     <PageHeader eyebrow="Kết nối nông sản Việt" title="Đăng ký tài khoản" description="Tạo tài khoản để quản lý nhà vườn, thu mua hoặc vận tải." />
     <Card>{confirmEmail ? <div className="stack" role="status"><h2>Kiểm tra email để tiếp tục</h2><p>Nếu email hợp lệ và chưa được sử dụng, bạn sẽ nhận được liên kết xác nhận. Kiểm tra cả thư mục Spam, xác nhận rồi đăng nhập.</p><Link className="button button-primary" to="/login">Đến trang đăng nhập</Link></div> :
       <form className="stack" onSubmit={submit} noValidate aria-label="Đăng ký tài khoản">

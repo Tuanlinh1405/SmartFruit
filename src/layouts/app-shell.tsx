@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Leaf, Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
+import { BrandMark } from '../components/brand-mark';
 import { pageInventory, roleMeta } from '../app/ui-inventory';
 import { workspaceNavigation } from '../app/navigation';
 import type { Role } from '../types/ui';
@@ -19,7 +20,7 @@ export function AppShell({ role }: { role: Role }) {
   const name = profile?.full_name || meta.label; const initial = name.charAt(0).toLocaleUpperCase('vi-VN');
   async function logout() { if (busy) return; setBusy(true); setError(''); try { await signOut(); navigate('/login', { replace: true }); } catch { setError('Không thể đăng xuất. Vui lòng thử lại.'); } finally { setBusy(false); } }
   const sidebarContent = <>
-    <Link to={role === 'BUYER' ? '/buyer' : `${meta.prefix}/dashboard`} className="workspace-brand" onClick={() => setMenuOpen(false)}><span className="workspace-brand-icon"><Leaf size={22} aria-hidden="true" /></span><span>SmartFruit<small>Nông sản Việt Nam</small></span></Link>
+    <Link to={role === 'BUYER' ? '/buyer' : `${meta.prefix}/dashboard`} className="workspace-brand" onClick={() => setMenuOpen(false)}><BrandMark /><span>onlmallfruit<small>Nông sản Việt Nam</small></span></Link>
     <p className="workspace-caption">Không gian {meta.label}</p><Navigation role={role} onNavigate={() => setMenuOpen(false)} />
     <div className="workspace-account"><NavLink to={accountPath} className="workspace-account-link" onClick={() => setMenuOpen(false)}><span className="workspace-avatar">{initial}</span><span><strong>{name}</strong><small>{role === 'CARRIER' ? 'Hồ sơ & đội xe' : 'Xem hồ sơ'}</small></span></NavLink>
       <Button variant="ghost" className="workspace-logout" loading={busy} onClick={() => { void logout(); }}><LogOut size={17} aria-hidden="true" />Đăng xuất</Button>{error && <p role="alert">{error}</p>}
@@ -30,6 +31,6 @@ export function AppShell({ role }: { role: Role }) {
     <div className="workspace-main"><header className="workspace-topbar">
       <Drawer title={`Menu ${meta.label}`} description="Điều hướng theo vai trò tài khoản đã đăng nhập." open={menuOpen} onOpenChange={setMenuOpen} trigger={<Button variant="ghost" className="workspace-menu" aria-label="Mở menu"><Menu size={22} aria-hidden="true" /></Button>}><div className="workspace-mobile-navigation">{sidebarContent}</div></Drawer>
       <span className="workspace-tag">B2B AGRITECH VIETNAM</span><span className="workspace-spacer" /><span className="workspace-welcome">Xin chào, {name}</span><Link to={accountPath} className="workspace-avatar" aria-label={`Hồ sơ ${name}`}>{initial}</Link>
-    </header><main id="main-content" tabIndex={-1} className="workspace-content"><nav aria-label="Đường dẫn" className="breadcrumb"><Link to="/">SmartFruit</Link><span aria-hidden="true">/</span><span>{meta.label}</span><span aria-hidden="true">/</span><span aria-current="page">{current?.title ?? (pathname.endsWith('/edit') ? 'Chỉnh sửa' : navItem?.title ?? 'Chi tiết')}</span></nav><div className={role === 'BUYER' ? 'b-workspace' : 'workspace-pages'}><Outlet /></div></main></div>
+    </header><main id="main-content" tabIndex={-1} className="workspace-content"><nav aria-label="Đường dẫn" className="breadcrumb"><Link to="/">onlmallfruit</Link><span aria-hidden="true">/</span><span>{meta.label}</span><span aria-hidden="true">/</span><span aria-current="page">{current?.title ?? (pathname.endsWith('/edit') ? 'Chỉnh sửa' : navItem?.title ?? 'Chi tiết')}</span></nav><div className={role === 'BUYER' ? 'b-workspace' : 'workspace-pages'}><Outlet /></div></main></div>
   </div>;
 }

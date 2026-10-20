@@ -25,14 +25,14 @@ function sdk(options: { initial?: Session | null; loading?: Promise<unknown>; re
 function Probe() { const a = useAuth(); return <><p data-testid="auth">{a.status}:{a.profile?.id}:{a.profile?.role}</p><button onClick={a.retry}>retry</button><button onClick={() => { void a.signOut(); }}>logout</button></>; }
 
 test('signup confirmation returns to the deployed repository path', async () => {
-  vi.stubEnv('BASE_URL', '/SmartFruit/');
+  vi.stubEnv('BASE_URL', '/onlmallfruit/');
   const api = sdk();
   vi.mocked(api.client.auth.signUp).mockResolvedValue({ data: { user: { id: 'new' }, session: null }, error: null } as never);
   function Signup() { const { signUp } = useAuth(); return <button onClick={() => { void signUp({ fullName: 'Test', email: 'user@example.com', password: 'Password123', confirmation: 'Password123', role: 'BUYER' }); }}>signup at base</button>; }
   try {
     render(<AuthProvider client={api.client}><Signup /></AuthProvider>);
     fireEvent.click(screen.getByText('signup at base'));
-    await waitFor(() => expect(api.client.auth.signUp).toHaveBeenCalledWith(expect.objectContaining({ options: expect.objectContaining({ emailRedirectTo: `${window.location.origin}/SmartFruit/role-home` }) })));
+    await waitFor(() => expect(api.client.auth.signUp).toHaveBeenCalledWith(expect.objectContaining({ options: expect.objectContaining({ emailRedirectTo: `${window.location.origin}/onlmallfruit/role-home` }) })));
   } finally { vi.unstubAllEnvs(); }
 });
 

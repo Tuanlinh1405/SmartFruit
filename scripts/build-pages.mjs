@@ -3,7 +3,8 @@ import { execFileSync } from 'node:child_process';
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 
 execFileSync(process.execPath, ['node_modules/typescript/bin/tsc', '--noEmit'], { stdio: 'inherit' });
-execFileSync(process.execPath, ['node_modules/vite/bin/vite.js', 'build', '--base', '/SmartFruit/'], { stdio: 'inherit' });
+const base = '/onlmallfruit/';
+execFileSync(process.execPath, ['node_modules/vite/bin/vite.js', 'build', '--base', base], { stdio: 'inherit' });
 const inventory = await readFile('src/app/ui-inventory.ts', 'utf8');
 const paths = new Set([...inventory.matchAll(/path:\s*['"]([^'"]+)['"]/g)].map(match => match[1]));
 let rolePrefix;
@@ -26,4 +27,4 @@ for (const path of paths) {
 }
 await copyFile('dist/index.html', 'dist/404.html');
 await writeFile('dist/.nojekyll', '');
-console.log(`Pages artifact prepared for /SmartFruit/ (${paths.size} route entries).`);
+console.log(`Pages artifact prepared for ${base} (${paths.size} route entries).`);

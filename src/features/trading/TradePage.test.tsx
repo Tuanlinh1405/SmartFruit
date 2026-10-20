@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { TradePage } from './TradePage';
@@ -30,7 +30,8 @@ test.each(['PENDING', 'DECLINED', 'CANCELLED'] as const)('a %s connection cannot
   expect(api.loadThread).not.toHaveBeenCalled();
 });
 test('without an ID, the existing default accepted conversation still opens', async () => {
-  show(); expect(await screen.findByLabelText('Tin nhắn')).toBeVisible(); expect(api.loadThread).toHaveBeenCalledWith('chosen');
+  show(); expect(await screen.findByLabelText('Tin nhắn')).toBeVisible();
+  await waitFor(() => expect(api.loadThread).toHaveBeenCalledWith('chosen'));
 });
 test('accepted invitation links to the canonical role conversation', async () => {
   show('/farmer/invitations', 'invitations');

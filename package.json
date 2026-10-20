@@ -15,6 +15,7 @@
     "test:database": "npm --prefix supabase/tests test",
     "build": "tsc --noEmit && vite build",
     "build:pages": "node scripts/build-pages.mjs",
+    "build:vercel": "node scripts/build-vercel.mjs",
     "preview": "vite preview",
     "setup:supabase": "node scripts/setup-supabase.mjs",
     "check:supabase": "node scripts/check-supabase.mjs",
