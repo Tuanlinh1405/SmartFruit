@@ -60,13 +60,10 @@ for (const width of [1440, 390, 320]) for (const role of ['FARMER', 'CARRIER', '
   });
 }
 
-test('carrier quotation portal uses shared controls and restores focus', async ({ page }) => {
+test('carrier transport explicitly waits for a real integration', async ({ page }) => {
   await installMockApi(page); await loginAs(page, 'CARRIER'); await page.goto('/carrier/requests');
-  const trigger = page.getByRole('button', { name: 'Chi tiết / báo giá' }).first(); await trigger.click();
-  const dialog = page.getByRole('dialog'); await expect(dialog).toBeVisible();
-  await expect(dialog).toHaveCSS('border-radius', '17px');
-  await expect(dialog.getByLabel('Báo giá (đ)')).toHaveCSS('border-radius', '9px');
-  await page.keyboard.press('Escape'); await expect(trigger).toBeFocused();
+  await expect(page.getByText('Chưa hỗ trợ', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Chi tiết / báo giá' })).toHaveCount(0);
 });
 
 for (const width of [1440, 390, 320]) test(`public and admin pages fit at ${width}px`, async ({ page }) => {

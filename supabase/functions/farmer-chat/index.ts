@@ -12,7 +12,7 @@ Deno.serve(createChatHandler({
     if (error || !data.user) return null;
     const profile = await client.from('profiles').select('role,is_suspended').eq('id', data.user.id).maybeSingle();
     if (profile.error) throw new Error('Profile unavailable');
-    return { role: profile.data?.is_suspended ? null : profile.data?.role ?? null };
+    return { role: profile.data?.role ?? null, isSuspended: profile.data?.is_suspended ?? true };
   },
   // Never log prompt, response, JWT, identity, key or provider errors.
   log: event => console.log(JSON.stringify(event)),

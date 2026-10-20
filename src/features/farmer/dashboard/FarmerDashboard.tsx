@@ -11,7 +11,7 @@ export default function FarmerDashboard() {
     <FarmerAssistantEntry/>
     <section className="panel hero-panel"><span className="eyebrow">Kết nối thu mua</span><h2>Đưa nông sản đến đúng người mua</h2><p>Chọn lô đã công bố, xem nhu cầu và lý do người mua phù hợp.</p><div className="hero-actions"><Link className="button button-primary" to="/farmer/matches">Tìm người mua →</Link><Link className="button button-secondary" to="/farmer/lots">Mở danh sách lô</Link></div></section>
     <div className="farmer-dashboard-live" key={id}><BuyingAreasCard userId={id}/><WeatherCard/></div>
-    <section className="panel demo-panel"><span className="badge badge-demo">Minh họa</span><h2>Tiến trình vận chuyển</h2><p>Luồng vận chuyển mẫu; chưa kết nối đặt xe hoặc GPS thật.</p><Link to="/farmer/transport">Xem vận chuyển minh họa →</Link></section>
+    <section className="panel"><h2>Vận chuyển</h2><p>Đặt xe, báo giá và tracking đang chờ tích hợp API nhà vận tải.</p><Link to="/farmer/transport">Thông tin vận chuyển →</Link></section>
     <Link to="/farmer/reviews">Xem đánh giá giao dịch →</Link>
   </div>;
 }

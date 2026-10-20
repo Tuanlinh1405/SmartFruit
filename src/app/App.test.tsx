@@ -8,6 +8,7 @@ vi.mock('../features/auth/AuthProvider',()=>({useAuth:()=>auth,AuthProvider:({ch
 vi.mock('../lib/supabase',()=>({supabase:{auth:{signOut:vi.fn().mockResolvedValue({error:null})}}}));
 vi.mock('../features/auth/LoginPage',()=>({LoginPage:()=> <h1>Đăng nhập</h1>}));
 vi.mock('../features/buyer/BuyerDashboard',()=>({BuyerDashboard:()=> <h1>Dashboard Buyer thật</h1>}));
+vi.mock('../features/farmer/dashboard/FarmerDashboard',()=>({default:()=> <h1>Tổng quan Farmer thời tiết và thu mua</h1>}));
 vi.mock('../features/admin/AdminPage',()=>({AdminPage:()=> <h1>Admin thật</h1>}));
 vi.mock('../features/buyer-profile/BuyerProfilePage',()=>({BuyerProfilePage:()=> <h1>Hồ sơ thật</h1>}));
 vi.mock('../features/buy-requests/RequestListPage',()=>({RequestListPage:()=> <h1>Nhu cầu thật</h1>}));
@@ -25,6 +26,11 @@ beforeEach(()=>{auth.status='ready';auth.profile.role='BUYER';});
 function show(path:string){window.history.replaceState({},'',path);render(<App/>);}
 
 describe('Dev A shell connected to authenticated features',()=>{
+  it.each(['/farmer', '/farmer/dashboard'])('keeps the latest Farmer dashboard through %s',async path=>{
+    auth.profile.role='FARMER';show(path);
+    expect(await screen.findByRole('heading',{name:'Tổng quan Farmer thời tiết và thu mua'})).toBeVisible();
+    expect(window.location.pathname).toBe('/farmer/dashboard');
+  });
   it('redirects the old Buyer root into the new dashboard without a role picker',async()=>{
     show('/buyer');expect(await screen.findByRole('heading',{name:'Dashboard Buyer thật'})).toBeVisible();
     expect(window.location.pathname).toBe('/buyer/dashboard');
@@ -48,8 +54,9 @@ describe('Dev A shell connected to authenticated features',()=>{
     expect(within(nav).getByRole('link', { name: 'Đàm phán' })).toHaveAttribute('href', '/farmer/negotiations');
   });
   it.each([['FARMER','/farmer/matches','Dev A matches','Nhà vườn'],['CARRIER','/carrier/vehicles','Dev A vehicles','Nhà xe'],
+    ['CARRIER','/carrier/profile','Dev A vehicles','Nhà xe'],['CARRIER','/carrier/transport','Vận chuyển','Nhà xe'],
     ['ADMIN','/admin/users','Admin thật','Quản trị']])('uses the same protected shell for %s',async(role,path,title,label)=>{
-    auth.profile.role=role;show(path);expect(await screen.findByRole('heading',{name:title})).toBeVisible();
+    auth.profile.role=role;show(path);expect(await screen.findByRole('heading',{name:title,level:1})).toBeVisible();
     expect(screen.getByRole('navigation',{name:`Điều hướng ${label}`})).toBeVisible();
   });
   it('does not grant another role by entering its UI path',async()=>{

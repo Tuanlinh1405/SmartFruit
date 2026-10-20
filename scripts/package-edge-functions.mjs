@@ -3,7 +3,7 @@ import {build} from 'rolldown';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 const manifest=[];
-for(const name of ['search-matches','process-embeddings']) {
+for(const name of ['search-matches','process-embeddings','farmer-chat']) {
   const result=await build({input:`supabase/functions/${name}/index.ts`,external:id=>id.startsWith('npm:'),
     output:{format:'esm',minify:false,sourcemap:false}});
   const code=result.output.find(item=>item.type==='chunk').code;

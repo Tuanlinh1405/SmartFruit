@@ -77,7 +77,8 @@ export function AuthProvider({ children, client = supabase }: { children: ReactN
   }, [client]);
   const signUp = useCallback(async (input: RegistrationInput) => {
     const credentials = registrationCredentials(input);
-    const { data, error } = await client.auth.signUp({ ...credentials, options: { ...credentials.options, emailRedirectTo: `${window.location.origin}/role-home` } });
+    const emailRedirectTo = new URL('role-home', new URL(import.meta.env.BASE_URL, window.location.origin)).href;
+    const { data, error } = await client.auth.signUp({ ...credentials, options: { ...credentials.options, emailRedirectTo } });
     if (error) throw error;
     if (!data.user) throw new Error('Registration returned no user');
     return { needsEmailConfirmation: !data.session };

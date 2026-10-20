@@ -37,7 +37,7 @@ test('single-turn request includes only matching knowledge and allowed context, 
 describe('access and input gates run before inference', () => {
   test('missing/invalid identity or wrong role cannot reach OpenRouter', async () => {
     const missing = setup(); expect((await missing.request(input, { Authorization: '' })).status).toBe(401); expect(missing.authenticate).not.toHaveBeenCalled();
-    for (const identity of [null, { role: 'CARRIER' }, { role: 'BUYER' }, { role: 'ADMIN' }, { role: null }]) {
+    for (const identity of [null, { role: 'CARRIER' }, { role: 'BUYER' }, { role: 'ADMIN' }, { role: null }, { role: 'FARMER', isSuspended: true }]) {
       const s = setup({ authenticate: async () => identity }); expect((await s.request()).status).toBe(identity ? 403 : 401); expect(s.fetcher).not.toHaveBeenCalled();
     }
   });
