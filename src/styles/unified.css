@@ -16,7 +16,10 @@ h3 { font-size: 1.08rem; line-height: 1.3; }
 .workspace-sidebar { position: sticky; top: 0; height: 100dvh; overflow-y: auto; scrollbar-width: thin; }
 .workspace-brand { display: flex; align-items: center; gap: .7rem; font-size: 1.25rem; font-weight: 800; letter-spacing: -.025em; line-height: 1.1; padding: .15rem .7rem; color: inherit; text-decoration: none; flex: none; }
 .workspace-brand small { display: block; font-size: .56rem; letter-spacing: .12em; text-transform: uppercase; margin-top: .26rem; color: #b7d2c1; }
-.workspace-brand-icon { width: 34px; height: 34px; flex: none; border-radius: 10px; background: #18a569; color: #e6f9bd; display: grid; place-items: center; box-shadow: inset 0 1px 2px #ffffff4a; }
+.brand-logo { display: block; width: 40px; height: auto; flex: none; }
+.brand-name { white-space: nowrap; }
+.workspace-brand { gap: .5rem; font-size: 1rem; }
+.workspace-brand .brand-logo { width: 34px; }
 .workspace-caption { font-size: .61rem; letter-spacing: .14em; text-transform: uppercase; color: #b7d2c1; margin: 2.5rem .9rem .75rem; font-weight: 800; }
 .workspace-navigation { display: grid; gap: .22rem; }
 .workspace-nav-link { display: flex; align-items: center; gap: .85rem; padding: .74rem .85rem; min-height: 44px; border-radius: 10px; color: #cbded2; font-size: .85rem; font-weight: 560; text-decoration: none; }

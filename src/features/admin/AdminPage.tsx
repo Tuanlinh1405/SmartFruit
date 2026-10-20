@@ -39,7 +39,7 @@ export function AdminPage() {
     catch (cause) { setError(explainError(cause)); } finally { setBusy(false); }
   }
   if (['transport','transports','settings','policy'].includes(section)) return <DeferredPage kind={section==='transports'?'transport':section} />;
-  return <><div className="page-heading"><div><span className="eyebrow">Quản trị LogStar</span><h1>{titles[section] || 'Tổng quan hệ thống'}</h1>
+  return <><div className="page-heading"><div><span className="eyebrow">Quản trị ONLMALLFRUIT</span><h1>{titles[section] || 'Tổng quan hệ thống'}</h1>
     <p>Dữ liệu từ Supabase. Thay đổi được lưu vào hệ thống.</p></div><button className="button outline" disabled={busy} onClick={() => void act(refresh, 'Đã tải dữ liệu mới.')}>Tải lại</button></div>
     {error && !editing && <p className="notice error" role="alert">{error}</p>}{success && <p className="form-success" role="status">{success}</p>}
     {loading ? <div className="panel empty-state">Đang tải dữ liệu quản trị…</div> : !section ? <><div className="stat-grid">{Object.entries(roles).map(([key, role]) =>

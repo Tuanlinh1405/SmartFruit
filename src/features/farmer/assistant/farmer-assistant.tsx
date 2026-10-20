@@ -20,7 +20,8 @@ export function FarmerAssistantEntry() {
 export function FarmerAssistantPanel({ enabled }: { enabled: boolean }) {
   const assistant = useFarmerAssistant(); const location = useLocation(); const composer = useRef<HTMLTextAreaElement>(null);
   const thread = useRef<HTMLDivElement>(null);
-  const onDashboard = enabled && ['/farmer/dashboard', '/farmer', '/farmer/'].includes(location.pathname);
+  const dashboardPath = location.pathname.replace(/\/+$/, '');
+  const onDashboard = enabled && ['/farmer/dashboard', '/farmer'].includes(dashboardPath);
   const setOpen = assistant?.setOpen;
   useEffect(() => { if (!onDashboard) setOpen?.(false); }, [onDashboard, setOpen]);
   useEffect(() => { thread.current?.scrollTo?.({ top: thread.current.scrollHeight }); }, [assistant?.exchanges.length, assistant?.pending, assistant?.open]);

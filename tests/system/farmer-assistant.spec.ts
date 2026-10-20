@@ -26,6 +26,18 @@ async function assistantApi(page: Page, options: { status?: number; delay?: Prom
   return { requests, prompts };
 }
 
+test('Farmer assistant opens after refreshing a trailing-slash dashboard URL', async ({ page }) => {
+  await installMockApi(page); const api = await assistantApi(page); await loginAs(page, 'FARMER');
+  await page.goto('/farmer/dashboard/?from=refresh'); await page.reload();
+  await page.getByRole('button', { name: 'Hỏi trợ lý', exact: true }).click();
+  const panel = page.getByRole('dialog', { name: 'Trợ lý nhà vườn', exact: true });
+  await expect(panel).toBeVisible();
+  await panel.getByLabel('Câu hỏi cho trợ lý').fill('Tình huống mẫu: dấu hiệu nào cần lưu ý?');
+  await panel.getByRole('button', { name: 'Gửi câu hỏi', exact: true }).click();
+  await expect(panel.locator('.assistant-answer')).toContainText('Nội dung tham khảo cho DURIAN.');
+  expect(api.requests).toHaveLength(1);
+});
+
 for (const width of [1440, 768, 390, 320]) test(`Farmer assistant at ${width}px: single prompt, source, focus and reset`, async ({ page }, info) => {
   await page.setViewportSize({ width, height: 960 }); await installMockApi(page); const api = await assistantApi(page); await loginAs(page, 'FARMER');
   const entry = page.getByRole('button', { name: 'Hỏi trợ lý', exact: true }); await expect(entry).toBeVisible();
