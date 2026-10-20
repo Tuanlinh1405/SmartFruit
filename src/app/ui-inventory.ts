@@ -11,7 +11,7 @@ function pages(role: Role, owner: 'A' | 'B', definitions: Definition[]): UiEntry
 function modal(id: string, title: string, path: string, role: Role | undefined, owner: 'A' | 'B'): UiEntry { return { id, title, path, kind: 'modal', role, owner, level: 'D' }; }
 export const uiInventory: UiEntry[] = [
   ...pages('FARMER', 'A', [
-    ['FUI-01','Tổng quan','dashboard','D',LayoutDashboard], ['FUI-02','Hồ sơ nhà vườn','profile','F',UserRound],
+    ['FUI-01','Tổng quan','dashboard','F',LayoutDashboard], ['FUI-02','Hồ sơ nhà vườn','profile','F',UserRound],
     ['FUI-03','Danh sách lô hàng','lots','F',Package], ['FUI-04','Tạo / sửa lô hàng','lots/new','F',ClipboardList],
     ['FUI-05','Người mua phù hợp','matches','F',Handshake], ['FUI-06','Tìm xe','transport','D',Truck],
     ['FUI-07','Đàm phán','chat','D',MessageCircle], ['FUI-09','Đánh giá & tín nhiệm','reviews','D',Star],

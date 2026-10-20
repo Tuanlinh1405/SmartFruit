@@ -1,5 +1,9 @@
 # Trạng thái triển khai
 
+## OpenRouter và Tổng quan Farmer — cập nhật 19/10/2026
+
+Đã thay adapter Gemini bằng OpenRouter Free; giữ JWT/role/CORS, không paid fallback. Tổng quan Farmer có thời tiết Open-Meteo theo hồ sơ/chọn địa điểm và bản đồ Leaflet/OpenStreetMap từ nhu cầu thu mua thật. Không migration, không đổi matching hoặc Carrier. Xem [hướng dẫn](farmer-dashboard-live.md), [cấu hình trợ lý](farmer-chatbot.md) và [kết quả kiểm thử/deploy của đợt này](openrouter-dashboard-acceptance.md). Nghiệm thu trước đây bên dưới là ảnh chụp trước đợt tích hợp này.
+
 ## Nghiệm thu ngày 19/10/2026
 
 Trạng thái và bằng chứng mới nhất nằm trong [biên bản nghiệm thu trước bàn giao](handover-acceptance-2026-10-19.md). Farmer CRUD lô/ảnh và Carrier CRUD xe đã dùng dữ liệu thật. Buyer E5 hybrid đã được kiểm tra trên cloud; màn hình matching Farmer hiện dùng rule-only. Không dùng các ghi chú chưa deploy/chưa thực hiện của bản chụp 15/10 bên dưới để suy ra trạng thái hiện tại. Đăng ký email đã bổ sung và RPC đã cài; người dùng đã xác nhận nhận/xác nhận email và vào đúng vai trò trên cloud ngày 19/10.

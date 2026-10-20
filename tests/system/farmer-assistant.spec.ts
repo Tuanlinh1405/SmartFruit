@@ -5,16 +5,16 @@ import { createChatHandler } from '../../supabase/functions/farmer-chat/handler'
 async function assistantApi(page: Page, options: { status?: number; delay?: Promise<void> } = {}) {
   const requests: Record<string, unknown>[] = []; const prompts: Record<string, unknown>[] = [];
   const handle = createChatHandler({
-    authenticate: async () => ({ role: 'FARMER' }), apiKey: 'test-only-gemini', allowedOrigins: ['http://127.0.0.1:4175'],
+    authenticate: async () => ({ role: 'FARMER' }), apiKey: 'test-only-openrouter', allowedOrigins: ['http://127.0.0.1:4175'],
     fetcher: async (_url, init) => {
       const body = JSON.parse(String(init?.body)); prompts.push(body);
       await options.delay;
       if (options.status) return new Response('private provider details', { status: options.status });
-      const payload = JSON.parse(body.contents[0].parts[0].text);
-      return new Response(JSON.stringify({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify({
+      const payload = JSON.parse(body.messages[1].content);
+      return new Response(JSON.stringify({ model: 'test/model:free', choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({
         answer: `Nội dung tham khảo cho ${payload.context.crop}. <script>window.chatInjected=true</script>`,
         sourceIds: [payload.knowledge[0].id], followUpQuestions: ['Bạn có thể bổ sung dấu hiệu trong tình huống mẫu không?'],
-      }) }] } }], usageMetadata: { promptTokenCount: 1500, candidatesTokenCount: 150 } }));
+      }) } }], usage: { prompt_tokens: 1500, completion_tokens: 150 } }));
     },
   });
   await page.route('http://127.0.0.1:54321/functions/v1/farmer-chat', async route => {
@@ -44,13 +44,13 @@ for (const width of [1440, 768, 390, 320]) test(`Farmer assistant at ${width}px:
   await panel.getByLabel('Câu hỏi cho trợ lý').fill('Tình huống mẫu: phân loại mít dựa vào đâu?'); await panel.getByRole('button', { name: 'Gửi câu hỏi', exact: true }).click();
   await expect(panel.getByText('Nội dung tham khảo cho JACKFRUIT.', { exact: false })).toBeVisible();
   expect(api.requests).toHaveLength(2); expect(Object.keys(api.requests[1]).sort()).toEqual(['crop', 'growthStage', 'question', 'topic']);
-  const prompt = api.prompts[1] as { contents: { parts: { text: string }[] }[] }; expect(prompt.contents).toHaveLength(1);
+  const prompt = api.prompts[1] as { messages: { content: string }[] }; expect(prompt.messages).toHaveLength(2);
   expect(JSON.stringify(prompt)).not.toContain('Tình huống mẫu: có dấu hiệu nào cần lưu ý?'); expect(JSON.stringify(prompt)).not.toContain('Nội dung tham khảo cho DURIAN'); expect(prompt).not.toHaveProperty('tools');
   expect(await panel.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
   await page.keyboard.press('Tab'); expect(await panel.evaluate(element => element.contains(document.activeElement))).toBe(true);
   if (width === 1440 || width === 390) await page.screenshot({ path: info.outputPath(`assistant-${width}.png`) });
   await page.keyboard.press('Escape'); await expect(panel).toHaveCount(0); await expect(entry).toBeFocused();
-  await page.getByRole('button', { name: 'Đặt lại minh họa', exact: true }).click(); await page.getByRole('button', { name: 'Hỏi trợ lý', exact: true }).click(); await expect(panel.getByText('Nội dung tham khảo cho JACKFRUIT.', { exact: false })).toBeVisible();
+  await entry.click(); await expect(panel.getByText('Nội dung tham khảo cho JACKFRUIT.', { exact: false })).toBeVisible();
   await page.keyboard.press('Escape'); await useMenu(page, 'Danh sách lô hàng'); await expect(page).toHaveURL(/\/farmer\/lots$/); await expect(panel).toHaveCount(0);
   await useMenu(page, 'Tổng quan'); await page.getByRole('button', { name: 'Hỏi trợ lý', exact: true }).click(); await expect(panel.getByText('Nội dung tham khảo cho JACKFRUIT.', { exact: false })).toBeVisible();
   // SPA navigation preserves the provider; a reload deliberately clears the transcript.

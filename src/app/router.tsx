@@ -7,6 +7,7 @@ import { StatusPage } from './skeleton-page';
 import { LoadingState } from '../components/shared';
 import { aDemoRoutes } from '../features/a-demo/demo-routes';
 const AFeaturePage = lazy(() => import('../features/a-feature-page').then(module => ({ default: module.AFeaturePage })));
+const FarmerDashboard = lazy(() => import('../features/farmer/dashboard/FarmerDashboard'));
 import { AuthProvider, useAuth } from '../features/auth/AuthProvider';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
@@ -48,6 +49,7 @@ export function ApplicationRoutes() {
         {role === 'FARMER' && <><Route path="invitations" element={<TradePage view="invitations" />} /><Route path="negotiations" element={<TradePage view="negotiations" />} /><Route path="chat" element={<TradePage view="negotiations" />} /><Route path="reviews" element={<TradePage view="reviews" />} /></>}
         {pageInventory.filter(entry => entry.role === role && aDemoRoutes[entry.id]).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={aDemoRoutes[entry.id]} />)}
         {role === 'FARMER' ? <>
+          <Route path="dashboard" element={<FarmerDashboard />} />
           <Route path="profile" element={<FarmerCarrierFeature feature="profile" />} />
           <Route path="lots" element={<FarmerCarrierFeature feature="lots" />} />
           <Route path="lots/new" element={<FarmerCarrierFeature feature="new" />} />
