@@ -17,7 +17,7 @@ export function createChatHandler(options: ChatHandlerOptions) {
       'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Cache-Control': 'no-store', 'Content-Type': 'application/json; charset=utf-8',
     };
     const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers });
-    const log = (code: string, usage?: unknown, providerStatus?: number, providerCode?: string) => options.log?.({ requestId, model, durationMs: Date.now() - start, code, ...(usage ? { usage } : {}), ...(providerStatus ? { providerStatus } : {}), ...(providerCode ? { providerCode } : {}) });
+    const log = (code: string, usage?: unknown, providerStatus?: number, providerCode?: string, actualModel = model) => options.log?.({ requestId, provider: 'openrouter', model: actualModel, durationMs: Date.now() - start, code, ...(usage ? { usage } : {}), ...(providerStatus ? { providerStatus } : {}), ...(providerCode ? { providerCode } : {}) });
     try {
       if (!options.allowedOrigins.length || options.allowedOrigins.includes('*')) throw new ChatError('NOT_CONFIGURED', 503, 'Trợ lý chưa được cấu hình.');
       if (origin && !allowed) throw new ChatError('FORBIDDEN_ORIGIN', 403, 'Nguồn truy cập không được phép.');
@@ -34,12 +34,12 @@ export function createChatHandler(options: ChatHandlerOptions) {
       try { value = JSON.parse(body); } catch { throw new ChatError('BAD_REQUEST', 400, 'Nội dung yêu cầu không hợp lệ.'); }
       const input = parseChatInput(value);
       if (!input) throw new ChatError('BAD_REQUEST', 400, 'Chọn cây, chủ đề, giai đoạn hợp lệ và nhập câu hỏi tối đa 1.500 ký tự.');
-      if (!options.apiKey?.trim()) throw new ChatError('NOT_CONFIGURED', 503, 'Trợ lý chưa được cấu hình Gemini.');
+      if (!options.apiKey?.trim()) throw new ChatError('NOT_CONFIGURED', 503, 'Trợ lý chưa được cấu hình OpenRouter.');
       const result = await generateAnswer(input, { apiKey: options.apiKey, model, requestId, fetcher: options.fetcher });
-      log('OK', result.usage); return json(result.response);
+      log('OK', result.usage, undefined, undefined, result.model); return json(result.response);
     } catch (cause) {
       const error = cause instanceof ChatError ? cause : new ChatError('UNAVAILABLE', 503, 'Không thể kiểm tra dịch vụ trợ lý. Vui lòng thử lại sau.');
-      log(error.code, error.usage, error.providerStatus, error.providerCode); return json({ error: { code: error.code, message: error.message }, requestId }, error.status);
+      log(error.code, error.usage, error.providerStatus, error.providerCode, error.actualModel ?? model); return json({ error: { code: error.code, message: error.message }, requestId }, error.status);
     }
   };
 }

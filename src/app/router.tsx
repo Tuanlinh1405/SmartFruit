@@ -7,6 +7,7 @@ import { StatusPage } from './skeleton-page';
 import { LoadingState } from '../components/shared';
 import { RoleDashboard } from '../features/workspace/RoleDashboard';
 const AFeaturePage = lazy(() => import('../features/a-feature-page').then(module => ({ default: module.AFeaturePage })));
+const FarmerDashboard = lazy(() => import('../features/farmer/dashboard/FarmerDashboard'));
 import { AuthProvider, useAuth } from '../features/auth/AuthProvider';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
@@ -46,9 +47,11 @@ export function ApplicationRoutes() {
       <Route path={role === 'FARMER' ? '/farmer' : '/carrier'} element={<AppShell role={role} />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         {role === 'FARMER' && <><Route path="invitations" element={<TradePage view="invitations" />} /><Route path="negotiations" element={<TradePage view="negotiations" />} /><Route path="chat" element={<TradePage view="negotiations" />} /><Route path="reviews" element={<TradePage view="reviews" />} /></>}
-        <Route path="dashboard" element={<RoleDashboard role={role} />} />
-        {pageInventory.filter(entry => entry.role === role && ['FUI-06','FUI-10','FUI-11','FUI-12','FUI-13','CUI-03','CUI-05','CUI-06'].includes(entry.id)).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={<DeferredPage kind={({ 'FUI-06':'transport','FUI-10':'prices','FUI-11':'weather','FUI-12':'map','FUI-13':'policy','CUI-03':'transport','CUI-05':'tracking','CUI-06':'carrier-reviews' } as Record<string,string>)[entry.id]} />} />)}
+        {role === 'CARRIER' && <Route path="dashboard" element={<RoleDashboard role={role} />} />}
+        {pageInventory.filter(entry => entry.role === role && ['FUI-06','FUI-13','CUI-03','CUI-05','CUI-06'].includes(entry.id)).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={<DeferredPage kind={({ 'FUI-06':'transport','FUI-13':'policy','CUI-03':'transport','CUI-05':'tracking','CUI-06':'carrier-reviews' } as Record<string,string>)[entry.id]} />} />)}
         {role === 'FARMER' ? <>
+          <Route path="dashboard" element={<FarmerDashboard />} />
+          {['prices','weather','map'].map(tab => <Route key={tab} path={tab} element={<Navigate to={`/farmer/dashboard?tab=${tab}`} replace />} />)}
           <Route path="profile" element={<FarmerCarrierFeature feature="profile" />} />
           <Route path="lots" element={<FarmerCarrierFeature feature="lots" />} />
           <Route path="lots/new" element={<FarmerCarrierFeature feature="new" />} />
@@ -70,7 +73,7 @@ export function ApplicationRoutes() {
       <Route path="*" element={<StatusPage code="404" />} />
     </Route></Route>
     <Route element={<RoleGuard role="ADMIN" />}><Route path="/admin" element={<div className="b-workspace"><AdminShell /></div>}>
-      <Route index element={<AdminPage />} /><Route path="dashboard" element={<Navigate to="/admin" replace />} />
+      <Route index element={<Navigate to="/admin/dashboard" replace />} /><Route path="dashboard" element={<AdminPage />} />
       <Route path=":section/map" element={<AdminPage />} /><Route path=":section" element={<AdminPage />} />
     </Route></Route>
     <Route path="/403" element={<StatusPage code="403" />} /><Route path="/404" element={<StatusPage code="404" />} />

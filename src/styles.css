@@ -2,6 +2,7 @@
 @import "./styles/tokens.css";
 @import "./styles/unified.css";
 @import "./styles/features.css";
+@import "./styles/forest.css";
 
 @layer base {
   body { margin: 0; background: var(--cream); color: var(--ink); font: 16px/1.5 var(--font-body); }
@@ -31,13 +32,13 @@
 .stack-sm { display: grid; gap: var(--space-3); }
 .row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
 .muted { color: var(--muted); }
-.eyebrow { color: var(--primary); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; }
+.eyebrow { color: var(--primary); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; }
 .button { min-height: 44px; padding: 10px 16px; border: 1px solid transparent; border-radius: 8px; display: inline-flex; gap: 8px; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; text-decoration: none; transition: background 150ms; }
-.button-primary { background: var(--primary); color: white; }
+.button-primary { background: var(--primary); color: var(--card); }
 .button-primary:hover { background: var(--forest); }
 .button-secondary { background: var(--surface); color: var(--forest); border-color: var(--forest); }
 .button-ghost { background: transparent; color: var(--forest); }
-.button-danger { background: var(--danger); color: white; }
+.button-danger { background: var(--danger); color: var(--card); }
 .button:disabled { opacity: .55; }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-6); min-width: 0; }
 .card-title { margin-bottom: var(--space-4); }
@@ -45,11 +46,11 @@
 .page-header p { margin-top: 8px; max-width: 65ch; }
 .field { display: grid; gap: 6px; min-width: 0; }
 .field-label { font-size: 14px; font-weight: 600; }
-.control { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #87968b; border-radius: 8px; padding: 10px 12px; background: var(--surface); color: var(--ink); }
+.control { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--sidebar-muted); border-radius: 8px; padding: 10px 12px; background: var(--surface); color: var(--ink); }
 .control[aria-invalid=true] { border-color: var(--danger); }
 .field-error { color: var(--danger); font-size: 13px; }
 .field-hint { color: var(--muted); font-size: 13px; }
-.number-unit { display: flex; align-items: center; border: 1px solid #87968b; border-radius: 8px; overflow: hidden; }
+.number-unit { display: flex; align-items: center; border: 1px solid var(--sidebar-muted); border-radius: 8px; overflow: hidden; }
 .number-unit:focus-within { outline: 3px solid var(--primary); outline-offset: 3px; }
 .number-unit:has(input[aria-invalid=true]) { border-color: var(--danger); }
 .number-unit .control { border: 0; outline: 0; }
@@ -59,9 +60,9 @@
 .chip:has(input:checked) { border-color: var(--primary); background: var(--mist); }
 .chip input { accent-color: var(--primary); }
 .badge { display: inline-flex; padding: 4px 9px; border-radius: 6px; font-size: 12px; font-weight: 600; background: var(--cream); color: var(--muted); }
-.badge-success { background: var(--mist); color: #166435; }
-.badge-warning { background: #fff2d6; color: #785000; }
-.badge-demo { background: #f9eae4; color: #903c1e; }
+.badge-success { background: var(--mist); color: var(--primary); }
+.badge-warning { background: color-mix(in srgb, var(--warning) 8%, var(--card)); color: var(--warning-ink); }
+.badge-demo { background: color-mix(in srgb, var(--warning) 6%, var(--card)); color: var(--warning-ink); }
 .notice { display: flex; align-items: flex-start; gap: 10px; background: var(--mist); border: 1px solid var(--border); padding: 12px 16px; border-radius: 8px; font-size: 14px; }
 .notice svg { flex-shrink: 0; margin-top: 2px; }
 .state { padding: 32px 16px; text-align: center; display: grid; gap: 12px; justify-items: center; }
@@ -77,25 +78,25 @@ table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th { text-align: left; background: var(--cream); }
 th, td { border-bottom: 1px solid var(--border); padding: 12px; }
 th button { border: 0; background: transparent; min-height: 44px; text-align: left; padding: 0; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-tbody tr:hover { background: #fafbf8; }
+tbody tr:hover { background: color-mix(in srgb, var(--accent) 4%, var(--card)); }
 .table-mobile { display: none; }
 .tabs-list { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
 .tab { border: 0; background: transparent; min-height: 44px; padding: 10px 16px; color: var(--muted); border-bottom: 3px solid transparent; }
 .tab[aria-selected=true] { color: var(--forest); border-bottom-color: var(--primary); font-weight: 600; }
 .tab-panel { padding-top: 24px; }
-.overlay { position: fixed; inset: 0; background: rgb(21 55 42 / .4); z-index: 40; }
+.overlay { position: fixed; inset: 0; background: color-mix(in srgb, var(--sidebar-active) 40.0%, transparent); z-index: 40; }
 .dialog { position: fixed; z-index: 41; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
 .drawer { left: auto; right: 0; top: 0; transform: none; width: min(360px, 100vw); height: 100dvh; max-height: 100dvh; border-radius: 0; }
 .dialog-head { display: flex; gap: 16px; align-items: start; justify-content: space-between; margin-bottom: 12px; }
 .dialog-description { margin-bottom: 24px; color: var(--muted); font-size: 14px; }
-.toast { position: fixed; z-index: 50; bottom: 24px; right: 24px; max-width: min(400px, calc(100vw - 32px)); padding: 16px; background: var(--forest); color: white; border-radius: 8px; display: flex; align-items: center; gap: 12px; }
-.toast button { color: white; background: transparent; border: 0; min-width: 44px; min-height: 44px; }
+.toast { position: fixed; z-index: 50; bottom: 24px; right: 24px; max-width: min(400px, calc(100vw - 32px)); padding: 16px; background: var(--forest); color: var(--card); border-radius: 8px; display: flex; align-items: center; gap: 12px; }
+.toast button { color: var(--card); background: transparent; border: 0; min-width: 44px; min-height: 44px; }
 .landing { max-width: 1120px; padding: 64px 32px; margin: auto; }
 .role-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
 .role-card { display: grid; gap: 20px; }
 .role-icon { width: 48px; height: 48px; background: var(--mist); border-radius: 10px; color: var(--forest); display: grid; place-items: center; }
-.brand { font: 800 24px var(--font-body); color: inherit; text-decoration: none; display: flex; align-items: center; gap: 10px; }
-.brand-mark { display: block; width: 44px; height: 44px; flex: none; border-radius: 10px; object-fit: contain; background: #062f27; }
+.brand { font: 600 24px var(--font-body); color: inherit; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+.brand-mark { display: block; width: 44px; height: 44px; flex: none; border-radius: 10px; object-fit: contain; background: var(--sidebar-active); }
 .breadcrumb { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--muted); }
 .skeleton-body { min-height: 260px; display: grid; align-content: center; justify-items: start; gap: 16px; }
 .skeleton-line { height: 12px; width: min(360px,100%); background: var(--cream); border-radius: 4px; }
@@ -104,7 +105,7 @@ tbody tr:hover { background: #fafbf8; }
 .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
 .swatch { display: grid; gap: 6px; font-size: 12px; }
 .swatch span { width: 64px; height: 40px; border-radius: 8px; border: 1px solid var(--border); }
-.skip-link { position: fixed; z-index: 60; top: 8px; left: 8px; transform: translateY(-160%); background: white; padding: 12px; }
+.skip-link { position: fixed; z-index: 60; top: 8px; left: 8px; transform: translateY(-160%); background: var(--card); padding: 12px; }
 .skip-link:focus { transform: none; }
 @media (max-width:767px) {
   h1 { font-size: 24px; }

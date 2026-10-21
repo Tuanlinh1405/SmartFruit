@@ -1,11 +1,11 @@
-.assistant-entry { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; background: linear-gradient(115deg, #ecf6e7, #fffefb); }
+.assistant-entry { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; background: var(--secondary); }
 .assistant-entry > div { flex: 1 1 240px; min-width: 0; }
 .assistant-entry h2 { margin: 0 0 .35rem; }
 .assistant-entry p { color: var(--muted); font-size: .89rem; }
 .assistant-mark { width: 48px; height: 48px; border-radius: 14px; background: var(--mist); color: var(--primary); display: grid; place-items: center; flex: none; }
 .farmer-assistant-dialog { width: min(480px, 100vw); display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: var(--radius) 0 0 var(--radius); }
 .farmer-assistant-dialog .dialog-head, .farmer-assistant-dialog .dialog-description { margin: 0; flex: none; }
-.farmer-assistant-dialog .dialog-description { font-size: .77rem; background: #fff9e9; border: 1px solid #f3dfae; border-radius: 9px; padding: 10px; }
+.farmer-assistant-dialog .dialog-description { font-size: .77rem; background: color-mix(in srgb, var(--warning) 4%, var(--card)); border: 1px solid var(--border); border-radius: 9px; padding: 10px; }
 .assistant-toolbar, .assistant-compose-footer { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
 .assistant-toolbar .button { font-size: .75rem; padding: 8px; }
 .assistant-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; flex: none; }
@@ -29,8 +29,8 @@
 .assistant-suggestions { display: flex; flex-wrap: wrap; gap: 6px; }
 .assistant-suggestions .button { font-size: .71rem; padding: 8px; text-align: left; }
 .assistant-compose-footer small, .assistant-pending { color: var(--muted); font-size: .8rem; }
-.assistant-error { color: var(--danger); background: #fff2ef; border-radius: 9px; padding: 10px; font-size: .8rem; }
+.assistant-error { color: var(--danger); background: color-mix(in srgb, var(--danger) 4%, var(--card)); border-radius: 9px; padding: 10px; font-size: .8rem; }
 .assistant-error small { display: block; overflow-wrap: anywhere; }
-@media (max-width: 850px) { .farmer-assistant-dialog { width: 100vw; border-radius: 0; } }
+@media (max-width: 767px) { .farmer-assistant-dialog { width: 100vw; border-radius: 0; } }
 @media (max-width: 630px) { .assistant-entry > .button { width: 100%; } }
 @media (max-height: 740px) { .farmer-assistant-dialog { display: block; } .farmer-assistant-dialog > * { margin-bottom: 12px; } .assistant-thread { max-height: 250px; } }

@@ -1,5 +1,7 @@
 # UI chung SmartFruit
 
+Cập nhật 19/10: `/farmer/dashboard` dùng Tổng quan riêng, thời tiết và khu vực thu mua thật; Leaflet/OpenStreetMap + Open-Meteo, desktop hai khối cạnh nhau/mobile xếp dọc. Không có KPI mẫu trên Tổng quan Farmer; vận chuyển vẫn là khối demo có nhãn. `/farmer/weather` và `/farmer/map` vẫn là màn minh họa riêng. Trợ lý chuyển OpenRouter Free. Chi tiết: [Tổng quan Farmer](farmer-dashboard-live.md).
+
 Nền UI lấy từ [PR #2 · Feature/UI skeleton](https://github.com/Tuanlinh1405/SmartFruit/pull/2), commit `47d988ad7c34c93148f40848da9ca00edd151f03`. Đã tích hợp với nghiệp vụ Dev B trên nhánh Linh, chưa merge PR trên GitHub. [Biên bản tích hợp](ui-integration.md).
 
 ## Thiết kế và cấu trúc

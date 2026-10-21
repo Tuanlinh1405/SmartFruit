@@ -4,19 +4,19 @@ button, a { touch-action: manipulation; }
 .content { display: flex; flex-direction: column; gap: var(--space-6); }
 .content > *, .content form, .content fieldset, .shell-main { min-width: 0; }
 .sidebar-logout { color: inherit; justify-content: flex-start; width: 100%; }
-.sidebar-logout:hover { background: rgb(255 255 255 / .12); }
+.sidebar-logout:hover { background: color-mix(in srgb, var(--card) 12.0%, transparent); }
 .account-menu { display: grid; gap: 8px; }
 .drawer .sidebar-logout { color: var(--forest); }
 .drawer .nav-link { color: var(--forest); }
 .drawer .nav-link:hover { background: var(--mist); }
 .brand { color: var(--forest); }
-.sidebar .brand { color: white; }
-.button.primary { background: var(--primary); color: white; }
+.sidebar .brand { color: var(--card); }
+.button.primary { background: var(--primary); color: var(--card); }
 .button.primary:hover { background: var(--forest); }
 .button.outline { background: var(--surface); color: var(--forest); border-color: var(--forest); }
 .button.accent { background: var(--amber); color: var(--forest); }
 .button.subtle { background: var(--mist); color: var(--forest); }
-.button.danger { background: var(--danger); color: white; }
+.button.danger { background: var(--danger); color: var(--card); }
 .button.full { width: 100%; }
 .button { white-space: normal; }
 .text-link { color: var(--primary); font-weight: 600; text-decoration: none; }
@@ -31,7 +31,7 @@ button, a { touch-action: manipulation; }
 .content label:not(.field-label), .dialog label:not(.field-label) { display: grid; gap: 6px; font-size: 14px; font-weight: 600; }
 .content input:not([type=checkbox]):not([type=radio]):not(.control), .content select:not(.control), .content textarea:not(.control),
 .dialog input:not([type=checkbox]):not([type=radio]):not(.control), .dialog select:not(.control), .dialog textarea:not(.control) {
-  width: 100%; min-width: 0; min-height: 44px; border: 1px solid #87968b; border-radius: 8px;
+  width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--sidebar-muted); border-radius: 8px;
   padding: 10px 12px; background: var(--surface); color: var(--ink); font-weight: 400;
 }
 textarea { resize: vertical; }
@@ -44,13 +44,13 @@ textarea { resize: vertical; }
 .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; align-items: start; }
 .wide { grid-column: 1 / -1; }
 .form-panel fieldset { border: 0; border-bottom: 1px solid var(--border); padding: 0 0 24px; margin: 0 0 24px; }
-.form-panel legend { font-weight: 700; color: var(--forest); margin-bottom: 16px; }
+.form-panel legend { font-weight: 600; color: var(--forest); margin-bottom: 16px; }
 .content .checkbox-field, .dialog .checkbox-field { display: flex; align-items: center; gap: 10px; min-height: 44px; }
 .checkbox-field input { width: 18px; height: 18px; accent-color: var(--primary); }
 .form-actions, .card-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 .form-actions { justify-content: flex-end; }
 .preview-panel { position: sticky; top: 24px; }
-.preview-cover { background: var(--forest); color: white; padding: 28px 16px; border-radius: 8px; margin: 20px 0; display: flex; align-items: center; gap: 12px; }
+.preview-cover { background: var(--forest); color: var(--card); padding: 28px 16px; border-radius: 8px; margin: 20px 0; display: flex; align-items: center; gap: 12px; }
 .preview-panel dl div { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border); padding: 12px 0; font-size: 14px; }
 .preview-panel dd { margin: 0; text-align: right; font-weight: 600; }
 .preview-panel dt { color: var(--muted); }

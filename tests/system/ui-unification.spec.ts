@@ -7,7 +7,7 @@ for (const role of ['FARMER', 'CARRIER', 'BUYER'] as const) {
     test(`${role} shared workspace at ${width}px`, async ({ page }, info) => {
       await page.setViewportSize({ width, height: 960 });
       await installMockApi(page); await loginAs(page, role);
-      await expect(page.locator('.stat-card').first()).toBeVisible();
+      await expect(role === 'FARMER' ? page.getByRole('tablist',{name:'Tiện ích nhà vườn',exact:true}) : page.locator('.stat-card').first()).toBeVisible();
       const shell = page.locator('.workspace-shell');
       await expect(shell).toHaveCSS('background-color', 'rgb(246, 247, 242)');
       await expect(page.locator('.workspace-topbar')).toHaveCSS('height', '70px');
@@ -24,7 +24,7 @@ for (const role of ['FARMER', 'CARRIER', 'BUYER'] as const) {
         await useMenu(page, role === 'BUYER' ? 'Yêu cầu thu mua' : role === 'FARMER' ? 'Danh sách lô hàng' : 'Hồ sơ & danh sách xe');
         await expect(page).toHaveURL(new RegExp(`/${role.toLowerCase()}/${role === 'BUYER' ? 'requests' : role === 'FARMER' ? 'lots' : 'vehicles'}$`));
         await expect(page.getByRole('dialog')).toHaveCount(0);
-        await page.goto(role === 'BUYER' ? '/buyer' : `/${role.toLowerCase()}/dashboard`); await expect(page.locator('.stat-card').first()).toBeVisible();
+        await page.goto(role === 'BUYER' ? '/buyer' : `/${role.toLowerCase()}/dashboard`); await expect(role === 'FARMER' ? page.getByRole('tablist',{name:'Tiện ích nhà vườn',exact:true}) : page.locator('.stat-card').first()).toBeVisible();
       } else {
         await expect(page.locator('.workspace-sidebar')).toBeVisible();
         await expect(page.locator('.workspace-sidebar')).toHaveCSS('width', '244px');

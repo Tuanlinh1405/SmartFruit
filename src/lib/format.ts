@@ -1,4 +1,4 @@
-export const formatMoney = (value: number) => `${new Intl.NumberFormat('vi-VN').format(value)} đ/kg`;
+export const formatMoney = (value: number) => `${new Intl.NumberFormat('vi-VN').format(value)} ₫/kg`;
 export const formatTonnes = (kg: number) => `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 3 }).format(kg / 1000)} tấn`;
 export const formatDate = (date: string) => {
   const [year, month, day] = date.slice(0, 10).split('-');

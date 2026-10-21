@@ -5,6 +5,7 @@ import { Drawer } from '../../../components/ui/dialog';
 import { Button, Select, TextArea } from '../../../components/ui';
 import { crops, topics, growthStages, questionLimit, demoDisclaimer } from './contract';
 import { useFarmerAssistant } from './assistant-context';
+import { LoadingSteps } from '../../../components/shared';
 import './farmer-assistant.css';
 
 export function FarmerAssistantEntry() {
@@ -20,7 +21,8 @@ export function FarmerAssistantEntry() {
 export function FarmerAssistantPanel({ enabled }: { enabled: boolean }) {
   const assistant = useFarmerAssistant(); const location = useLocation(); const composer = useRef<HTMLTextAreaElement>(null);
   const thread = useRef<HTMLDivElement>(null);
-  const onDashboard = enabled && ['/farmer/dashboard', '/farmer', '/farmer/'].includes(location.pathname);
+  const dashboardPath = location.pathname.replace(/\/+$/, '');
+  const onDashboard = enabled && ['/farmer/dashboard', '/farmer'].includes(dashboardPath);
   const setOpen = assistant?.setOpen;
   useEffect(() => { if (!onDashboard) setOpen?.(false); }, [onDashboard, setOpen]);
   useEffect(() => { thread.current?.scrollTo?.({ top: thread.current.scrollHeight }); }, [assistant?.exchanges.length, assistant?.pending, assistant?.open]);
@@ -45,7 +47,7 @@ export function FarmerAssistantPanel({ enabled }: { enabled: boolean }) {
           {exchange.response.sources.length > 0 && <div className="assistant-sources"><strong>Nguồn tham khảo</strong><ul>{exchange.response.sources.map(source => <li key={source.id}>{source.url ? <a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a> : source.title}<small>{source.id}</small></li>)}</ul></div>}
         </div>
       </article>)}
-      {pending && <p role="status" className="assistant-pending">Trợ lý đang trả lời…</p>}
+      {pending && <LoadingSteps label="Trợ lý đang trả lời…" />}
     </div>
     <form className="assistant-compose" onSubmit={e => { e.preventDefault(); void assistant.send(); }}>
       <div className="assistant-suggestions" aria-label="Câu hỏi gợi ý">{suggestions.map((suggestion, i) => <Button key={suggestion} variant="secondary" disabled={pending} onClick={() => { assistant.setDraft(suggestion); composer.current?.focus(); }}>{i === 0 ? context.topic === 'DISEASE' ? 'Dấu hiệu bệnh thường gặp' : 'Tiêu chí phân loại' : context.topic === 'DISEASE' ? 'Thông tin phòng ngừa' : 'Kiểm tra đủ dữ kiện'}</Button>)}</div>

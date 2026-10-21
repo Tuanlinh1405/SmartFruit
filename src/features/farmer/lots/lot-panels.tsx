@@ -70,7 +70,7 @@ function DetailForUser({ authenticatedUserId: userId, lotId, repository, imagesR
       <p>{catalog.data?.fruits.find(item => item.id === lot.fruit_type_id)?.name} {catalog.data?.varieties.find(item => item.id === lot.variety_id)?.name}</p>
       <p>{lot.province} {lot.district}</p><p>{formatDate(lot.harvest_start)} – {formatDate(lot.harvest_end)}</p><p>{lot.grade}</p><p>{tradeMethods[lot.selling_method]}</p><p>{lot.description}</p><p>{lot.certifications.join(', ')} · Tự khai báo</p><p>{lot.packaging_options.join(', ')}</p><p>{lot.growing_area_code}</p>
       </div></Card>
-    <div className="row">{onFindBuyers && <Button variant="secondary" disabled={lot.status !== 'PUBLISHED'} title={lot.status !== 'PUBLISHED' ? 'Công bố lô trước khi matching.' : undefined} onClick={() => onFindBuyers(lot)}>Tìm người mua phù hợp</Button>}{onFindTransport && <Button variant="secondary" onClick={() => onFindTransport(lot)}>Tìm xe minh họa</Button>}</div>
+    <div className="row">{onFindBuyers && <Button variant="secondary" disabled={lot.status !== 'PUBLISHED'} title={lot.status !== 'PUBLISHED' ? 'Công bố lô trước khi matching.' : undefined} onClick={() => onFindBuyers(lot)}>Tìm người mua phù hợp</Button>}{onFindTransport && <Button variant="secondary" onClick={() => onFindTransport(lot)}>Thông tin vận chuyển</Button>}</div>
     <LotImages userId={userId} lotId={lot.id} repository={imagesRepository} />
     <LotActions lot={lot} onStatus={async status => { await actions.mutateAsync({ kind: 'status', id: lot.id, status }); }} onDelete={async () => {
       try { await imagesRepository.deleteLot(userId, lot.id); }

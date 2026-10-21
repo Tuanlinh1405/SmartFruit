@@ -1,11 +1,13 @@
 // Test-only HTTP adapter. The production app always uses its real Supabase SDK.
 import { expect, type Page } from '@playwright/test';
 import { testCatalog, testLot } from '../../../src/features/farmer/lots/lot.fixtures';
+import { installEnvironmentApi } from './environment-api';
 export type TestRole = 'FARMER' | 'CARRIER' | 'BUYER' | 'ADMIN';
 export const testIds = { FARMER: '30000000-0000-4000-8000-000000000001', CARRIER: '30000000-0000-4000-8000-000000000003', BUYER: '30000000-0000-4000-8000-000000000005', ADMIN: '30000000-0000-4000-8000-000000000006' };
 type Row = Record<string, unknown>;
 const phones: Record<TestRole, string> = { FARMER: '+84900000001', CARRIER: '+84900000003', BUYER: '+84900000005', ADMIN: '+84900000006' };
 export async function installMockApi(page: Page, sharedDatabase?: Record<string, Row[]>, signupMode: 'confirm' | 'immediate' | 'error' = 'confirm') {
+  await installEnvironmentApi(page);
   let role: TestRole = 'FARMER'; let active = false; let failPublish = 0; let failConnection = false;
   const calls: { method: string; table: string; body: Row | null }[] = [];
   const database: Record<string, Row[]> = sharedDatabase ?? {

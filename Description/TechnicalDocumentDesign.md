@@ -1,5 +1,7 @@
 **Phiên bản:** 0.4 — Supabase-first, tối giản cho MVP 7 ngày
 
+> **Cập nhật triển khai 19/10/2026 theo yêu cầu bổ sung:** Trợ lý Farmer chuyển sang OpenRouter Free, không paid fallback. Tổng quan Farmer dùng Open-Meteo và Leaflet/OpenStreetMap để hiển thị thời tiết và khu vực từ nhu cầu Buyer thật theo quyền hiện có. Không migration; không đưa khoảng cách vào matching, không nâng booking/GPS thành thật. Các chỉ số mẫu Farmer đã bỏ khỏi Tổng quan; vận chuyển vẫn có nhãn demo riêng. Phần phân loại D ở bản thiết kế gốc bên dưới không thay thế cập nhật này. Xem [thiết kế/hướng dẫn hiện hành](../docs/farmer-dashboard-live.md) và [nghiệm thu](../docs/openrouter-dashboard-acceptance.md).
+
 **Ngày cập nhật:** 13/10/2026
 
 **Trạng thái:** ĐỀ XUẤT — CẦN TEAM/CHỦ DỰ ÁN CHỐT

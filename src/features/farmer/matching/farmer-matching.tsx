@@ -2,7 +2,7 @@ import { supabase } from '../../../lib/supabase';
 import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { Card, EmptyState, ErrorState, LoadingState, PageHeader } from '../../../components/shared';
+import { Card, EmptyState, ErrorState, LoadingState, LoadingSteps, PageHeader } from '../../../components/shared';
 import { Select } from '../../../components/ui';
 import type { Lot } from '../lots/lot.model';
 import { lotColumns } from '../lots/lot.api';
@@ -100,7 +100,7 @@ function ForUser({ authenticatedUserId: userId, repository = farmerMatchingRepos
     {lots.isPending ? <LoadingState /> : lots.isError ? <ErrorState message="Không thể tải lô để matching." onRetry={() => { void lots.refetch(); }} /> : <Select label="Chọn lô cần matching" value={id} onChange={e => { setId(e.target.value); setPage(1); }}><option value="">Chọn lô</option>{lots.data.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}</Select>}
     {connectError && <p role="alert">{connectError}</p>}
     {!id && <EmptyState title="Chưa chọn lô" />}
-    {id && scorer && (result.isPending ? <LoadingState /> : result.isError ? <ErrorState message={result.error.message} onRetry={() => { void result.refetch(); }} /> : !result.data.matches.length ? <EmptyState title="Không có người mua phù hợp" description="Thử thay đổi thông tin lô hoặc ngày thu hoạch." /> : <>
+    {id && scorer && (result.isPending ? <LoadingSteps label="Đang tìm người mua phù hợp…" /> : result.isError ? <ErrorState message={result.error.message} onRetry={() => { void result.refetch(); }} /> : !result.data.matches.length ? <EmptyState title="Không có người mua phù hợp" description="Thử thay đổi thông tin lô hoặc ngày thu hoạch." /> : <>
       <p>{result.data.mode === 'hybrid' ? 'Đã lấy tối đa 20 nhu cầu bằng cosine E5 rồi xếp lại theo độ khớp tên.' : 'Đang dùng so tên và quy tắc giá/lượng.'}</p>
       {result.data.warning && <p role="status">{result.data.warning}</p>}
       {result.data.matches.slice((page - 1) * 20, page * 20).map(match => { const request = result.data.requests.find(r => r.id === match.requestId)!; return <Card key={match.requestId} title={result.data.partners.find(p => p.user_id === request.buyer_id)?.display_name ?? 'Đối tác thu mua'}><p>Phù hợp {match.score} điểm · Quy tắc {match.ruleVersion}</p>{match.cosineSimilarity != null && <p>Cosine E5: {match.cosineSimilarity.toFixed(4)}</p>}<ul>{match.reasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul><p>{request.title} · {request.allow_partial ? 'Chấp nhận một phần' : 'Yêu cầu đủ lượng'}</p><p>{match.suggestedQuantityKg !== undefined && `${match.suggestedQuantityKg} kg đề xuất`}</p><p>{match.missingInformation.join('; ')}</p><button className="button button-secondary" disabled={connecting !== null} onClick={() => { void connect(id, request.id); }}>{connecting === request.id ? 'Đang gửi…' : 'Gửi lời mời kết nối'}</button></Card>; })}

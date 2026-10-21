@@ -1,3 +1,4 @@
+import { Sprout } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -147,7 +148,7 @@ export function RequestFormPage() {
         {isFinal && <p className="notice">Yêu cầu đã kết thúc nên chỉ có thể xem.</p>}
       </form>
       <aside className="panel preview-panel"><span className="eyebrow">Xem trước yêu cầu</span><h2>{draft.title || 'Nhu cầu nông sản'}</h2>
-        <div className="preview-cover">✳ <span>{draft.title || 'Tên nông sản'}</span></div>
+        <div className="preview-cover"><Sprout size={24} aria-hidden="true" /> <span>{draft.title || 'Tên nông sản'}</span></div>
         <dl><div><dt>Khối lượng</dt><dd>{Number(draft.tonnes) > 0 ? formatTonnes(Number(draft.tonnes) * 1000) : '—'}</dd></div>
           <div><dt>Giá mong muốn</dt><dd>{price(draft.minPrice) > 0 && price(draft.maxPrice) > 0 ? `${formatMoney(price(draft.minPrice))} – ${formatMoney(price(draft.maxPrice))}` : '—'}</dd></div>
           <div><dt>Khu vực dự kiến</dt><dd>{draft.provinces || 'Chưa khai báo'}</dd></div>

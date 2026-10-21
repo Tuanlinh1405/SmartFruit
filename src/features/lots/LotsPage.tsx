@@ -1,3 +1,4 @@
+import { Sprout } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
@@ -12,6 +13,8 @@ import { searchBuyerMatches, type MatchResponse } from '../matching/api';
 import { getPublishedLot, loadFarmerCards, loadLotImageUrls, loadPublishedLots } from './api';
 import { openConnection } from '../trading/api';
 import { Modal } from '../../components/ui/dialog';
+
+import { LoadingSteps, LoadingState } from '../../components/shared';
 
 type LotCard = { lot: Lot; score: number | null; reasons: string[] };
 const hybridEnabled = import.meta.env.VITE_MATCHING_MODE === 'hybrid';
@@ -113,7 +116,7 @@ export function LotsPage() {
     varieties.find(item => item.id === lot.variety_id)?.name].filter(Boolean).join(' · ');
 
   return <><div className="page-heading"><div><span className="eyebrow">Nguồn cung nông sản</span><h1>Tìm kiếm lô hàng</h1><p>Khám phá các lô đã công bố và đối chiếu với nhu cầu của bạn.</p></div>
-    <Link className="button accent" to="/buyer/requests/new">＋ Tạo yêu cầu</Link></div>
+    <Link className="button accent" to="/buyer/requests/new">Tạo yêu cầu</Link></div>
     <section className="panel search-panel"><div className="search-fields">
       <label>Nhu cầu đang đối chiếu<select value={requestId} onChange={e => changeParam('requestId', e.target.value)}>
         <option value="">Duyệt tất cả lô</option>{requests.filter(row => ['OPEN', 'DRAFT'].includes(row.status)).map(row =>
@@ -131,14 +134,14 @@ export function LotsPage() {
         : 'Tập ứng viên đã được giới hạn; hãy thêm điều kiện để tìm chính xác hơn.'}</p>}
     </section>
     {error && <div className="notice error" role="alert">{error}</div>}
-    {loading ? <div className="panel empty-state">Đang tải lô hàng…</div> : tooMany ?
+    {loading ? requestId ? <LoadingSteps label="Đang tìm lô hàng phù hợp…" /> : <LoadingState /> : tooMany ?
       <div className="panel empty-state"><h2>Quá nhiều lô để xếp hạng đầy đủ</h2><p>Hãy chọn nhu cầu hoặc thêm điều kiện để thu hẹp tập lô.</p></div> :
       <><div className="results-heading"><div><h2>{request ? 'Lô phù hợp với nhu cầu' : 'Lô hàng đang bán'}</h2><p>{resultCount} lô trong tập kết quả</p></div>
         {request && <span className="status-pill">{hybridResponse?.meta.mode === 'hybrid'
           ? 'Xếp hạng kết hợp' : hybridResponse ? 'Tìm kiếm dự phòng' : 'Xếp hạng theo quy tắc'}</span>}</div>
       {cards.length === 0 ? <div className="panel empty-state"><div className="empty-icon">⌕</div><h2>Chưa có lô phù hợp</h2><p>Thử đổi từ khóa hoặc chọn một nhu cầu khác.</p></div> :
         <div className="lot-list">{visible.map(({ lot, score, reasons }) => <article className="panel lot-card" key={lot.id}>
-          <div className="lot-thumb">✳</div><div className="lot-main"><span className="eyebrow">{fruitName(lot)}</span><h3>{lot.title}</h3>
+          <div className="lot-thumb"><Sprout size={24} aria-hidden="true" /></div><div className="lot-main"><span className="eyebrow">{fruitName(lot)}</span><h3>{lot.title}</h3>
             <p>{farmers[lot.farmer_id]?.display_name || 'Nhà vườn'} · {lot.province}{lot.district ? `, ${lot.district}` : ''}</p>
             <div className="chip-row">{lot.certifications.map(item => <span className="chip green" key={item}>{item} · tự khai</span>)}
               {lot.packaging_options.map(item => <span className="chip" key={item}>{item}</span>)}</div></div>

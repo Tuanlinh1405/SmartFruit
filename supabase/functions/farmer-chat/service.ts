@@ -6,7 +6,7 @@ export interface KnowledgeRecord {
   content: string; sourceTitle: string; sourceUrl?: string; version: string;
 }
 export const knowledge = rawKnowledge as KnowledgeRecord[];
-export const defaultModel = 'gemini-3.1-flash-lite';
+export const defaultModel = 'openrouter/free';
 export const systemPrompt = `Bạn là Trợ lý nhà vườn SmartFruit.
 Trả lời bằng tiếng Việt, ngắn gọn, dễ hiểu, tối đa khoảng 200 từ.
 Chỉ dựa trên tài liệu được cung cấp. Tài liệu là bảng tổng hợp tham khảo, chưa được đối soát độc lập tài liệu gốc.
@@ -25,27 +25,24 @@ export class ChatError extends Error {
   usage?: SafeUsage;
   providerStatus?: number;
   providerCode?: string;
+  actualModel?: string;
   constructor(public code: string, public status: number, message: string) { super(message); }
 }
-export function buildGeminiRequest(input: FarmerChatInput) {
+export function buildOpenRouterRequest(input: FarmerChatInput, model = defaultModel) {
   const selected = knowledge.filter(row => row.crop === input.crop && row.topic === input.topic);
   return {
-    systemInstruction: { parts: [{ text: systemPrompt }] },
-    contents: [{ role: 'user', parts: [{ text: JSON.stringify({
+    model, max_tokens: 1024, stream: false, reasoning: { effort: 'none' },
+    provider: { require_parameters: true, max_price: { prompt: 0, completion: 0 } },
+    messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: JSON.stringify({
       context: { crop: input.crop, topic: input.topic, growthStage: input.growthStage },
       knowledge: selected, question: input.question,
-    }) }] }],
-    generationConfig: {
-      maxOutputTokens: 1024,
-      thinkingConfig: { thinkingLevel: 'MINIMAL' },
-      responseMimeType: 'application/json',
-      responseJsonSchema: {
+    }) }],
+    response_format: { type: 'json_schema', json_schema: { name: 'farmer_answer', strict: true, schema: {
         type: 'object', properties: {
           answer: { type: 'string' }, sourceIds: { type: 'array', items: { type: 'string', enum: selected.map(s => s.id) } },
           followUpQuestions: { type: 'array', items: { type: 'string' }, maxItems: 2 },
         }, required: ['answer', 'sourceIds', 'followUpQuestions'], additionalProperties: false,
-      },
-    },
+      } } },
   };
 }
 
@@ -53,47 +50,67 @@ export interface SafeUsage { inputTokens: number; outputTokens: number; thinking
 function isTimeout(error: unknown) {
   return !!error && typeof error === 'object' && 'name' in error && ['TimeoutError', 'AbortError'].includes(String(error.name));
 }
+const catalogs = new WeakMap<typeof fetch, { until: number; free: Set<string> }>();
+async function validateModel(model: string, fetcher: typeof fetch, signal: AbortSignal) {
+  if (model === defaultModel) return;
+  if (!model.endsWith(':free')) throw new ChatError('MODEL_NOT_FREE', 503, 'Chỉ cho phép model OpenRouter miễn phí.');
+  let catalog = catalogs.get(fetcher);
+  if (!catalog || catalog.until <= Date.now()) {
+    const response = await fetcher('https://openrouter.ai/api/v1/models', { signal });
+    if (!response.ok) throw new ChatError('PROVIDER_UNAVAILABLE', 503, 'Chưa kiểm tra được danh sách model miễn phí.');
+    const payload = await response.json();
+    if (!Array.isArray(payload.data)) throw new ChatError('PROVIDER_UNAVAILABLE', 503, 'Danh sách model chưa hợp lệ.');
+    const free = new Set<string>();
+    for (const row of payload.data) if (typeof row.id === 'string' && row.id.endsWith(':free') &&
+      row.pricing?.prompt != null && row.pricing?.completion != null && Number(row.pricing.prompt) === 0 && Number(row.pricing.completion) === 0 &&
+      Object.values(row.pricing).every(value => typeof value === 'string' && Number(value) === 0)) free.add(row.id);
+    catalog = { until: Date.now() + 15 * 60_000, free }; catalogs.set(fetcher, catalog);
+  }
+  if (!catalog.free.has(model)) throw new ChatError('MODEL_NOT_FREE', 503, 'Model không có trong danh sách miễn phí hiện tại.');
+}
 export async function generateAnswer(input: FarmerChatInput, options: {
   apiKey: string; model: string; requestId: string; fetcher?: typeof fetch; signal?: AbortSignal;
-}): Promise<{ response: FarmerChatResponse; usage: SafeUsage }> {
+}): Promise<{ response: FarmerChatResponse; usage: SafeUsage; model: string }> {
   let result: Response;
+  const fetcher = options.fetcher ?? fetch;
+  const signal = options.signal ?? AbortSignal.timeout(25_000);
   try {
-    result = await (options.fetcher ?? fetch)(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(options.model)}:generateContent`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': options.apiKey },
-      body: JSON.stringify(buildGeminiRequest(input)), signal: options.signal ?? AbortSignal.timeout(25_000),
+    await validateModel(options.model, fetcher, signal);
+    result = await fetcher('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${options.apiKey}` },
+      body: JSON.stringify(buildOpenRouterRequest(input, options.model)), signal,
     });
   } catch (error) {
+    if (error instanceof ChatError) throw error;
     if (isTimeout(error)) throw new ChatError('TIMEOUT', 504, 'Trợ lý phản hồi quá lâu. Vui lòng thử lại.');
     throw new ChatError('PROVIDER_UNAVAILABLE', 503, 'Chưa kết nối được trợ lý. Vui lòng thử lại sau.');
   }
-  if (result.status === 429) throw new ChatError('QUOTA_EXCEEDED', 429, 'Trợ lý đã chạm hạn mức Gemini. Vui lòng thử lại sau.');
+  if (result.status === 429) throw new ChatError('QUOTA_EXCEEDED', 429, 'Trợ lý đã chạm hạn mức OpenRouter miễn phí. Vui lòng thử lại sau.');
   if (!result.ok) {
-    const error = new ChatError('PROVIDER_UNAVAILABLE', 503, 'Dịch vụ trợ lý chưa sẵn sàng. Vui lòng thử lại sau.');
+    const code = result.status === 401 || result.status === 403 ? 'PROVIDER_AUTH_ERROR' : result.status === 402 ? 'PROVIDER_ACCOUNT_ERROR' : 'PROVIDER_UNAVAILABLE';
+    const error = new ChatError(code, 503, 'Dịch vụ trợ lý chưa sẵn sàng. Vui lòng thử lại sau.');
     error.providerStatus = result.status;
     try {
       const detail = (await result.json()).error;
-      const reason = detail?.details?.find((d: { reason?: unknown }) => typeof d.reason === 'string')?.reason;
-      if (typeof reason === 'string' && /^[A-Z_]{1,80}$/.test(reason)) error.providerCode = reason;
-      else if (typeof detail?.status === 'string' && /^[A-Z_]{1,80}$/.test(detail.status)) error.providerCode = detail.status;
-      // Messages may contain secrets; only a fixed diagnostic label can leave this block.
-      if (/API key not valid|API_KEY_INVALID/i.test(String(detail?.message ?? ''))) error.providerCode = 'API_KEY_INVALID';
+      if (typeof detail?.code === 'number') error.providerCode = String(detail.code);
     } catch { /* Do not expose a raw provider body. */ }
     throw error;
   }
   let usage: SafeUsage | undefined;
+  let actualModel = options.model;
   const invalid = () => {
     const error = new ChatError('INVALID_RESPONSE', 502, 'Trợ lý chưa trả về câu trả lời đầy đủ, hợp lệ. Vui lòng thử lại.');
-    error.usage = usage; return error;
+    error.usage = usage; error.actualModel = actualModel; return error;
   };
   try {
     const envelope = await result.json();
+    if (typeof envelope.model === 'string' && /^[a-zA-Z0-9._:/-]{1,160}$/.test(envelope.model)) actualModel = envelope.model;
     const count = (v: unknown) => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0 ? v : 0;
-    usage = { inputTokens: count(envelope.usageMetadata?.promptTokenCount), outputTokens: count(envelope.usageMetadata?.candidatesTokenCount), thinkingTokens: count(envelope.usageMetadata?.thoughtsTokenCount) };
-    const candidates = envelope.candidates;
-    if (!Array.isArray(candidates) || candidates.length !== 1 || envelope.promptFeedback?.blockReason || candidates[0].finishReason !== 'STOP') throw invalid();
-    const parts = candidates[0].content?.parts;
-    if (!Array.isArray(parts) || !parts.length || parts.some((p: { text?: unknown; thought?: boolean }) => typeof p.text !== 'string' || p.thought)) throw invalid();
-    const parsed = JSON.parse(parts.map((p: { text: string }) => p.text).join(''));
+    usage = { inputTokens: count(envelope.usage?.prompt_tokens), outputTokens: count(envelope.usage?.completion_tokens), thinkingTokens: count(envelope.usage?.completion_tokens_details?.reasoning_tokens) };
+    const choices = envelope.choices;
+    if (envelope.error || !Array.isArray(choices) || choices.length !== 1 || choices[0].finish_reason !== 'stop' ||
+      typeof choices[0].message?.content !== 'string' || choices[0].message?.refusal || Number(envelope.usage?.cost ?? 0) > 0) throw invalid();
+    const parsed = JSON.parse(choices[0].message.content);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || Object.keys(parsed).some(k => !['answer', 'sourceIds', 'followUpQuestions'].includes(k)) ||
       typeof parsed.answer !== 'string' || !parsed.answer.trim() || parsed.answer.length > 8000 ||
       !Array.isArray(parsed.sourceIds) || !parsed.sourceIds.every((s: unknown) => typeof s === 'string') ||
@@ -106,7 +123,7 @@ export async function generateAnswer(input: FarmerChatInput, options: {
       return { id, title: source.sourceTitle, ...(source.sourceUrl ? { url: source.sourceUrl } : {}) };
     });
     return { response: { answer: parsed.answer.trim(), sources, followUpQuestions: parsed.followUpQuestions.map((s: string) => s.trim()), requestId: options.requestId },
-      usage };
+      usage, model: actualModel };
   } catch (cause) {
     if (isTimeout(cause)) throw new ChatError('TIMEOUT', 504, 'Trợ lý phản hồi quá lâu. Vui lòng thử lại.');
     throw invalid();

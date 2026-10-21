@@ -9,7 +9,7 @@ if (process.env.VERCEL) {
   }
 }
 const run = args => execFileSync(process.execPath, args, {stdio:'inherit'});
-run(['node_modules/vitest/vitest.mjs','run','--pool=forks','--maxWorkers=1','--testTimeout=20000']);
+run(['node_modules/vitest/vitest.mjs','run',process.platform === 'win32' ? '--pool=threads' : '--pool=forks','--maxWorkers=2','--testTimeout=20000']);
 run(['node_modules/typescript/bin/tsc','--noEmit']);
 run(['node_modules/vite/bin/vite.js','build','--base','/']);
 const sha = process.env.VERCEL_GIT_COMMIT_SHA || execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();

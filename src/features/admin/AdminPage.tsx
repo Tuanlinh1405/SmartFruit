@@ -8,6 +8,9 @@ import { TextField } from '../../components/ui/fields';
 import { closeListing, getConnections, getDirectory, getMarketplace, updateMember,
   type AdminConnection, type AdminListing, type Member } from './api';
 
+import { MetricCard } from '../../components/shared';
+import { Users } from 'lucide-react';
+
 const titles: Record<string, string> = { buyers: 'Thương lái', farmers: 'Nhà vườn', carriers: 'Đơn vị vận tải',
   marketplace: 'Thị trường', connections: 'Kết nối & thỏa thuận', users: 'Quản lý người dùng', lots: 'Quản lý lô hàng', requests: 'Nhu cầu thu mua' };
 const roles: Record<string, string> = { buyers: 'BUYER', farmers: 'FARMER', carriers: 'CARRIER' };
@@ -43,7 +46,7 @@ export function AdminPage() {
     <p>Dữ liệu từ Supabase. Thay đổi được lưu vào hệ thống.</p></div><button className="button outline" disabled={busy} onClick={() => void act(refresh, 'Đã tải dữ liệu mới.')}>Tải lại</button></div>
     {error && !editing && <p className="notice error" role="alert">{error}</p>}{success && <p className="form-success" role="status">{success}</p>}
     {loading ? <div className="panel empty-state">Đang tải dữ liệu quản trị…</div> : !section ? <><div className="stat-grid">{Object.entries(roles).map(([key, role]) =>
-      <Link className="stat-card" to={`/admin/${key}`} key={role}><span>{titles[key]}</span><strong>{members.filter(row => row.role === role).length}</strong><small>{members.filter(row => row.role === role && row.is_suspended).length} tài khoản đang khóa</small></Link>)}</div>
+      <MetricCard to={`/admin/${key}`} key={role} label={titles[key]} value={members.filter(row => row.role === role).length} description={`${members.filter(row => row.role === role && row.is_suspended).length} tài khoản đang khóa`} />)}</div>
       <div className="dashboard-columns"><section className="panel"><h2>Thị trường</h2><p>{listings.filter(row => row.status === 'PUBLISHED').length} lô đang công bố</p><p>{listings.filter(row => row.status === 'OPEN').length} nhu cầu đang mở</p><Link className="text-link" to="/admin/marketplace">Quản lý tin →</Link></section>
         <section className="panel"><h2>Giao dịch</h2><p>{connections.length} kết nối · {connections.filter(row => row.agreement_status === 'COMPLETED').length} thỏa thuận hoàn tất</p><Link className="text-link" to="/admin/connections">Xem kết nối →</Link></section></div></> :
       roles[section] || section==='users' ? <><section className="panel admin-filter"><label>Tìm theo tên hoặc tỉnh<input type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></label><span>{filtered.length} hồ sơ</span>
@@ -51,7 +54,7 @@ export function AdminPage() {
         <Link className="button outline" to={isMap ? `/admin/${section}` : `/admin/${section}/map`}>{isMap ? 'Xem danh sách' : 'Phân bố theo tỉnh'}</Link></section>
         {isMap && <section className="panel"><h2>Phân bố hồ sơ theo tỉnh</h2><p className="muted">Tổng hợp theo tỉnh khai báo; chưa có bản đồ tọa độ.</p><div className="province-grid">{[...new Set(filtered.map(row => row.province || 'Chưa khai báo'))].map(province =>
           <div className="offer-card" key={province}><strong>{province}</strong><p>{filtered.filter(row => (row.province || 'Chưa khai báo') === province).length} hồ sơ</p></div>)}</div></section>}
-        <div className="admin-cards">{shown.map(row => <article className="panel admin-card" key={row.id}><div className="admin-card-mark">✳</div><div><span className="eyebrow">{row.province || 'Chưa khai báo tỉnh'}</span><h2>{row.display_name || row.full_name}</h2><p>{row.full_name}</p></div>
+        <div className="admin-cards">{shown.map(row => <article className="panel admin-card" key={row.id}><div className="admin-card-mark"><Users size={22} aria-hidden="true" /></div><div><span className="eyebrow">{row.province || 'Chưa khai báo tỉnh'}</span><h2>{row.display_name || row.full_name}</h2><p>{row.full_name}</p></div>
           <span className="status-pill">{row.is_suspended ? 'Đang khóa' : 'Hoạt động'}</span><div className="admin-card-actions"><button className="button outline" onClick={() => setDetail(row)}>Chi tiết</button><button className="button primary" onClick={() => setEditing({ ...row })}>Chỉnh sửa</button></div></article>)}</div>
         {!filtered.length && <div className="panel empty-state">Không có hồ sơ phù hợp.</div>}
         {pages > 1 && <div className="pagination"><button className="button outline" disabled={page<=1} onClick={() => setPage(page-1)}>← Trước</button><span>Trang {Math.min(page,pages)} / {pages}</span><button className="button outline" disabled={page>=pages} onClick={() => setPage(page+1)}>Tiếp →</button></div>}</> :

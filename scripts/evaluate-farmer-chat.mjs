@@ -1,15 +1,15 @@
-// Opt-in real Gemini smoke/evaluation with synthetic questions only. No Supabase credentials needed.
+// Opt-in real OpenRouter smoke/evaluation with synthetic questions only. No Supabase credentials needed.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { stripTypeScriptTypes } from 'node:module';
 
-const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-if (!apiKey) throw new Error('Set GEMINI_API_KEY locally. Never commit it or use a VITE_ variable.');
+const apiKey = process.env.OPENROUTER_API_KEY;
+if (!apiKey) throw new Error('Set OPENROUTER_API_KEY locally. Never commit it or use a VITE_ variable.');
 const argument = process.argv.find(value => value.startsWith('--limit='));
 const limit = argument ? Number(argument.slice('--limit='.length)) : 1;
 if (!Number.isInteger(limit) || limit < 1 || limit > 30) throw new Error('--limit must be between 1 and 30; default is one real request.');
-const model = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
+const model = process.env.OPENROUTER_MODEL || 'openrouter/free';
 const target = path.resolve('tmp/farmer-chat-evaluation');
 await fs.mkdir(target, { recursive: true });
 const source = await fs.readFile('supabase/functions/farmer-chat/service.ts', 'utf8');
@@ -19,7 +19,8 @@ await fs.copyFile('supabase/functions/farmer-chat/knowledge.json', path.join(tar
 const { generateAnswer } = await import(pathToFileURL(path.join(target, 'service.mjs')).href);
 const cases = JSON.parse(await fs.readFile('tests/fixtures/farmer-chat-evaluation.json', 'utf8'));
 const results = [];
-for (const entry of cases.slice(0, limit)) {
+const selected = process.argv.includes('--representative') ? ['DURIAN','JACKFRUIT','DRAGON_FRUIT'].flatMap(crop => ['DISEASE','GRADING'].map(topic => cases.find(c => c.crop === crop && c.topic === topic))).filter(Boolean).slice(0,limit) : cases.slice(0,limit);
+for (const entry of selected) {
   const started = Date.now();
   const input = { crop: entry.crop, topic: entry.topic, growthStage: entry.growthStage, question: entry.question };
   try {

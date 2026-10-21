@@ -10,8 +10,8 @@ import { type FarmerChatResponse } from './contract';
 
 const answer: FarmerChatResponse = { answer: 'Nội dung tham khảo <script>bad()</script>.', sources: [{ id: 'd1', title: 'Bảng tham khảo', url: 'https://drive.google.com/file/d/example' }], followUpQuestions: ['Cây ở giai đoạn nào?'], requestId: 'r1' };
 function ResetDemo() { const { reset } = useADemo(); return <button onClick={reset}>Reset demo</button>; }
-function show(sendRequest: typeof askFarmer = vi.fn(async () => answer), identity = 'farmer1') {
-  const tree = (key: string) => <MemoryRouter initialEntries={['/farmer/dashboard']}><FarmerAssistantProvider key={key} sendRequest={sendRequest}>
+function show(sendRequest: typeof askFarmer = vi.fn(async () => answer), identity = 'farmer1', path = '/farmer/dashboard') {
+  const tree = (key: string) => <MemoryRouter initialEntries={[path]}><FarmerAssistantProvider key={key} sendRequest={sendRequest}>
     <ADemoProvider><Routes><Route path="/farmer/dashboard" element={<><FarmerAssistantEntry /><ResetDemo /><Link to="/farmer/lots">Lots</Link></>} /><Route path="/farmer/lots" element={<Link to="/farmer/dashboard">Dashboard</Link>} /></Routes></ADemoProvider>
     <FarmerAssistantPanel enabled />
   </FarmerAssistantProvider></MemoryRouter>;
@@ -19,6 +19,14 @@ function show(sendRequest: typeof askFarmer = vi.fn(async () => answer), identit
 }
 async function open() { await userEvent.click(screen.getByRole('button', { name: 'Hỏi trợ lý' })); }
 async function submit(question = 'Câu hỏi mẫu') { fireEvent.change(screen.getByLabelText('Câu hỏi cho trợ lý'), { target: { value: question } }); await userEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' })); }
+
+test('trailing slash on a refreshed dashboard still allows opening the assistant', async () => {
+  show(undefined, 'farmer1', '/farmer/dashboard/?from=refresh');
+  await open();
+  expect(await screen.findByRole('dialog', { name: 'Trợ lý nhà vườn' })).toBeVisible();
+  await submit();
+  expect(await screen.findByText(answer.answer)).toBeVisible();
+});
 
 test('suggestions only fill composer; source and model text render safely; supplement restores original context', async () => {
   const send = vi.fn<typeof askFarmer>(async () => answer); show(send); await open();

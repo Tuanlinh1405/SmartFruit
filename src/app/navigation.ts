@@ -17,7 +17,7 @@ const buyer: NavigationItem[] = [
 export function workspaceNavigation(role: Role): NavigationItem[] {
   if (role === 'BUYER') return buyer;
   if (role === 'FARMER') return navigationFor(role)
-    .filter(item => item.id !== 'FUI-02' && item.id !== 'FUI-04')
+    .filter(item => !['FUI-02', 'FUI-04', 'FUI-10', 'FUI-11', 'FUI-12'].includes(item.id))
     .flatMap<NavigationItem>(item => item.id === 'FUI-07' ? [
       { path: '/farmer/invitations', title: 'Lời mời kết nối', icon: Mail },
       { path: '/farmer/negotiations', title: 'Đàm phán', icon: Handshake },

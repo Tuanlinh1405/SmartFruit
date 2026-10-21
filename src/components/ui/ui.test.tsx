@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import { Button } from './button';
@@ -49,5 +49,5 @@ test('confirm invokes callback only when confirmed',async()=>{
 });
 test('toast is announced and dismissible',async()=>{
   function Example(){const toast=useToast();return <Button onClick={()=>toast('Thành công mẫu')}>Thông báo</Button>;}
-  render(<ToastProvider><Example/></ToastProvider>);await userEvent.click(screen.getByRole('button',{name:'Thông báo'}));expect(screen.getByRole('status')).toHaveTextContent('Thành công mẫu');await userEvent.click(screen.getByRole('button',{name:'Đóng thông báo'}));expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  render(<ToastProvider><Example/></ToastProvider>);await userEvent.click(screen.getByRole('button',{name:'Thông báo'}));expect(screen.getByRole('status')).toHaveTextContent('Thành công mẫu');await userEvent.click(screen.getByRole('button',{name:'Đóng thông báo'}));await waitFor(()=>expect(screen.queryByRole('status')).not.toBeInTheDocument());
 });

@@ -25,7 +25,7 @@ function MapList({ farmerMap = false }: { farmerMap?: boolean }) {
 export function DemoDashboard({ role }: { role: 'FARMER' | 'CARRIER' }) {
   const { state, reset } = useADemo(); const farmer = role === 'FARMER';
   return <div className="stack">
-    <PageHeader eyebrow={`Tổng quan · ${farmer ? 'Nhà vườn' : 'Nhà xe'}`} title={farmer ? 'Mùa vụ sẵn sàng, kết nối người mua.' : 'Chuyến hàng tiếp nối, vững bước đường xa.'} description={farmer ? 'Quản lý lô nông sản và khám phá nhu cầu thu mua phù hợp.' : 'Quản lý đội xe và tìm yêu cầu vận chuyển phù hợp.'} action={<Link className="button button-accent" to={farmer ? '/farmer/lots/new' : '/carrier/vehicles'}>{farmer ? '＋ Tạo lô hàng' : 'Quản lý đội xe'}</Link>} />
+    <PageHeader eyebrow={`Tổng quan · ${farmer ? 'Nhà vườn' : 'Nhà xe'}`} title={farmer ? 'Mùa vụ sẵn sàng, kết nối người mua.' : 'Chuyến hàng tiếp nối, vững bước đường xa.'} description={farmer ? 'Quản lý lô nông sản và khám phá nhu cầu thu mua phù hợp.' : 'Quản lý đội xe và tìm yêu cầu vận chuyển phù hợp.'} action={<Link className="button button-accent" to={farmer ? '/farmer/lots/new' : '/carrier/vehicles'}>{farmer ? 'Tạo lô hàng' : 'Quản lý đội xe'}</Link>} />
     {farmer && <FarmerAssistantEntry />}
     <DemoNotice />
     <section className="stat-grid" aria-label="Hoạt động minh họa">

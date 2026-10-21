@@ -37,7 +37,7 @@ export function RequestListPage() {
 
   const visible = filter === 'ALL' ? rows : rows.filter(row => row.status === filter);
   return <><div className="page-heading"><div><span className="eyebrow">Nhu cầu thu mua</span><h1>Yêu cầu của bạn</h1><p>Quản lý các nhu cầu đã lưu trên Supabase.</p></div>
-    <Link to="/buyer/requests/new" className="button accent">＋ Tạo yêu cầu</Link></div>
+    <Link to="/buyer/requests/new" className="button accent">Tạo yêu cầu</Link></div>
     <div className="tabs" role="tablist" aria-label="Lọc trạng thái">{filters.map(item =>
       <button role="tab" aria-selected={filter === item.value} key={item.value} className={filter === item.value ? 'active' : ''}
         onClick={() => setFilter(item.value)}>{item.label}</button>)}</div>

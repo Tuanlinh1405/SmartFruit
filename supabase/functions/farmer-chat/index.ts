@@ -2,7 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.117.3';
 import { createChatHandler } from './handler.ts';
 
 Deno.serve(createChatHandler({
-  apiKey: Deno.env.get('GEMINI_API_KEY'), model: Deno.env.get('GEMINI_MODEL'),
+  apiKey: Deno.env.get('OPENROUTER_API_KEY'), model: Deno.env.get('OPENROUTER_MODEL'),
   allowedOrigins: (Deno.env.get('FARMER_CHAT_ALLOWED_ORIGINS') ?? '').split(',').map(s => s.trim()).filter(Boolean),
   async authenticate(jwt) {
     const client = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {

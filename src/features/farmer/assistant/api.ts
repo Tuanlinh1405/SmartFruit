@@ -5,8 +5,13 @@ export class AssistantRequestError extends Error {
   constructor(message: string, public code = 'UNAVAILABLE', public requestId?: string) { super(message); }
 }
 const errorMessages: Record<string, string> = {
-  QUOTA_EXCEEDED: 'Trợ lý đã chạm hạn mức Gemini. Vui lòng thử lại sau.',
-  NOT_CONFIGURED: 'Trợ lý chưa được cấu hình Gemini. Vui lòng thử lại sau.',
+  QUOTA_EXCEEDED: 'Trợ lý đã chạm hạn mức OpenRouter miễn phí. Vui lòng thử lại sau.',
+  NOT_CONFIGURED: 'Trợ lý chưa được cấu hình OpenRouter. Vui lòng thử lại sau.',
+  MODEL_NOT_FREE: 'Model trợ lý chưa được cấu hình là model miễn phí hợp lệ. Liên hệ quản trị viên.',
+  PROVIDER_AUTH_ERROR: 'Khóa kết nối OpenRouter chưa hợp lệ. Liên hệ quản trị viên.',
+  PROVIDER_ACCOUNT_ERROR: 'Tài khoản OpenRouter chưa sử dụng được dịch vụ miễn phí. Liên hệ quản trị viên.',
+  PROVIDER_UNAVAILABLE: 'OpenRouter hiện chưa trả lời được. Vui lòng thử lại sau.',
+  FORBIDDEN_ORIGIN: 'Tên miền website chưa được cho phép gọi trợ lý. Liên hệ quản trị viên.',
   TIMEOUT: 'Trợ lý phản hồi quá lâu. Vui lòng thử lại.',
   UNAUTHENTICATED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
   FORBIDDEN: 'Trợ lý chỉ dành cho tài khoản nhà vườn.',

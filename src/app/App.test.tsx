@@ -8,6 +8,7 @@ vi.mock('../features/auth/AuthProvider',()=>({useAuth:()=>auth,AuthProvider:({ch
 vi.mock('../lib/supabase',()=>({supabase:{auth:{signOut:vi.fn().mockResolvedValue({error:null})}}}));
 vi.mock('../features/auth/LoginPage',()=>({LoginPage:()=> <h1>Đăng nhập</h1>}));
 vi.mock('../features/buyer/BuyerDashboard',()=>({BuyerDashboard:()=> <h1>Dashboard Buyer thật</h1>}));
+vi.mock('../features/farmer/dashboard/FarmerDashboard',()=>({default:()=> <h1>Tổng quan Farmer thời tiết và thu mua</h1>}));
 vi.mock('../features/admin/AdminPage',()=>({AdminPage:()=> <h1>Admin thật</h1>}));
 vi.mock('../features/buyer-profile/BuyerProfilePage',()=>({BuyerProfilePage:()=> <h1>Hồ sơ thật</h1>}));
 vi.mock('../features/buy-requests/RequestListPage',()=>({RequestListPage:()=> <h1>Nhu cầu thật</h1>}));
@@ -25,6 +26,11 @@ beforeEach(()=>{auth.status='ready';auth.profile.role='BUYER';});
 function show(path:string){window.history.replaceState({},'',path);render(<App/>);}
 
 describe('Dev A shell connected to authenticated features',()=>{
+  it.each(['/farmer', '/farmer/dashboard'])('keeps the latest Farmer dashboard through %s',async path=>{
+    auth.profile.role='FARMER';show(path);
+    expect(await screen.findByRole('heading',{name:'Tổng quan Farmer thời tiết và thu mua'})).toBeVisible();
+    expect(window.location.pathname).toBe('/farmer/dashboard');
+  });
   it('redirects the old Buyer root into the new dashboard without a role picker',async()=>{
     show('/buyer');expect(await screen.findByRole('heading',{name:'Dashboard Buyer thật'})).toBeVisible();
     expect(window.location.pathname).toBe('/buyer/dashboard');
@@ -69,4 +75,11 @@ describe('Dev A shell connected to authenticated features',()=>{
     auth.status='signed-out';show(path);expect(await screen.findByRole('heading',{name:'Đăng ký tài khoản'})).toBeVisible();
     expect(screen.getByRole('combobox',{name:/Bạn tham gia/})).toBeVisible();
   });
+});
+
+it.each(['/admin','/admin/dashboard'])('keeps Admin overview and active navigation through %s',async path=>{
+ auth.profile.role='ADMIN';show(path);
+ expect(await screen.findByRole('heading',{name:'Admin thật'})).toBeVisible();
+ expect(window.location.pathname).toBe('/admin/dashboard');
+ expect(within(screen.getByRole('navigation',{name:'Điều hướng Quản trị'})).getByRole('link',{name:'Tổng quan vận hành'})).toHaveAttribute('aria-current','page');
 });

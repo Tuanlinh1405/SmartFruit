@@ -10,7 +10,7 @@ export interface FarmerChatInput {
 export interface ChatSource { id: string; title: string; url?: string; }
 export interface FarmerChatResponse { answer: string; sources: ChatSource[]; followUpQuestions: string[]; requestId: string; }
 export const questionLimit = 1500;
-export const demoDisclaimer = 'Bản demo. Không nhập thông tin cá nhân hoặc bí mật kinh doanh. Mỗi câu hỏi được xử lý độc lập, không dùng nội dung các lượt trước.';
+export const demoDisclaimer = 'Kiến thức tham khảo. Không nhập thông tin cá nhân hoặc bí mật kinh doanh. Mỗi câu hỏi được xử lý độc lập, không dùng nội dung các lượt trước.';
 export const defaultContext: Omit<FarmerChatInput, 'question'> = { crop: 'DURIAN', topic: 'DISEASE', growthStage: 'UNKNOWN' };
 
 export function parseChatInput(value: unknown): FarmerChatInput | null {
