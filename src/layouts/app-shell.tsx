@@ -8,6 +8,7 @@ import type { Role } from '../types/ui';
 import { Drawer } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../features/auth/AuthProvider';
+import { NotificationBell } from './notification-bell';
 function Navigation({ role, onNavigate }: { role: Role; onNavigate?: () => void }) {
   return <nav aria-label={`Điều hướng ${roleMeta[role].label}`} className="workspace-navigation">{workspaceNavigation(role).map(item => { const Icon = item.icon; return <NavLink end={item.end} key={item.path} to={item.path} className="workspace-nav-link" onClick={onNavigate}>{Icon && <Icon size={19} strokeWidth={1.8} aria-hidden="true" />}<span>{item.title}</span></NavLink>; })}</nav>;
 }
@@ -30,7 +31,7 @@ export function AppShell({ role }: { role: Role }) {
     <aside className="workspace-sidebar">{sidebarContent}</aside>
     <div className="workspace-main"><header className="workspace-topbar">
       <Drawer title={`Menu ${meta.label}`} description="Điều hướng theo vai trò tài khoản đã đăng nhập." open={menuOpen} onOpenChange={setMenuOpen} trigger={<Button variant="ghost" className="workspace-menu" aria-label="Mở menu"><Menu size={22} aria-hidden="true" /></Button>}><div className="workspace-mobile-navigation">{sidebarContent}</div></Drawer>
-      <span className="workspace-tag">B2B AGRITECH VIETNAM</span><span className="workspace-spacer" /><span className="workspace-welcome">Xin chào, {name}</span><Link to={accountPath} className="workspace-avatar" aria-label={`Hồ sơ ${name}`}>{initial}</Link>
+      <span className="workspace-tag">B2B AGRITECH VIETNAM</span><span className="workspace-spacer" /><NotificationBell /><span className="workspace-welcome">Xin chào, {name}</span><Link to={accountPath} className="workspace-avatar" aria-label={`Hồ sơ ${name}`}>{initial}</Link>
     </header><main id="main-content" tabIndex={-1} className="workspace-content"><nav aria-label="Đường dẫn" className="breadcrumb"><Link to="/">{brandName}</Link><span aria-hidden="true">/</span><span>{meta.label}</span><span aria-hidden="true">/</span><span aria-current="page">{current?.title ?? (pathname.endsWith('/edit') ? 'Chỉnh sửa' : navItem?.title ?? 'Chi tiết')}</span></nav><div className={role === 'BUYER' ? 'b-workspace' : 'workspace-pages'}><Outlet /></div></main></div>
   </div>;
 }

@@ -48,9 +48,10 @@ export function ApplicationRoutes() {
         <Route index element={<Navigate to="dashboard" replace />} />
         {role === 'FARMER' && <><Route path="invitations" element={<TradePage view="invitations" />} /><Route path="negotiations" element={<TradePage view="negotiations" />} /><Route path="chat" element={<TradePage view="negotiations" />} /><Route path="reviews" element={<TradePage view="reviews" />} /></>}
         {role === 'CARRIER' && <Route path="dashboard" element={<RoleDashboard role={role} />} />}
-        {pageInventory.filter(entry => entry.role === role && ['FUI-06','FUI-10','FUI-11','FUI-12','FUI-13','CUI-03','CUI-05','CUI-06'].includes(entry.id)).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={<DeferredPage kind={({ 'FUI-06':'transport','FUI-10':'prices','FUI-11':'weather','FUI-12':'map','FUI-13':'policy','CUI-03':'transport','CUI-05':'tracking','CUI-06':'carrier-reviews' } as Record<string,string>)[entry.id]} />} />)}
+        {pageInventory.filter(entry => entry.role === role && ['FUI-06','FUI-13','CUI-03','CUI-05','CUI-06'].includes(entry.id)).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={<DeferredPage kind={({ 'FUI-06':'transport','FUI-13':'policy','CUI-03':'transport','CUI-05':'tracking','CUI-06':'carrier-reviews' } as Record<string,string>)[entry.id]} />} />)}
         {role === 'FARMER' ? <>
           <Route path="dashboard" element={<FarmerDashboard />} />
+          {['prices','weather','map'].map(tab => <Route key={tab} path={tab} element={<Navigate to={`/farmer/dashboard?tab=${tab}`} replace />} />)}
           <Route path="profile" element={<FarmerCarrierFeature feature="profile" />} />
           <Route path="lots" element={<FarmerCarrierFeature feature="lots" />} />
           <Route path="lots/new" element={<FarmerCarrierFeature feature="new" />} />
