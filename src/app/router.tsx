@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { StartPage } from './start-page';
 import { pageInventory } from './ui-inventory';
 import { AppShell } from '../layouts/app-shell';
@@ -35,6 +35,14 @@ function FarmerCarrierFeature({ feature }: { feature: Feature }) {
   const { session } = useAuth();
   return <AFeaturePage feature={feature} authenticatedUserId={session!.user.id} scorer={scoreFarmerRequests} scoringVersion={`${RULE_VERSION}:${import.meta.env.VITE_MATCHING_MODE}`} />;
 }
+function FarmerDashboardRedirect() {
+  const { search, hash } = useLocation();
+  const params = new URLSearchParams(search);
+  // The dashboard now shows all sections together; only the old tab selector is obsolete.
+  params.delete('tab');
+  const query = params.toString();
+  return <Navigate to={{ pathname: '/farmer/dashboard', search: query ? `?${query}` : '', hash }} replace />;
+}
 // Exported without BrowserRouter/AuthProvider for integration tests using real
 // routing with injected SDK dependencies. Production always uses AppRouter.
 export function ApplicationRoutes() {
@@ -56,7 +64,7 @@ export function ApplicationRoutes() {
         {pageInventory.filter(entry => entry.role === role && ['FUI-06','CUI-03','CUI-05','CUI-06'].includes(entry.id)).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={['FUI-06','CUI-03'].includes(entry.id)?<TransportPage/>:<DeferredPage kind={entry.id==='CUI-05'?'tracking':'carrier-reviews'} />} />)}
         {role === 'FARMER' ? <>
           <Route path="dashboard" element={<FarmerDashboard />} />
-          {['prices','weather','map'].map(path => <Route key={path} path={path} element={<Navigate to="/farmer/dashboard" replace />} />)}
+          {['prices','weather','map'].map(path => <Route key={path} path={path} element={<FarmerDashboardRedirect />} />)}
           <Route path="profile" element={<FarmerCarrierFeature feature="profile" />} />
           <Route path="lots" element={<FarmerCarrierFeature feature="lots" />} />
           <Route path="lots/new" element={<FarmerCarrierFeature feature="new" />} />

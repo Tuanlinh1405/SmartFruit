@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../auth/AuthProvider';
 import { supabase } from '../../lib/supabase';
-import { explainError, formatMoney } from '../../lib/format';
+import { explainError, formatTransportFare } from '../../lib/format';
 import { vietnamDate } from '../farmer/dashboard/areas';
 import { createTransport,findVehicles,listTransport,loadTransportSources,respondTransport,transportLabels,vehicleTypes,type Shipment,type TransportRequest,type VehicleType } from './api';
 import './transport.css';
@@ -14,7 +14,7 @@ function RequestCard({row,carrier,busy,onAct}:{row:TransportRequest;carrier:bool
     <h3>{row.source_title}</h3><p><strong>{transportLabels[row.status]}</strong> · {Number(row.quantity_kg).toLocaleString('vi-VN')} kg</p>
     <p>{row.origin_province} → {row.destination_province} · {row.pickup_date.split('-').reverse().join('/')}</p>
     <p>Lấy hàng: {row.origin_address}<br/>Giao hàng: {row.destination_address}</p>
-    <p>{row.carrier_name} · {row.vehicle_label}</p><p><strong>{row.quote_vnd?`${formatMoney(row.quote_vnd)}/chuyến`:'Chờ báo giá'}</strong></p>{row.quote_note&&<p>{row.quote_note}</p>}
+    <p>{row.carrier_name} · {row.vehicle_label}</p><p><strong>{row.quote_vnd?formatTransportFare(row.quote_vnd):'Chờ báo giá'}</strong></p>{row.quote_note&&<p>{row.quote_note}</p>}
     {row.status==='ACCEPTED'&&<p className="muted">Hai bên đã thống nhất báo giá. Liên hệ xác nhận lịch xe; hệ thống chưa tự giữ chỗ hoặc xử lý thanh toán.</p>}
     {carrier&&row.status==='PENDING'&&<form className="stack-sm" onSubmit={e=>{e.preventDefault();onAct(row.id,'QUOTED',Number(price),note);}}>
       <label>Cước trọn chuyến (VND)<input className="control" type="number" min="1" max="1000000000000" step="1" required value={price} onChange={e=>setPrice(e.target.value)}/></label>
