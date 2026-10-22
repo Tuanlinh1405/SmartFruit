@@ -2,6 +2,8 @@
 
 LogStar MVP: React/TypeScript/Vite + Supabase. Dev B đã triển khai Auth, Buyer, kết nối Buyer/Farmer, chat, thương lượng/thỏa thuận, đánh giá và Admin bằng dữ liệu thật. Matching mặc định theo quy tắc; vector/graph có schema và mã, còn chờ host inference/worker. [Trạng thái tính năng và các phần hoãn](docs/implementation-status.md).
 
+Cập nhật 22/10/2026: đã có mã dashboard gọn, chính sách, thông báo và tìm xe/báo giá tối thiểu; cần áp migration mới trước khi đưa các luồng mới lên cloud. Đánh giá mẫu cho farmer3/buyer3 đã được tạo trên cloud và kiểm tra không trùng. Xem [kết quả triển khai và bước cloud còn lại](docs/customer-feedback-acceptance-2026-10-22.md).
+
 Khởi tạo máy developer với Node.js >=22:
 
 ```powershell

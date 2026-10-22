@@ -36,6 +36,6 @@ export function RegisterPage() {
         <TextField label="Mật khẩu" type="password" required autoComplete="new-password" hint="Từ 8 đến 128 ký tự." value={password} disabled={busy} onChange={e => setPassword(e.target.value)} />
         <TextField label="Xác nhận mật khẩu" type="password" required autoComplete="new-password" value={confirmation} disabled={busy} onChange={e => setConfirmation(e.target.value)} />
         {error && <p role="alert">{error}</p>}<Button type="submit" loading={busy}>Tạo tài khoản</Button>
-      </form>}</Card><p>Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p>
+      </form>}</Card><p>Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p><p>Khi đăng ký, bạn đồng ý với <Link to="/policy">Chính sách &amp; bảo mật</Link>.</p>
   </main>;
 }

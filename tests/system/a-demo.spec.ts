@@ -6,17 +6,21 @@ for (const width of [1440, 768, 390]) for (const route of pages) test(`A workspa
   const errors: string[] = []; const remote: string[] = []; page.on('pageerror', e => errors.push(e.message)); page.on('request', r => { if (r.url().includes('supabase.co')) remote.push(r.url()); });
   await page.setViewportSize({ width, height: 960 }); await page.goto(route); await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   if (route.endsWith('/dashboard')) await expect(page.getByRole('region', { name: 'Thống kê tài khoản' })).toBeVisible();
-  else await expect(page.getByText('Chưa hỗ trợ', { exact: true })).toBeVisible();
+  else if(route.endsWith('/tracking')||route.endsWith('/reviews'))await expect(page.getByText('Chưa hỗ trợ', { exact: true })).toBeVisible();
+  else if(route.endsWith('/transport'))await expect(page.getByRole('heading',{name:'Tìm xe phù hợp'})).toBeVisible();
+  else if(route.endsWith('/requests'))await expect(page.getByRole('heading',{name:'Yêu cầu gửi đến nhà xe'})).toBeVisible();
+  else if(route.endsWith('/notifications'))await expect(page.getByRole('heading',{name:'Thông báo',exact:true})).toBeVisible();
+  else {await expect(page.getByRole('heading',{name:'Tổng quan nhà vườn',exact:true})).toBeVisible();await expect(page.getByRole('tab')).toHaveCount(0);}
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true); expect(errors).toEqual([]); expect(remote).toEqual([]);
 });
-test('deferred Farmer integrations do not offer simulated submissions', async ({ page }) => {
+test('Farmer utilities use live pages without simulated submissions', async ({ page }) => {
   for (const route of ['/farmer/transport','/farmer/prices','/farmer/weather','/farmer/map','/farmer/notifications']) {
-    await page.goto(route); await expect(page.getByText('Chưa hỗ trợ', { exact: true })).toBeVisible();
+    await page.goto(route); await expect(page.getByRole('heading',{level:1})).toBeVisible();
     await expect(page.getByRole('button', { name: /minh họa/ })).toHaveCount(0);
   }
 });
-test('carrier deferred transport and reviews cannot create fake bookings', async ({ page }) => {
-  for (const route of ['/carrier/requests','/carrier/tracking','/carrier/reviews']) {
+test('carrier deferred tracking and reviews cannot create fake bookings', async ({ page }) => {
+  for (const route of ['/carrier/tracking','/carrier/reviews']) {
     await page.goto(route); await expect(page.getByText('Chưa hỗ trợ', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: /Nhận chuyến|báo giá|minh họa/ })).toHaveCount(0);
   }

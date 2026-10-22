@@ -9,4 +9,4 @@
 - Toast qua Sonner; nút đóng có nhãn và nội dung được thông báo cho screen reader. Component form, status badge, bảng, dialog dùng cùng palette/radius/focus ring.
 - Backend, RLS và công thức matching giữ nguyên. Thời tiết/bản đồ gọi provider thật; giá thị trường và vận tải vẫn ghi rõ chưa tích hợp.
 
-Chuông thông báo vẫn là empty state chưa gắn backend. Việc đổi nhà cung cấp trợ lý trong nhánh Dev A cần deployment Supabase function riêng, không được thực hiện tự động bởi Vercel. Lần kiểm tra trước có timeout trợ lý thật; không coi unit test pass là xác nhận provider luôn khả dụng.
+Sau khi gộp phản hồi khách hàng ngày 22/10, chuông đã có mã kết nối backend và tìm xe/báo giá đã có luồng tối thiểu; cả hai vẫn cần migration mới trước khi dùng trên cloud. Dashboard Farmer chỉ còn Tổng quan, giữ MetricCard và palette chung của Forest Logistics. Chi tiết tại customer-feedback-acceptance-2026-10-22.md. Việc đổi nhà cung cấp trợ lý trong nhánh Dev A cần deployment Supabase function riêng, không được thực hiện tự động bởi Vercel. Lần kiểm tra trước có timeout trợ lý thật; không coi unit test pass là xác nhận provider luôn khả dụng.

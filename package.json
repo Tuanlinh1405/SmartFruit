@@ -23,6 +23,9 @@
     "test:system:live": "node scripts/run-live-system.mjs",
     "auth:reset-password": "node scripts/reset-auth-password.mjs",
     "seed:test": "node scripts/seed-test-accounts.mjs",
+    "seed:reviews": "node scripts/seed-customer-reviews.mjs",
+    "seed:notifications": "node scripts/seed-demo-notifications.mjs",
+    "check:feedback": "node scripts/check-customer-feedback-cloud.mjs",
     "test:live": "node scripts/test-live-trading.mjs",
     "ui:inventory": "node scripts/generate-ui-inventory.mjs"
   },

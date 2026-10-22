@@ -3,6 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 vi.mock('../features/auth/AuthProvider', () => ({ useAuth: () => ({ profile: { full_name: 'Farmer test' }, signOut: vi.fn() }) }));
+vi.mock('../layouts/notification-bell',()=>({NotificationBell:()=> <button>Mở thông báo</button>}));
 import { AppShell } from '../layouts/app-shell';
 import { roleMeta, pageInventory, uiInventory } from './ui-inventory';
 test('inventory covers all 42 IDs and modal parents are pages',()=>{expect(uiInventory).toHaveLength(42);expect(new Set(uiInventory.map(entry=>entry.id)).size).toBe(42);expect(new Set(pageInventory.map(entry=>entry.path)).size).toBe(pageInventory.length);for(const entry of uiInventory.filter(entry=>entry.kind==='modal'))expect(pageInventory.some(parent=>parent.path===entry.path)).toBe(true);});

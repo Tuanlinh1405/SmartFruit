@@ -13,6 +13,7 @@ export async function installMockApi(page: Page, sharedDatabase?: Record<string,
   const database: Record<string, Row[]> = sharedDatabase ?? {
     profiles: Object.entries(testIds).map(([role, id]) => ({ id, role, full_name: `Test ${role}`, phone_display: 'Test' })),
     trade_connections: [], trade_messages: [], trade_offers: [], trade_agreements: [], trade_reviews: [],
+    notifications: [], transport_requests: [],
     farmer_profiles: [], carrier_profiles: [], vehicles: [], lot_images: [], lot_private_details: [],
     fruit_types: testCatalog.fruits.map(v => ({ ...v })), fruit_varieties: testCatalog.varieties.map(v => ({ ...v })),
     lots: [{ ...testLot({ id: '40000000-0000-4000-8000-000000000001', farmer_id: testIds.FARMER, status: 'PUBLISHED', quantity_kg: 5000 }) }],
@@ -64,6 +65,17 @@ export async function installMockApi(page: Page, sharedDatabase?: Record<string,
       calls.push({ method, table: rpc, body: args });
       const actor = testIds[role];
       const denied = () => send({ message: 'Thao tác không được phép hoặc trạng thái đã thay đổi.' }, 403);
+      if (rpc === 'mark_notifications_read' && active) {
+        database.notifications.filter(n=>n.recipient_id===actor&&(!args.target_id||n.id===args.target_id)&&(!args.through_time||String(n.created_at)<=String(args.through_time))).forEach(n=>n.read_at=new Date().toISOString());return send(null);
+      }
+      if (rpc === 'my_review_summary' && active) {
+        const rows=database.trade_reviews.filter(r=>r.target_id===actor);
+        return send({count:rows.length,average:rows.length?rows.reduce((s,r)=>s+Number(r.rating),0)/rows.length:null,recent:rows.slice(-3).reverse().map(r=>({...r,reviewer_name:database.profiles.find(p=>p.id===r.reviewer_id)?.full_name??'Đối tác'}))});
+      }
+      if(rpc==='my_transport_sources'&&active){return send(database.lots.filter(l=>role==='FARMER'&&l.farmer_id===actor&&l.status==='PUBLISHED').map(l=>({lot_id:l.id,agreement_id:null,title:l.title,quantity_kg:l.quantity_kg,province:l.province,available_start:'2026-01-01',available_end:'2099-12-31'})));}
+      if(rpc==='find_transport_vehicles'&&active){const rows=database.vehicles.filter(v=>v.active&&Number(v.capacity_kg)>=Number(args.kg)&&v.vehicle_type===args.required&&(v.provinces as string[]).includes(String(args.origin))&&(v.provinces as string[]).includes(String(args.destination))).map(v=>({...v,company_name:'Nhà xe kiểm thử'}));return send({items:rows,count:rows.length});}
+      if(rpc==='create_transport_request'&&active){const vehicle=database.vehicles.find(v=>v.id===args.target_vehicle_id);const lot=database.lots.find(l=>l.id===args.target_lot_id);if(!vehicle||!lot)return denied();const id=crypto.randomUUID();database.transport_requests.push({id,requester_id:actor,carrier_id:vehicle.carrier_id,source_title:lot.title,carrier_name:'Nhà xe kiểm thử',vehicle_label:'Xe thùng kín',quantity_kg:args.kg,origin_province:args.origin,destination_province:args.destination,origin_address:args.origin_detail,destination_address:args.destination_detail,pickup_date:args.pickup,status:'PENDING',quote_vnd:null,quote_note:'',created_at:new Date().toISOString()});return send(id);}
+      if(rpc==='respond_transport_request'&&active){const r=database.transport_requests.find(r=>r.id===args.target_id);if(!r||![r.requester_id,r.carrier_id].includes(actor))return denied();r.status=args.decision;if(args.decision==='QUOTED'){r.quote_vnd=args.price;r.quote_note=args.note;}return send(null);}
       if (rpc === 'complete_registration') {
         const profile = database.profiles.find(row => row.id === actor);
         if (!active || !profile || profile.is_suspended || !registrationMetadata || !['FARMER','BUYER','CARRIER'].includes(String(registrationMetadata.registration_role))) return denied();
@@ -120,6 +132,7 @@ export async function installMockApi(page: Page, sharedDatabase?: Record<string,
     calls.push({ method, table, body });
     const matches = (row: Row) => [...url.searchParams].every(([key, value]) => {
       if (value.startsWith('eq.')) return String(row[key]) === value.slice(3);
+      if (value==='is.null') return row[key]===null||row[key]===undefined;
       if (value.startsWith('in.')) return value.slice(3).replace(/[()"]/g, '').split(',').includes(String(row[key]));
       if (value.startsWith('lte.')) return String(row[key]) <= value.slice(4);
       if (value.startsWith('gte.')) return String(row[key]) >= value.slice(4);
@@ -129,6 +142,8 @@ export async function installMockApi(page: Page, sharedDatabase?: Record<string,
     const participant = (row: Row) => [row.buyer_id, row.farmer_id].includes(testIds[role]);
     let rows = database[table].filter(matches).filter(row => {
       if (table === 'trade_connections') return participant(row);
+      if (table === 'notifications') return row.recipient_id===testIds[role];
+      if (table === 'transport_requests') return [row.requester_id,row.carrier_id].includes(testIds[role]);
       if (table === 'trade_reviews') return [row.reviewer_id, row.target_id].includes(testIds[role]);
       if (table.startsWith('trade_')) return database.trade_connections.some(connection => connection.id === row.connection_id && participant(connection));
       return true;
@@ -156,7 +171,7 @@ export async function installMockApi(page: Page, sharedDatabase?: Record<string,
 export async function loginAs(page: Page, role: TestRole) {
   await page.goto('/login'); await page.getByLabel(/^Email hoặc số điện thoại/).fill(phones[role]); await page.getByLabel(/^Mật khẩu/).fill('test-only-password');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page).toHaveURL(role === 'BUYER' ? /\/buyer\/dashboard$/ : role === 'ADMIN' ? /\/admin$/ : new RegExp(`/${role.toLowerCase()}/dashboard$`));
+  await expect(page).toHaveURL(role === 'BUYER' ? /\/buyer\/dashboard$/ : role === 'ADMIN' ? /\/admin\/dashboard$/ : new RegExp(`/${role.toLowerCase()}/dashboard$`));
 }
 export async function logout(page: Page) {
   if (await page.getByRole('button', { name: 'Mở menu' }).isVisible()) await page.getByRole('button', { name: 'Mở menu' }).click();

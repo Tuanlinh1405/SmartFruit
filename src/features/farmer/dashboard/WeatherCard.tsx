@@ -5,7 +5,7 @@ import { supabase } from '../../../lib/supabase';
 import { coordinates, findPlaces, provincePlace, type Place } from './geography';
 import { cachedForecast, loadForecast, weatherLabel, type Forecast } from './weather';
 
-export function WeatherCard() {
+export function WeatherCard({compact=false}:{compact?:boolean}) {
   const { session } = useAuth(); const userId = session?.user.id;
   const [place, setPlace] = useState<Place | null>(null), [search, setSearch] = useState(''), [options,setOptions] = useState<Place[]>([]);
   const [locationError,setLocationError] = useState(''), [searching,setSearching] = useState(false), [chosen,setChosen] = useState(false);
@@ -25,17 +25,17 @@ export function WeatherCard() {
     {profile.isPending && <p role="status">Đang đọc vị trí hồ sơ…</p>}
     {profile.isError && <p role="alert">Không đọc được hồ sơ. Bạn vẫn có thể chọn địa điểm bên dưới. <button className="text-link" onClick={() => void profile.refetch()}>Thử lại hồ sơ</button></p>}
     {!profile.isPending && !place && <p>Chưa có vị trí dự báo. Chọn địa điểm tham khảo hoặc bổ sung tọa độ trong hồ sơ vườn.</p>}
-    <form className="stack-sm" onSubmit={async e => { e.preventDefault(); if (searching) return; setSearching(true); setLocationError(''); setOptions([]); try { const rows=await findPlaces(search); setOptions(rows); if (!rows.length) setLocationError('Không tìm thấy địa điểm tại Việt Nam.'); } catch { setLocationError('Không tìm được địa điểm. Vui lòng thử lại.'); } finally { setSearching(false); } }}>
+    <details open={!compact||!place}><summary>Chọn địa điểm dự báo</summary><form className="stack-sm" onSubmit={async e => { e.preventDefault(); if (searching) return; setSearching(true); setLocationError(''); setOptions([]); try { const rows=await findPlaces(search); setOptions(rows); if (!rows.length) setLocationError('Không tìm thấy địa điểm tại Việt Nam.'); } catch { setLocationError('Không tìm được địa điểm. Vui lòng thử lại.'); } finally { setSearching(false); } }}>
       <label>Tìm địa điểm thời tiết<input className="control" value={search} maxLength={120} onChange={e=>setSearch(e.target.value)} placeholder="Nhập tỉnh hoặc thành phố" /></label>
       <button className="button outline" disabled={searching || search.trim().length < 2}>{searching ? 'Đang tìm…' : 'Tìm địa điểm'}</button>
       {options.length > 0 && <label>Chọn địa điểm tham khảo<select className="control" value="" onChange={e=>{const p=options.find(x=>x.id===Number(e.target.value));if(p){setChosen(true);setPlace(p);setLocationError('');}}}><option value="">Chọn địa điểm</option>{options.map(p=><option value={p.id} key={p.id}>{p.name}</option>)}</select></label>}
-    </form>
+    </form></details>
     {locationError && <p role="alert">{locationError}</p>}
     {place && <><p><strong>{place.name}</strong> · {place.representative ? 'Địa điểm đại diện' : 'Theo tọa độ hồ sơ vườn'}</p>
       {forecast.isFetching && <p role="status">Đang tải dự báo…</p>}
       {forecast.isError && <p role="alert">Không tải được dự báo mới.{data && ' Đang hiển thị dữ liệu cũ.'} <button className="text-link" onClick={()=>void forecast.refetch()}>Thử lại thời tiết</button></p>}
       {data && <><p className="weather-temperature">{data.temperature}°C · {weatherLabel(data.code)}</p><p>Độ ẩm {data.humidity}% · Gió {data.wind} km/h</p><p>Khả năng mưa hôm nay: {data.days[0].rain}%</p>
-        <ul className="weather-days">{data.days.map(d=><li key={d.date}><strong>{d.date.split('-').reverse().join('/')}</strong><span>{weatherLabel(d.code)}</span><span>{d.min}–{d.max}°C · Mưa {d.rain}%</span></li>)}</ul>
+        <ul className={`weather-days${compact?' weather-days-compact':''}`}>{data.days.map(d=><li key={d.date}><strong>{d.date.split('-').reverse().join('/')}</strong><span>{weatherLabel(d.code)}</span><span>{d.min}–{d.max}°C · Mưa {d.rain}%</span></li>)}</ul>
         <small>Cập nhật {new Date(data.updatedAt).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})} · Giờ Việt Nam</small></>}
     </>}
     <p className="muted"><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Nguồn: Open-Meteo</a> · Dự báo tham khảo, không phải số đo tại vườn.</p>

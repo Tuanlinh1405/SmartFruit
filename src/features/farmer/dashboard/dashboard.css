@@ -11,7 +11,6 @@
 .weather-temperature { font-size:24px;font-weight:600;font-variant-numeric:tabular-nums; }
 .weather-days { list-style:none;margin:16px 0;padding:0;display:grid;gap:12px; }.weather-days li { display:grid;gap:3px;border-top:1px solid var(--border);padding-top:10px; }
 .farmer-dashboard { gap:16px; }.farmer-overview { gap:16px; }
-.farmer-dashboard .tab-panel { padding-top:16px; }.farmer-dashboard .tab-panel[hidden] { display:none; }
 .farmer-overview-grid { display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;align-items:stretch; }.farmer-overview-grid>* { min-width:0; }
 .farmer-dashboard .assistant-entry { gap:12px;align-content:start; }.farmer-dashboard .assistant-entry>div { flex-basis:calc(100% - 60px); }
 .farmer-dashboard .assistant-entry .eyebrow { font-size:11px;font-weight:500;text-transform:none;letter-spacing:0; }
@@ -26,7 +25,29 @@
 .farmer-dashboard-weather,.farmer-reference-prices { max-width:760px; }.farmer-reference-prices p { margin-bottom:12px; }
 @media(max-width:767px) {
  .farmer-overview-grid,.farmer-shortcuts { grid-template-columns:minmax(0,1fr); }
- .farmer-dashboard .tabs-list { display:grid;grid-template-columns:repeat(2,minmax(0,1fr)); }
- .farmer-dashboard .tab { padding:8px 4px;font-size:12px; }
  .farmer-dashboard .assistant-entry>.button { width:auto; }
 }
+
+/* Customer overview: all utilities share one page and Forest Logistics tokens. */
+.farmer-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.farmer-overview-grid{grid-template-columns:minmax(0,1fr)}
+.farmer-dashboard .farmer-matching{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px}
+.farmer-matching .farmer-feature-icon{margin:0;width:30px;height:30px}
+.farmer-matching h2{margin:0;flex:1;min-width:150px}.farmer-matching p{display:none}.farmer-matching .hero-actions{margin:0}
+.farmer-overview-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.farmer-overview-tools>*{min-width:0}.farmer-overview-tools .buying-area-map{height:200px}
+.farmer-overview-tools .buying-area-list{max-height:180px}.buying-area-list[hidden]{display:none}
+.farmer-overview-tools summary{cursor:pointer;font-size:12px;color:var(--accent);margin:8px 0}
+.farmer-overview-tools .row{flex-wrap:wrap}.farmer-overview-tools .row button{font-size:11px}
+.farmer-overview-tools .review-summary article{font-size:12px}.farmer-overview-tools .review-summary article:nth-of-type(n+3){display:none}
+.farmer-overview-tools .weather-days-compact{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.farmer-overview-tools .weather-days-compact li{font-size:11px}
+.farmer-dashboard .farmer-reference-prices{max-width:none}.farmer-reference-prices h2{margin:0}.farmer-reference-prices p{margin:6px 0;font-size:12px}
+@media(min-width:1250px){
+ .farmer-overview-tools{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"reviews weather map" "transport weather map"}
+ .farmer-overview-tools>.review-summary{grid-area:reviews}.farmer-overview-tools>[aria-label="Vận chuyển"]{grid-area:transport}
+ .farmer-overview-tools>.farmer-weather{grid-area:weather}.farmer-overview-tools>.farmer-buying-areas{grid-area:map}
+ .farmer-overview-tools .weather-days-compact{grid-template-columns:1fr}.farmer-overview-tools .weather-days-compact li{display:flex;flex-wrap:wrap}.farmer-overview-tools .weather-days-compact li>strong{width:100%}
+}
+@media(max-width:767px){.farmer-overview-tools{grid-template-columns:minmax(0,1fr)}.farmer-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.assistant-fab{bottom:calc(80px + env(safe-area-inset-bottom));right:16px}}
+@media(max-width:630px){.farmer-matching .hero-actions{flex-basis:100%;margin-top:4px}}

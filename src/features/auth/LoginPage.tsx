@@ -26,6 +26,6 @@ export function LoginPage() {
       <TextField label="Email hoặc số điện thoại" required autoComplete="username" placeholder="ban@example.com hoặc +84901234567" value={identifier} onChange={e => setIdentifier(e.target.value)} />
       <TextField label="Mật khẩu" required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} />
       {error && <p role="alert">{error}</p>}<Button type="submit" loading={busy}>Đăng nhập</Button>
-    </form></Card><p>Chưa có tài khoản? <Link to="/register">Đăng ký</Link></p>
+    </form></Card><p>Chưa có tài khoản? <Link to="/register">Đăng ký</Link></p><Link to="/policy">Chính sách &amp; bảo mật</Link>
   </main>;
 }

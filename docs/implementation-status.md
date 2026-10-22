@@ -1,5 +1,11 @@
 # Trạng thái triển khai
 
+## Phản hồi khách hàng ngày 22/10/2026
+
+Đã bổ sung mã dashboard gọn với thời tiết/bản đồ/đánh giá/vận chuyển ngay Tổng quan, biểu tượng chatbot, trang chính sách dùng chung, thông báo theo sự kiện và tìm xe/báo giá tối thiểu. Migration mới là `202610220001_customer_feedback.sql`; chưa áp cloud trong lần cập nhật này. Các luồng mới cần migration trước khi dùng trên website kết nối cloud.
+
+Đã tạo ba giao dịch mẫu riêng trên cloud bằng RPC hiện có cho farmer3/buyer3 và đánh giá hai chiều; kiểm tra chạy lại không tạo trùng: farmer3 nhận 3 lượt, 4,7/5; buyer3 nhận 3 lượt, 5,0/5. Không đổi mật khẩu hoặc hoàn tất giao dịch cũ. Chi tiết triển khai/kiểm thử và phần cloud còn lại nằm trong [biên bản đợt này](customer-feedback-acceptance-2026-10-22.md).
+
 ## OpenRouter và Tổng quan Farmer — cập nhật 19/10/2026
 
 Đã thay adapter Gemini bằng OpenRouter Free; giữ JWT/role/CORS, không paid fallback. Tổng quan Farmer có thời tiết Open-Meteo theo hồ sơ/chọn địa điểm và bản đồ Leaflet/OpenStreetMap từ nhu cầu thu mua thật. Không migration, không đổi matching hoặc Carrier. Xem [hướng dẫn](farmer-dashboard-live.md), [cấu hình trợ lý](farmer-chatbot.md) và [kết quả kiểm thử/deploy của đợt này](openrouter-dashboard-acceptance.md). Nghiệm thu trước đây bên dưới là ảnh chụp trước đợt tích hợp này.
