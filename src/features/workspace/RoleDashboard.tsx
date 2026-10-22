@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../auth/AuthProvider';
 import { PageHeader, LoadingState, ErrorState, MetricCard } from '../../components/shared';
 import { FarmerAssistantEntry } from '../farmer/assistant/farmer-assistant';
+import { TransportSummary } from '../transport/TransportSummary';
 
 type Role = 'FARMER' | 'CARRIER';
 export async function loadRoleSummary(userId: string, role: Role) {
@@ -29,6 +30,6 @@ export function RoleDashboard({ role, load = loadRoleSummary }: { role: Role; lo
       {labels.map((label, index) => <MetricCard key={label} label={label} value={summary.data[index]} description="Dữ liệu đã lưu" />)}
     </section>}
     {farmer && <section className="panel"><h2>Tìm người mua phù hợp</h2><p>Chọn lô đang công bố để đối chiếu tên nông sản, giá và khối lượng.</p><Link className="button button-secondary" to="/farmer/matches">Tìm người mua →</Link></section>}
-    <section className="panel"><h2>Vận chuyển</h2><p>Đặt xe, báo giá và tracking đang chờ tích hợp API nhà vận tải.</p></section>
+    <TransportSummary userId={userId??''} role={farmer?'farmer':'carrier'}/>
   </div>;
 }

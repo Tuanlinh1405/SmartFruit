@@ -97,7 +97,7 @@ function Thread({ connection, userId, prefix }: { connection: Connection; userId
           <label>Khối lượng (tấn)<input type="number" min="0.001" step="0.001" value={tonnes} onChange={event => setTonnes(event.target.value)} required /></label>
           <label>Ngày lấy hàng<input type="date" value={date} onChange={event => setDate(event.target.value)} required /></label>
           <button className="button accent full" disabled={busy}>Gửi đề nghị</button></form>}
-      <p className="muted small-text">Thỏa thuận chưa tự giữ hàng hoặc xử lý thanh toán. Đặt xe sẽ được tích hợp sau.</p>
+      <p className="muted small-text">Thỏa thuận chưa tự giữ hàng hoặc xử lý thanh toán.</p>{agreement&&<Link className="button outline" to={`${prefix}/transport?${prefix==='/buyer'?'agreementId='+agreement.id:'lotId='+connection.lot_id}`}>Tìm xe cho giao dịch →</Link>}
       <h3>Đề nghị gần đây</h3>{offers.map(offer => <div className="offer-card" key={offer.id}><strong>{formatMoney(offer.price_vnd_per_kg)}</strong><p>{formatTonnes(offer.quantity_kg)} · {formatDate(offer.delivery_date)}</p>
         <small>{offer.proposed_by === userId ? 'Bạn gửi' : 'Đối tác gửi'} · {labels[offer.status]}</small>
         {offer.status === 'PENDING' && <div className="chip-row">{offer.proposed_by === userId ? <button className="button outline" disabled={busy} onClick={() => void act(() => respondOffer(offer.id, 'WITHDRAWN'))}>Rút đề nghị</button> :

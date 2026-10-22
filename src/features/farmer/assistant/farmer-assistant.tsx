@@ -11,11 +11,7 @@ import './farmer-assistant.css';
 export function FarmerAssistantEntry() {
   const assistant = useFarmerAssistant();
   if (!assistant) return null;
-  return <section className="panel assistant-entry" aria-label="Trợ lý nhà vườn">
-    <span className="assistant-mark"><Bot size={26} aria-hidden="true" /></span>
-    <div><span className="eyebrow">Hỏi đáp kiến thức · Tham khảo</span><h2>Trợ lý nhà vườn</h2><p>Tra cứu kiến thức về bệnh và phân loại nông sản từ tài liệu tham khảo.</p></div>
-    <Button onClick={() => assistant.setOpen(true)}>Hỏi trợ lý</Button>
-  </section>;
+  return <Button className="assistant-fab" aria-label="Hỏi trợ lý" title="Hỏi trợ lý nhà vườn" onClick={() => assistant.setOpen(true)}><Bot size={26} aria-hidden="true" /></Button>;
 }
 
 export function FarmerAssistantPanel({ enabled }: { enabled: boolean }) {

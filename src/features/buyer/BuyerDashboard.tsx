@@ -5,6 +5,8 @@ import { listMyRequests } from '../buy-requests/api';
 import { listConnections } from '../trading/api';
 import { supabase } from '../../lib/supabase';
 import { explainError, formatMoney, formatTonnes } from '../../lib/format';
+import { ReviewSummary } from '../trading/ReviewSummary';
+import { TransportSummary } from '../transport/TransportSummary';
 
 import { MetricCard, LoadingState } from '../../components/shared';
 
@@ -34,5 +36,6 @@ export function BuyerDashboard() {
       <section className="panel"><h2>Nguồn cung đang công bố</h2><p className="muted">Tổng hợp từ các lô bạn có quyền xem. Đây là giá chào bán, chưa phải giá giao dịch.</p>
         <div className="admin-cards">{market.map(row=><article className="admin-card" key={row.fruit_name}><div><h3>{row.fruit_name}</h3><p>{row.lot_count} lô · {formatTonnes(row.quantity_kg)}</p></div><strong>{formatMoney(row.min_price)} – {formatMoney(row.max_price)}</strong></article>)}</div>
         {!market.length&&<p>Chưa có lô hàng đang công bố.</p>}</section></>}
+    {session&&<div className="dashboard-columns"><ReviewSummary userId={session.user.id} role="buyer"/><TransportSummary userId={session.user.id} role="buyer"/></div>}
   </>;
 }

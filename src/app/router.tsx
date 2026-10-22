@@ -26,6 +26,9 @@ const TradePage = lazy(() => import('../features/trading/TradePage').then(module
 const DeferredPage = lazy(() => import('../features/deferred/DeferredPage').then(module => ({ default: module.DeferredPage })));
 const AdminPage = lazy(() => import('../features/admin/AdminPage').then(module => ({ default: module.AdminPage })));
 import './b-styles.css';
+const PolicyPage = lazy(() => import('../features/policy/PolicyPage').then(m=>({default:m.PolicyPage})));
+const TransportPage = lazy(() => import('../features/transport/TransportPage').then(m=>({default:m.TransportPage})));
+import { NotificationsPage } from '../features/notifications/NotificationCenter';
 const DevUi = import.meta.env.DEV ? lazy(() => import('../dev/ui-page')) : null;
 type Feature = import('react').ComponentProps<typeof AFeaturePage>['feature'];
 function FarmerCarrierFeature({ feature }: { feature: Feature }) {
@@ -40,6 +43,7 @@ export function ApplicationRoutes() {
     <Route path="/" element={<StartPage />} />
     <Route path="/login" element={<LoginPage />} />
     <Route path="/register" element={<RegisterPage />} />
+    <Route path="/policy" element={<main className="landing"><PolicyPage/></main>} />
     <Route path="/auth/register" element={<Navigate to="/register" replace />} />
     <Route path="/auth/login" element={<Navigate to="/login" replace />} />
     <Route path="/role-home" element={<RoleHome />} />
@@ -48,10 +52,11 @@ export function ApplicationRoutes() {
         <Route index element={<Navigate to="dashboard" replace />} />
         {role === 'FARMER' && <><Route path="invitations" element={<TradePage view="invitations" />} /><Route path="negotiations" element={<TradePage view="negotiations" />} /><Route path="chat" element={<TradePage view="negotiations" />} /><Route path="reviews" element={<TradePage view="reviews" />} /></>}
         {role === 'CARRIER' && <Route path="dashboard" element={<RoleDashboard role={role} />} />}
-        {pageInventory.filter(entry => entry.role === role && ['FUI-06','FUI-13','CUI-03','CUI-05','CUI-06'].includes(entry.id)).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={<DeferredPage kind={({ 'FUI-06':'transport','FUI-13':'policy','CUI-03':'transport','CUI-05':'tracking','CUI-06':'carrier-reviews' } as Record<string,string>)[entry.id]} />} />)}
+        <Route path="policy" element={<PolicyPage/>}/><Route path="notifications" element={<NotificationsPage/>}/>
+        {pageInventory.filter(entry => entry.role === role && ['FUI-06','CUI-03','CUI-05','CUI-06'].includes(entry.id)).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={['FUI-06','CUI-03'].includes(entry.id)?<TransportPage/>:<DeferredPage kind={entry.id==='CUI-05'?'tracking':'carrier-reviews'} />} />)}
         {role === 'FARMER' ? <>
           <Route path="dashboard" element={<FarmerDashboard />} />
-          {['prices','weather','map'].map(tab => <Route key={tab} path={tab} element={<Navigate to={`/farmer/dashboard?tab=${tab}`} replace />} />)}
+          {['prices','weather','map'].map(path => <Route key={path} path={path} element={<Navigate to="/farmer/dashboard" replace />} />)}
           <Route path="profile" element={<FarmerCarrierFeature feature="profile" />} />
           <Route path="lots" element={<FarmerCarrierFeature feature="lots" />} />
           <Route path="lots/new" element={<FarmerCarrierFeature feature="new" />} />
@@ -68,12 +73,13 @@ export function ApplicationRoutes() {
       <Route path="requests/new" element={<RequestFormPage />} /><Route path="requests/:id/edit" element={<RequestFormPage />} />
       <Route path="lots" element={<LotsPage />} /><Route path="chat" element={<TradePage view="negotiations" />} />
       {(['invitations','negotiations','reviews'] as const).map(view => <Route key={view} path={view} element={<TradePage view={view} />} />)}
-      {(['transport','policy','map'] as const).map(kind => <Route key={kind} path={kind} element={<DeferredPage kind={kind} />} />)}
-      <Route path="notifications" element={<DeferredPage kind="policy" />} />
+      <Route path="transport" element={<TransportPage/>}/><Route path="policy" element={<PolicyPage/>}/><Route path="map" element={<DeferredPage kind="map"/>}/>
+      <Route path="notifications" element={<NotificationsPage/>} />
       <Route path="*" element={<StatusPage code="404" />} />
     </Route></Route>
     <Route element={<RoleGuard role="ADMIN" />}><Route path="/admin" element={<div className="b-workspace"><AdminShell /></div>}>
       <Route index element={<Navigate to="/admin/dashboard" replace />} /><Route path="dashboard" element={<AdminPage />} />
+      <Route path="policy" element={<PolicyPage/>}/><Route path="notifications" element={<NotificationsPage/>}/>
       <Route path=":section/map" element={<AdminPage />} /><Route path=":section" element={<AdminPage />} />
     </Route></Route>
     <Route path="/403" element={<StatusPage code="403" />} /><Route path="/404" element={<StatusPage code="404" />} />

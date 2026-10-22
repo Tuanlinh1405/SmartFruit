@@ -22,6 +22,15 @@ export function explainError(error: unknown): string {
     'Lot changed; propose a new offer': 'Lô hàng đã thay đổi. Hãy kiểm tra lại và gửi đề nghị mới.',
     'Request changed; propose a new offer': 'Nhu cầu đã thay đổi. Hãy kiểm tra lại và gửi đề nghị mới.',
     'Invalid login credentials': 'Email/số điện thoại hoặc mật khẩu chưa đúng.',
+    'Source unavailable': 'Nguồn hàng không còn hợp lệ hoặc bạn không có quyền sử dụng.',
+    'Agreement unavailable': 'Thỏa thuận không còn hợp lệ hoặc bạn không có quyền sử dụng.',
+    'Invalid shipment': 'Kiểm tra khối lượng, ngày lấy hàng và tỉnh lấy hàng theo nguồn đã chọn.',
+    'Vehicle unavailable': 'Xe không còn đáp ứng tải trọng, loại xe hoặc vùng phục vụ. Hãy tìm lại.',
+    'Shipment unavailable': 'Xe, lịch hoặc tài khoản đã thay đổi. Hãy kiểm tra lại trước khi xác nhận.',
+    'Request unavailable': 'Yêu cầu không tồn tại hoặc bạn không có quyền truy cập.',
+    'Invalid transition': 'Yêu cầu đã được xử lý hoặc thao tác không phù hợp. Hãy tải lại danh sách.',
+    'Invalid quote': 'Cước phải là số nguyên dương; ghi chú tối đa 1.000 ký tự.',
+    'Invalid filters': 'Bộ lọc tìm xe chưa hợp lệ. Hãy kiểm tra tải trọng và tỉnh lấy/giao.',
   };
   if (translations[message]) return translations[message];
   if (details?.code === '23505') return 'Bản ghi đã tồn tại. Hãy tải lại để kiểm tra trước khi thử lại.';

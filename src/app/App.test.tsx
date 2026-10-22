@@ -15,6 +15,7 @@ vi.mock('../features/buy-requests/RequestListPage',()=>({RequestListPage:()=> <h
 vi.mock('../features/buy-requests/RequestFormPage',()=>({RequestFormPage:()=> <h1>Form nhu cầu thật</h1>}));
 vi.mock('../features/lots/LotsPage',()=>({LotsPage:()=> <h1>Matching thật</h1>}));
 vi.mock('../features/trading/TradePage',()=>({TradePage:({view}:{view:string})=> <h1>Giao dịch {view}</h1>}));
+vi.mock('../features/transport/TransportPage',()=>({TransportPage:()=> <h1>Vận chuyển thật</h1>}));
 vi.mock('../features/a-feature-page',()=>({AFeaturePage:({feature}:{feature:string})=> <h1>Dev A {feature}</h1>}));
 // Keep the actual shared shell while avoiding business network calls in route/authorization tests.
 vi.mock('../features/workspace/RoleWorkspace',async()=>{
@@ -54,7 +55,7 @@ describe('Dev A shell connected to authenticated features',()=>{
     expect(within(nav).getByRole('link', { name: 'Đàm phán' })).toHaveAttribute('href', '/farmer/negotiations');
   });
   it.each([['FARMER','/farmer/matches','Dev A matches','Nhà vườn'],['CARRIER','/carrier/vehicles','Dev A vehicles','Nhà xe'],
-    ['CARRIER','/carrier/profile','Dev A vehicles','Nhà xe'],['CARRIER','/carrier/transport','Vận chuyển','Nhà xe'],
+    ['CARRIER','/carrier/profile','Dev A vehicles','Nhà xe'],['CARRIER','/carrier/transport','Vận chuyển thật','Nhà xe'],
     ['ADMIN','/admin/users','Admin thật','Quản trị']])('uses the same protected shell for %s',async(role,path,title,label)=>{
     auth.profile.role=role;show(path);expect(await screen.findByRole('heading',{name:title,level:1})).toBeVisible();
     expect(screen.getByRole('navigation',{name:`Điều hướng ${label}`})).toBeVisible();

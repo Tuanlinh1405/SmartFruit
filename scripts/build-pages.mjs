@@ -17,7 +17,7 @@ for (const line of inventory.split('\n')) {
 for (const path of ['/login','/register','/auth/login','/auth/register','/role-home','/403','/404','/farmer','/buyer','/carrier','/admin',
   '/buyer/profile','/buyer/requests','/buyer/requests/new','/buyer/lots','/buyer/invitations','/buyer/negotiations','/buyer/chat','/buyer/reviews',
   '/buyer/transport','/buyer/policy','/buyer/map','/buyer/notifications','/farmer/chat','/farmer/negotiations']) paths.add(path);
-for (const path of ['/carrier/profile','/carrier/transport','/farmer/invitations',
+for (const path of ['/policy','/farmer/policy','/carrier/policy','/carrier/notifications','/admin/notifications','/carrier/profile','/carrier/transport','/farmer/invitations',
   ...['buyers','farmers','carriers','marketplace','connections','transport','policy'].map(section => `/admin/${section}`)]) paths.add(path);
 // Static routes return HTTP 200 on reload; dynamic IDs use the custom 404 SPA.
 for (const path of paths) {

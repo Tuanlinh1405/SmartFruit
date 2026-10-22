@@ -7,27 +7,27 @@ for (const role of ['FARMER', 'CARRIER', 'BUYER'] as const) {
     test(`${role} shared workspace at ${width}px`, async ({ page }, info) => {
       await page.setViewportSize({ width, height: 960 });
       await installMockApi(page); await loginAs(page, role);
-      await expect(role === 'FARMER' ? page.getByRole('tablist',{name:'Tiện ích nhà vườn',exact:true}) : page.locator('.stat-card').first()).toBeVisible();
+      await expect(role === 'FARMER' ? page.getByRole('region',{name:'Thống kê lô hàng',exact:true}) : page.locator('.stat-card').first()).toBeVisible();
       const shell = page.locator('.workspace-shell');
-      await expect(shell).toHaveCSS('background-color', 'rgb(246, 247, 242)');
-      await expect(page.locator('.workspace-topbar')).toHaveCSS('height', '70px');
+      await expect(shell).toHaveCSS('background-color', 'rgb(244, 246, 245)');
+      await expect(page.locator('.workspace-topbar')).toHaveCSS('height', '56px');
       await expect(page.locator('h1')).toHaveCSS('font-family', await shell.evaluate(e => getComputedStyle(e).fontFamily));
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      if (width <= 850) {
+      if (width < 768) {
         await expect(page.locator('.workspace-sidebar')).toBeHidden();
         const trigger = page.getByRole('button', { name: 'Mở menu' });
         await trigger.click();
         const dialog = page.getByRole('dialog'); await expect(dialog).toBeVisible();
-        await expect(dialog.locator('.workspace-mobile-navigation')).toHaveCSS('background-image', /linear-gradient/);
+        await expect(dialog.locator('.workspace-mobile-navigation')).toHaveCSS('background-image', 'none');
         await page.keyboard.press('Tab'); expect(await dialog.evaluate(e => e.contains(document.activeElement))).toBe(true);
         await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0); await expect(trigger).toBeFocused();
         await useMenu(page, role === 'BUYER' ? 'Yêu cầu thu mua' : role === 'FARMER' ? 'Danh sách lô hàng' : 'Hồ sơ & danh sách xe');
         await expect(page).toHaveURL(new RegExp(`/${role.toLowerCase()}/${role === 'BUYER' ? 'requests' : role === 'FARMER' ? 'lots' : 'vehicles'}$`));
         await expect(page.getByRole('dialog')).toHaveCount(0);
-        await page.goto(role === 'BUYER' ? '/buyer' : `/${role.toLowerCase()}/dashboard`); await expect(role === 'FARMER' ? page.getByRole('tablist',{name:'Tiện ích nhà vườn',exact:true}) : page.locator('.stat-card').first()).toBeVisible();
+        await page.goto(role === 'BUYER' ? '/buyer' : `/${role.toLowerCase()}/dashboard`); await expect(role === 'FARMER' ? page.getByRole('region',{name:'Thống kê lô hàng',exact:true}) : page.locator('.stat-card').first()).toBeVisible();
       } else {
         await expect(page.locator('.workspace-sidebar')).toBeVisible();
-        await expect(page.locator('.workspace-sidebar')).toHaveCSS('width', '244px');
+        await expect(page.locator('.workspace-sidebar')).toHaveCSS('width', '240px');
       }
       if (width === 1440 || width === 390) await page.screenshot({ path: info.outputPath(`${role.toLowerCase()}-${width}.png`), fullPage: true });
     });
@@ -60,9 +60,10 @@ for (const width of [1440, 390, 320]) for (const role of ['FARMER', 'CARRIER', '
   });
 }
 
-test('carrier transport explicitly waits for a real integration', async ({ page }) => {
+test('carrier transport shows real request workspace without fabricated bookings', async ({ page }) => {
   await installMockApi(page); await loginAs(page, 'CARRIER'); await page.goto('/carrier/requests');
-  await expect(page.getByText('Chưa hỗ trợ', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Yêu cầu vận chuyển',exact:true})).toBeVisible();
+  await expect(page.getByText('Chưa có yêu cầu vận chuyển.',{exact:true})).toBeVisible();
   await expect(page.getByRole('button', { name: 'Chi tiết / báo giá' })).toHaveCount(0);
 });
 
