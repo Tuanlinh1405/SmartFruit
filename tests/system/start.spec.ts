@@ -14,3 +14,24 @@ test('production app opens and refreshes without JavaScript errors', async ({ pa
   await expect(page.getByRole('heading', { name: 'Nhà vườn, thu mua và vận tải' })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('landing stays readable across desktop and mobile and links to public pages', async ({ page }, testInfo) => {
+  await page.goto('/');
+  for (const width of [1440, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole('heading', { name: 'Mỗi vai trò, một không gian làm việc' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Bắt đầu từ một kết nối' })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    if (width === 1440 || width === 390) {
+      await page.screenshot({ path: testInfo.outputPath(`landing-${width}.png`), fullPage: true });
+    }
+  }
+  await page.getByRole('link', { name: 'Tạo tài khoản', exact: true }).click();
+  await expect(page).toHaveURL(/\/register$/);
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Đăng nhập', exact: true }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Chính sách nền tảng' }).click();
+  await expect(page).toHaveURL(/\/policy$/);
+});
