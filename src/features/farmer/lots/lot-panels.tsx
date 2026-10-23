@@ -40,7 +40,7 @@ function ListForUser({ authenticatedUserId: userId, repository, onOpen, onCreate
     </FilterBar>
     {list.isPending ? <LoadingState /> : list.isError ? <ErrorState message="Không thể tải danh sách lô hàng." onRetry={() => { void list.refetch(); }} /> : <>
       <DataTable rows={list.data.rows} rowKey={lot => lot.id} caption="Lô hàng của bạn" columns={[
-        { id: 'title', label: 'Lô hàng', render: lot => <Button variant="ghost" onClick={() => onOpen(lot.id)}>{lot.title}</Button> },
+        { id: 'title', label: 'Lô hàng', render: lot => <span className={`lot-status-edge edge-${lot.status.toLowerCase()}`}><Button variant="ghost" onClick={() => onOpen(lot.id)}>{lot.title}</Button></span> },
         { id: 'quantity', label: 'Khối lượng', render: lot => `${lot.quantity_kg.toLocaleString('vi-VN')} kg` },
         { id: 'price', label: 'Giá chào', render: lot => `${lot.price_vnd_per_kg.toLocaleString('vi-VN')} đ/kg` },
         { id: 'province', label: 'Khu vực', render: lot => lot.province },

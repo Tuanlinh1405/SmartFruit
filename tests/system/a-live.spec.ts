@@ -74,7 +74,7 @@ test.describe('A real authenticated production routes', () => {
     const invalid = await okay(await clients.farmer1.from('farmer_profiles').select('farm_name').eq('user_id',ids.farmer1).maybeSingle()); expect(invalid.data?.farm_name ?? null).toBe(savedProfiles[0].value?.farm_name ?? null);
     await page.getByLabel(/^Tên vườn/).fill(tag); await page.getByLabel(/^Tỉnh \/ thành phố/).fill('Tiền Giang'); await page.getByRole('button',{ name:'Lưu hồ sơ',exact:true }).click(); await expect(page.getByText('Đã lưu hồ sơ nhà vườn.')).toBeVisible();
     await page.reload(); await expect(page.getByLabel(/^Tên vườn/)).toHaveValue(tag);
-    await page.goto('/farmer/lots/new'); await page.getByLabel(/^Tên lô hàng/).fill(tag); await page.getByLabel(/^Loại quả/).selectOption(fruitId); await page.getByLabel(/^Khối lượng/).fill('1'); await page.getByLabel(/^Giá chào/).fill('65000');
+    await page.goto('/farmer/lots/new'); await page.getByLabel(/^Tên lô hàng/).fill(tag); await page.getByRole('combobox',{name:/Loại quả/}).fill('sau rieng');await page.getByRole('option',{name:'Sầu riêng',exact:true}).click(); await page.getByLabel(/^Khối lượng/).fill('1'); await page.getByLabel(/^Giá chào/).fill('65000');
     await page.getByLabel(/^Bắt đầu thu hoạch/).fill('2026-10-15'); await page.getByLabel(/^Kết thúc thu hoạch/).fill('2026-10-20'); await page.getByLabel(/^Tỉnh \/ thành phố/).fill('Tiền Giang');
     await page.getByRole('button',{ name:'Lưu nháp',exact:true }).click(); await expect(page).toHaveURL(/\/farmer\/lots\/[^/]+\/edit$/);
     createdLotId = new URL(page.url()).pathname.split('/')[3]; lotIds.add(createdLotId);

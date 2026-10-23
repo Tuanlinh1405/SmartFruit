@@ -17,14 +17,24 @@ test('missing scoring dependency never invents scores or fetches candidates', as
   fireEvent.change(await screen.findByLabelText('Chọn lô cần matching'), { target: { value: 'lot-1' } });
   expect(repository.candidates).not.toHaveBeenCalled(); expect(screen.queryByText(/Phù hợp 86/)).not.toBeInTheDocument();
 });
-test('result UI preserves supplied rule/reasons/partial quantity and excludes private fields', async () => {
+test('result UI displays business facts and percentage while hiding scoring internals', async () => {
   const repository = repo(); show(repository, () => [match]);
   fireEvent.change(await screen.findByLabelText('Chọn lô cần matching'), { target: { value: 'lot-1' } });
-  expect(await screen.findByText('Buyer công khai')).toBeVisible(); expect(screen.getByText('Cùng loại quả')).toBeVisible(); expect(screen.getByText(/1000 kg đề xuất/)).toBeVisible(); expect(screen.getByText(/Chấp nhận một phần/)).toBeVisible();
+  expect(await screen.findByText('Buyer công khai')).toBeVisible(); expect(screen.getByText('86.0% phù hợp')).toBeVisible();expect(screen.getByText('Sản lượng nhập')).toBeVisible();expect(screen.queryByText(/Quy tắc|Cosine|fixture-only/)).not.toBeInTheDocument();
+});
+
+test('buyer card opens full request details without sending an invitation and routes message intent', async () => {
+  const repository=repo();repository.candidates=async()=>({lot:testLot(),requests:[{...request,quality_requirements:['VietGAP'],packaging_options:['CARTON'],notes:'Nhận tại điểm tập kết'}],partners:[{user_id:'b',display_name:'Thu mua An Phú',province:'Đồng Nai'}]});
+  const connect=vi.fn();const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0}}});
+  render(<QueryClientProvider client={client}><FarmerMatchingPanel authenticatedUserId="u" repository={repository} scorer={()=>[match]} initialLotId="lot-1" onConnect={connect}/></QueryClientProvider>);
+  expect(await screen.findByText('Thu mua An Phú')).toBeVisible();expect(screen.getByText('Đồng Nai')).toBeVisible();expect(screen.getByText('Thùng carton')).toBeVisible();
+  await userEvent.click(screen.getByRole('button',{name:'Xem chi tiết'}));expect(screen.getByRole('dialog')).toHaveTextContent('Nhận tại điểm tập kết');expect(connect).not.toHaveBeenCalled();
+  expect(screen.queryByText(/45\s*km|Cosine|fixture-only/)).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button',{name:'Đóng chi tiết'}));await userEvent.click(screen.getByRole('button',{name:'Nhắn tin'}));expect(connect).toHaveBeenCalledWith('lot-1','r','message');
 });
 test('empty result and broken scoring contract are explicit states', async () => {
   const first = show(repo(), () => []); fireEvent.change(await screen.findByLabelText('Chọn lô cần matching'), { target: { value: 'lot-1' } }); expect(await screen.findByText('Không có người mua phù hợp')).toBeVisible(); first.unmount();
-  show(repo(), () => [{ ...match, score: NaN }]); fireEvent.change(await screen.findByLabelText('Chọn lô cần matching'), { target: { value: 'lot-1' } }); expect(await screen.findByRole('alert')).toHaveTextContent('không đúng contract');
+  show(repo(), () => [{ ...match, score: NaN }]); fireEvent.change(await screen.findByLabelText('Chọn lô cần matching'), { target: { value: 'lot-1' } }); expect(await screen.findByRole('alert')).toHaveTextContent('Không thể tìm người mua lúc này');
 });
 test('contract rejects foreign IDs, duplicate matches, invalid scores/quantities', () => {
   for (const value of [{ ...match, lotId: 'foreign' }, { ...match, requestId: 'foreign' }, { ...match, score: 101 }, { ...match, suggestedQuantityKg: 999999 }]) expect(() => validateMatches(testLot(), [request], [value])).toThrow();
@@ -35,22 +45,22 @@ test('connect passes only lot and request IDs, not private fields', async () => 
   repository.candidates = async () => ({ lot: { ...testLot(), internal_notes: 'PRIVATE', price_floor_vnd_per_kg: 1000 } as ReturnType<typeof testLot>, requests: [request], partners: [{ user_id: 'b', display_name: 'Buyer công khai', province: null }] });
   const connect = vi.fn(); const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   render(<QueryClientProvider client={client}><FarmerMatchingPanel authenticatedUserId="u" repository={repository} scorer={() => [match]} onConnect={connect} initialLotId="lot-1" /></QueryClientProvider>);
-  await userEvent.click(await screen.findByRole('button', { name: 'Gửi lời mời kết nối' }));
-  expect(connect).toHaveBeenCalledWith('lot-1', 'r');
+  await userEvent.click(await screen.findByRole('button', { name: 'Gửi đề nghị' }));
+  expect(connect).toHaveBeenCalledWith('lot-1', 'r', 'offer');
 });
 test('connection failure stays on matching and allows retry without duplicate submissions', async () => {
   let reject!: (reason: Error) => void;
   const connect = vi.fn().mockImplementationOnce(() => new Promise<void>((_resolve, fail) => { reject = fail; })).mockResolvedValue(undefined);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   render(<QueryClientProvider client={client}><FarmerMatchingPanel authenticatedUserId="u" repository={repo()} scorer={() => [match]} initialLotId="lot-1" onConnect={connect} /></QueryClientProvider>);
-  const button = await screen.findByRole('button', { name: 'Gửi lời mời kết nối' });
+  const button = await screen.findByRole('button', { name: 'Gửi đề nghị' });
   fireEvent.click(button); fireEvent.click(button);
   expect(connect).toHaveBeenCalledTimes(1); expect(button).toBeDisabled();
   reject(new Error('Không gửi được lời mời'));
   expect(await screen.findByRole('alert')).toHaveTextContent('Không gửi được lời mời');
-  await userEvent.click(screen.getByRole('button', { name: 'Gửi lời mời kết nối' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Gửi đề nghị' }));
   await waitFor(() => expect(connect).toHaveBeenCalledTimes(2));
-  expect(connect).toHaveBeenLastCalledWith('lot-1', 'r');
+  expect(connect).toHaveBeenLastCalledWith('lot-1', 'r', 'offer');
 });
 
 test('candidate adapter refuses oversize sets instead of scoring a truncated first page; public projection only', async () => {

@@ -15,7 +15,7 @@ export const uiInventory: UiEntry[] = [
     ['FUI-03','Danh sách lô hàng','lots','F',Package], ['FUI-04','Tạo / sửa lô hàng','lots/new','F',ClipboardList],
     ['FUI-05','Người mua phù hợp','matches','F',Handshake], ['FUI-06','Tìm xe','transport','D',Truck],
     ['FUI-07','Đàm phán','chat','D',MessageCircle], ['FUI-09','Đánh giá & tín nhiệm','reviews','D',Star],
-    ['FUI-10','Giá tham khảo','prices','D',ChartNoAxesCombined], ['FUI-11','Thời tiết & khuyến nghị','weather','D',CloudSun],
+    ['FUI-10','Dự báo giá','prices','D',ChartNoAxesCombined], ['FUI-11','Thời tiết & khuyến nghị','weather','D',CloudSun],
     ['FUI-12','Bản đồ thương lái','map','D',MapPin], ['FUI-13','Thông báo / chính sách','notifications','U',Bell],
   ]),
   modal('FUI-08','Xác nhận đàm phán','/farmer/chat','FARMER','A'),

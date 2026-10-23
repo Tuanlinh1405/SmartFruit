@@ -1,3 +1,4 @@
+import { RatingStars } from '../../components/shared/rating-stars';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
@@ -35,6 +36,7 @@ export function TradePage({ view }: { view: 'invitations' | 'negotiations' | 're
   }
   return <><div className="page-heading"><div><span className="eyebrow">Kết nối đối tác</span><h1>{view === 'invitations' ? 'Lời mời kết nối' : view === 'reviews' ? 'Đánh giá đối tác' : 'Trao đổi & thỏa thuận'}</h1>
     <p>Thông tin được lưu trên hệ thống và chỉ các bên tham gia được truy cập.</p></div><button className="button outline" onClick={() => void refresh().catch(cause => setError(explainError(cause)))}>Tải lại</button></div>
+    {view==='invitations'&&!loading&&params.has('focus')&&connections.some(c=>c.id===requestedId&&c.status==='PENDING')&&<p className="notice" role="status">Lời mời kết nối đang chờ phản hồi. Sau khi hai bên đồng ý, bạn có thể nhắn tin và gửi đề nghị giá, sản lượng, ngày giao.</p>}
     {error && <p className="notice error" role="alert">{error}</p>}
     {loading ? <div className="panel empty-state">Đang tải kết nối…</div> : view === 'invitations' ?
       <div className="admin-cards">{connections.length === 0 && <div className="panel empty-state">Chưa có lời mời. Mở chi tiết lô hàng để gửi kết nối.</div>}
@@ -47,14 +49,14 @@ export function TradePage({ view }: { view: 'invitations' | 'negotiations' | 're
       <div className="chat-layout"><aside className="panel chat-list"><h2>Hội thoại</h2>{connections.filter(row => row.status === 'ACCEPTED').map(row =>
         <button className={`conversation ${selected?.id === row.id ? 'selected' : ''}`} key={row.id} onClick={() => setParams({ connectionId: row.id })}><strong>{row.partnerName}</strong><span>{row.lot_title}</span></button>)}
         {!connections.some(row => row.status === 'ACCEPTED') && <p className="muted">Hai bên cần đồng ý kết nối trước khi trao đổi.</p>}</aside>
-        {selected?.status === 'ACCEPTED' ? <Thread key={selected.id} connection={selected} userId={userId} prefix={prefix} /> : <section className="panel empty-state" role="status">
+        {selected?.status === 'ACCEPTED' ? <Thread key={`${selected.id}:${params.get('focus')}`} connection={selected} userId={userId} prefix={prefix} focus={params.get('focus')} /> : <section className="panel empty-state" role="status">
           {requestedId !== null && !selected ? 'Không tìm thấy kết nối hoặc bạn không có quyền truy cập.' : selected ? `Kết nối ${labels[selected.status].toLocaleLowerCase('vi-VN')}. Chỉ trao đổi sau khi lời mời được đồng ý.` : 'Chọn một hội thoại đã kết nối.'}
           {selected && <Link to={`${prefix}/invitations?connectionId=${encodeURIComponent(selected.id)}`}>Xem lời mời kết nối</Link>}
         </section>}</div>}
   </>;
 }
 
-function Thread({ connection, userId, prefix }: { connection: Connection; userId: string; prefix: string }) {
+function Thread({ connection, userId, prefix, focus }: { connection: Connection; userId: string; prefix: string; focus?:string|null }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [agreement, setAgreement] = useState<Agreement | null>(null);
@@ -85,7 +87,7 @@ function Thread({ connection, userId, prefix }: { connection: Connection; userId
     <form className="chat-compose" onSubmit={event => { event.preventDefault(); const body = draft.trim(); if (!body) return;
       if (pendingMessage.current.body !== body) pendingMessage.current = { id: crypto.randomUUID(), body };
       void act(async () => { await sendMessage(connection.id, pendingMessage.current.id, body); setDraft(''); pendingMessage.current = { id: crypto.randomUUID(), body: '' }; }); }}>
-      <input aria-label="Tin nhắn" maxLength={4000} value={draft} onChange={event => setDraft(event.target.value)} placeholder="Nhập tin nhắn…" />
+      <input autoFocus={focus==='message'} aria-label="Tin nhắn" maxLength={4000} value={draft} onChange={event => setDraft(event.target.value)} placeholder="Nhập tin nhắn…" />
       <button className="button primary" disabled={busy || !draft.trim()}>Gửi</button></form>{error && <p className="form-error" role="alert">{error}</p>}</section>
     <aside className="panel chat-side"><span className="eyebrow">Điều kiện giao dịch</span><h2>Thỏa thuận thu mua</h2>
       {agreement ? <><span className="status-pill">{labels[agreement.status]}</span><p>{formatTonnes(agreement.quantity_kg)} · {formatMoney(agreement.price_vnd_per_kg)}</p><p>Ngày lấy hàng: {formatDate(agreement.delivery_date)}</p>
@@ -93,7 +95,7 @@ function Thread({ connection, userId, prefix }: { connection: Connection; userId
         <button className="button primary full" disabled={busy || Boolean(ownCompletion)} onClick={() => void act(() => completeAgreement(agreement.id))}>{ownCompletion ? 'Bạn đã xác nhận hoàn tất' : 'Xác nhận đã hoàn tất giao dịch'}</button>
         {agreement.status === 'COMPLETED' ? <Link className="button primary" to={`${prefix}/reviews`}>Đánh giá giao dịch</Link> : <p className="muted">Chỉ đánh giá khi cả hai bên đã xác nhận hoàn tất.</p>}</> :
         <form onSubmit={event => { event.preventDefault(); void act(() => proposeOffer(connection.id, Number(price), Number(tonnes) * 1000, date)); }}>
-          <label>Giá đề nghị (VND/kg)<input type="number" min="1" step="1" value={price} onChange={event => setPrice(event.target.value)} required /></label>
+          <label>Giá đề nghị (VND/kg)<input autoFocus={focus==='offer'} type="number" min="1" step="1" value={price} onChange={event => setPrice(event.target.value)} required /></label>
           <label>Khối lượng (tấn)<input type="number" min="0.001" step="0.001" value={tonnes} onChange={event => setTonnes(event.target.value)} required /></label>
           <label>Ngày lấy hàng<input type="date" value={date} onChange={event => setDate(event.target.value)} required /></label>
           <button className="button accent full" disabled={busy}>Gửi đề nghị</button></form>}
@@ -104,21 +106,21 @@ function Thread({ connection, userId, prefix }: { connection: Connection; userId
           <><button className="button primary" disabled={busy} onClick={() => void act(() => respondOffer(offer.id, 'ACCEPTED'))}>Đồng ý</button><button className="button outline" disabled={busy} onClick={() => void act(() => respondOffer(offer.id, 'REJECTED'))}>Từ chối</button></>}</div>}</div>)}</aside></>;
 }
 
+function ReviewForm({ agreement, name, onSaved }: { agreement: Agreement; name: string; onSaved: () => Promise<void> }) {
+  const [stars,setStars]=useState(5),[comment,setComment]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+  return <article className="panel review-entry"><h2>{name}</h2><p>Giao dịch đã hoàn tất</p><form onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy(true);setError('');try{await submitReview(agreement.id,stars,comment.trim());await onSaved();}catch(cause){setError(explainError(cause));}finally{setBusy(false);}}}>
+    <div className="rating-row" role="group" aria-label={`Chấm sao ${name}`}>{[1,2,3,4,5].map(n=><button type="button" key={n} aria-label={`${n} sao`} aria-pressed={stars===n} onClick={()=>setStars(n)}>{n<=stars?'★':'☆'}</button>)}</div>
+    <label>Nhận xét<textarea className="control" required rows={3} maxLength={2000} value={comment} onChange={e=>setComment(e.target.value)}/></label><button className="button primary" disabled={busy||!comment.trim()}>{busy?'Đang lưu…':'Lưu đánh giá'}</button>{error&&<p role="alert">{error}</p>}
+  </form></article>;
+}
 function Reviews({ userId, connections }: { userId: string; connections: Connection[] }) {
-  const [reviews, setReviews] = useState<Review[]>([]); const [agreements, setAgreements] = useState<Agreement[]>([]);
-  const [selected, setSelected] = useState(''); const [stars, setStars] = useState(5); const [comment, setComment] = useState('');
-  const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [tab, setTab] = useState<'received' | 'sent'>('received');
-  const refresh = useCallback(async () => { const result = await loadReviews(); setReviews(result.reviews); setAgreements(result.agreements); }, []);
-  useEffect(() => { let active = true; loadReviews().then(result => { if (active) { setReviews(result.reviews); setAgreements(result.agreements); } }).catch(cause => { if (active) setError(explainError(cause)); }); return () => { active = false; }; }, []);
-  const available = agreements.filter(row => !reviews.some(review => review.agreement_id === row.id && review.reviewer_id === userId));
-  const connectionName = (id: string) => { const row = connections.find(item => item.id === id); return `${row?.partnerName || 'Đối tác'} · ${row?.lot_title || id.slice(0,8)}`; };
-  return <div className="dashboard-columns"><section className="panel"><h2>Đánh giá giao dịch đã hoàn tất</h2>
-    {available.length === 0 ? <p className="muted">Chưa có giao dịch hoàn tất cần đánh giá.</p> : <form onSubmit={async event => { event.preventDefault(); setBusy(true); setError('');
-      try { await submitReview(selected, stars, comment.trim()); setComment(''); setSelected(''); await refresh(); } catch (cause) { setError(explainError(cause)); } finally { setBusy(false); } }}>
-      <label>Thỏa thuận<select value={selected} onChange={event => setSelected(event.target.value)} required><option value="">Chọn thỏa thuận</option>{available.map(row => <option value={row.id} key={row.id}>{connectionName(row.connection_id)}</option>)}</select></label>
-      <div className="rating-row" role="group" aria-label="Chấm sao">{[1,2,3,4,5].map(value => <button key={value} type="button" aria-label={`${value} sao`} aria-pressed={stars === value} onClick={() => setStars(value)}>{value <= stars ? '★' : '☆'}</button>)}</div>
-      <label>Nhận xét<textarea rows={4} maxLength={2000} value={comment} onChange={event => setComment(event.target.value)} required /></label><button className="button primary" disabled={busy || !selected || !comment.trim()}>Lưu đánh giá</button></form>}
-    {error && <p className="form-error" role="alert">{error}</p>}</section><section className="panel"><div className="tab-row"><button className={tab === 'received' ? 'active' : ''} onClick={() => setTab('received')}>Đã nhận</button><button className={tab === 'sent' ? 'active' : ''} onClick={() => setTab('sent')}>Đã gửi</button></div>
-      {reviews.filter(row => tab === 'received' ? row.target_id === userId : row.reviewer_id === userId).map(row => <article className="offer-card" key={row.id}><strong>{'★'.repeat(row.rating)}</strong><p>{row.comment}</p><small>{formatDate(row.created_at.slice(0,10))} · Thỏa thuận {row.agreement_id.slice(0,8)}</small></article>)}
-      {!reviews.some(row => tab === 'received' ? row.target_id === userId : row.reviewer_id === userId) && <p className="muted">Chưa có đánh giá.</p>}</section></div>;
+  const [reviews,setReviews]=useState<Review[]>([]),[agreements,setAgreements]=useState<Agreement[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[tab,setTab]=useState<'pending'|'sent'>('pending');
+  const refresh=useCallback(async()=>{const r=await loadReviews();setReviews(r.reviews);setAgreements(r.agreements);},[]);
+  useEffect(()=>{let active=true;loadReviews().then(r=>{if(active){setReviews(r.reviews);setAgreements(r.agreements);}}).catch(e=>{if(active)setError(explainError(e));}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[]);
+  const sent=reviews.filter(r=>r.reviewer_id===userId),available=agreements.filter(a=>!sent.some(r=>r.agreement_id===a.id));
+  const name=(id:string)=>{const c=connections.find(c=>c.id===id);return `${c?.partnerName??'Đối tác'} · ${c?.lot_title??'Giao dịch'}`;};
+  return <div className="stack reviews-page"><div className="tabs" role="tablist" aria-label="Danh sách đánh giá"><button role="tab" aria-selected={tab==='pending'} onClick={()=>setTab('pending')}>Chưa đánh giá ({available.length})</button><button role="tab" aria-selected={tab==='sent'} onClick={()=>setTab('sent')}>Đã đánh giá ({sent.length})</button></div>
+    {error&&<p role="alert">{error} <button className="text-link" onClick={()=>void refresh().then(()=>setError('')).catch(e=>setError(explainError(e)))}>Thử lại</button></p>}
+    {loading?<p role="status">Đang tải giao dịch…</p>:tab==='pending'?<>{!available.length&&<section className="panel"><p>Chưa có giao dịch hoàn tất cần đánh giá.</p></section>}{available.map(a=><ReviewForm key={a.id} agreement={a} name={name(a.connection_id)} onSaved={async()=>{await refresh();setTab('sent');}}/>)}</>:<>{!sent.length&&<section className="panel"><p>Bạn chưa gửi đánh giá nào.</p></section>}{sent.map(r=><article className="panel review-entry" key={r.id}><h2>{name(agreements.find(a=>a.id===r.agreement_id)?.connection_id??'')}</h2><RatingStars value={r.rating}/><p>{r.comment}</p><small>{formatDate(r.created_at.slice(0,10))}</small></article>)}</>}
+  </div>;
 }

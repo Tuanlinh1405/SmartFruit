@@ -1,4 +1,5 @@
 import { useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { FruitCombobox } from '../../../components/ui/fruit-combobox';
 import { Card, FormLayout, PhotoPlaceholder } from '../../../components/shared';
 import { Button, DateInput, Select, TextArea, TextField } from '../../../components/ui';
 import { formatDate } from '../../../lib/formatters';
@@ -59,12 +60,7 @@ export function LotForm({ initialLot, catalog, disabled = false, priceFloor, onS
       {imagePicker}
       <Card title="Thông tin lô"><div className="stack-sm">
         <TextField label="Tên lô hàng" required value={values.title} error={errors.title} onChange={event => change('title', event.target.value)} />
-        <Select label="Loại quả" required value={values.fruit_type_id} error={errors.fruit_type_id} onChange={event => change('fruit_type_id', event.target.value)}>
-          <option value="">Chọn loại quả</option>{catalog.fruits.filter(item => item.active || item.id === initialLot?.fruit_type_id).map(item => <option key={item.id} value={item.id} disabled={!item.active}>{item.name}{!item.active && ' (ngừng sử dụng)'}</option>)}
-        </Select>
-        <Select label="Giống" value={values.variety_id} error={errors.variety_id} onChange={event => change('variety_id', event.target.value)}>
-          <option value="">Không chọn giống</option>{catalog.varieties.filter(item => item.fruit_type_id === values.fruit_type_id && (item.active || item.id === initialLot?.variety_id)).map(item => <option key={item.id} value={item.id} disabled={!item.active}>{item.name}{!item.active && ' (ngừng sử dụng)'}</option>)}
-        </Select>
+        <FruitCombobox catalog={catalog} fruitId={values.fruit_type_id} varietyId={values.variety_id} error={errors.fruit_type_id??errors.variety_id} onChange={(fruit,variety)=>{setValues(v=>({...v,fruit_type_id:fruit,variety_id:variety}));setErrors(e=>({...e,fruit_type_id:undefined,variety_id:undefined}));setFeedback(null);}}/>
         <TextField label="Phân loại chất lượng" value={values.grade} error={errors.grade} onChange={event => change('grade', event.target.value)} />
         <TextField label="Khối lượng" required inputMode="decimal" value={values.quantity} error={errors.quantity} onChange={event => change('quantity', event.target.value)} />
         <Select label="Đơn vị khối lượng" value={values.unit} onChange={event => changeUnit(event.target.value as LotFormValues['unit'])}><option value="tonne">Tấn</option><option value="kg">Kg</option></Select>

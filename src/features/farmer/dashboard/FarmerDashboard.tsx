@@ -30,12 +30,12 @@ export default function FarmerDashboard() {
     <PageHeader eyebrow="Không gian nhà vườn" title="Tổng quan nhà vườn" description="Quản lý lô hàng và theo dõi thông tin phục vụ mùa vụ."
       action={<Link className="button button-primary" to="/farmer/lots/new"><Plus size={16} aria-hidden="true" />Tạo lô hàng</Link>} />
     <div className="farmer-overview stack">
-        <LotSummary userId={id} />
+        <LotSummary userId={id} /><BuyingAreasCard userId={id} compact/>
         <div className="farmer-overview-grid"><FarmerAssistantEntry />
           <section className="panel farmer-matching"><span className="farmer-feature-icon"><Handshake size={22} aria-hidden="true" /></span><h2>Kết nối người mua</h2><p>Chọn lô đã công bố và tìm nhu cầu thu mua phù hợp.</p><div className="hero-actions"><Link className="button button-primary" to="/farmer/matches">Tìm người mua →</Link><Link className="text-link" to="/farmer/lots">Danh sách lô hàng</Link></div></section>
         </div>
-        <div className="farmer-overview-tools"><ReviewSummary userId={id} role="farmer"/><TransportSummary userId={id} role="farmer"/><WeatherCard compact/><BuyingAreasCard userId={id} compact/></div>
-        <section className="panel farmer-reference-prices" aria-label="Giá tham khảo"><h2>Giá tham khảo</h2><p>Chưa có nguồn giá thị trường được tích hợp. Bạn có thể tham khảo giá chào của các lô hàng và khoảng giá thu mua đã đăng.</p><Link className="text-link" to="/farmer/lots">Xem giá chào lô hàng →</Link></section>
+        <div className="farmer-overview-tools"><ReviewSummary userId={id} role="farmer"/><TransportSummary userId={id} role="farmer"/><WeatherCard compact/></div>
+        <section className="panel farmer-reference-prices" aria-label="Giá tham khảo"><h2>Giá tham khảo</h2><Link className="text-link" to="/farmer/prices">Xem dự báo giá minh họa →</Link></section>
     </div>
   </div>;
 }

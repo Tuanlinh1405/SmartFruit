@@ -1,55 +1,36 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Upload, X, Clock3 } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
-import { getBuyerProfile, saveBuyerProfile, saveDisplayName } from './api';
-import { explainError } from '../../lib/format';
+import { loadBusinessProfile, saveBusinessProfile, cleanupBusinessImages } from './api';
+import { emptyBusinessProfile, evidenceError, validateBusinessProfile, type BusinessProfile, type Evidence } from './business-profile';
 import { TextField } from '../../components/ui/fields';
 import { Button } from '../../components/ui/button';
-import { PageHeader } from '../../components/shared/content';
 
 export function BuyerProfilePage() {
-  const { session, profile, retry } = useAuth();
-  const [values, setValues] = useState({ full_name: '', organization_name: '', province: '', address: '' });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
-  useEffect(() => {
-    let active = true;
-    if (!session) return;
-    getBuyerProfile(session.user.id).then(data => {
-      if (!active) return;
-      setValues({ full_name: profile?.full_name ?? '', organization_name: data?.organization_name ?? '',
-        province: data?.province ?? '', address: data?.address ?? '' }); setLoading(false);
-    }).catch(cause => { if (active) { setError(explainError(cause)); setLoading(false); } });
-    return () => { active = false; };
-  }, [session?.user.id, profile?.full_name]);
-
-  async function submit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!session) return;
-    const fullName = values.full_name.trim();
-    const organization = values.organization_name.trim();
-    const province = values.province.trim();
-    if (!fullName || !organization || !province) { setError('Nhập tên, tổ chức và tỉnh.'); return; }
-    setSaving(true); setError(''); setNotice('');
-    try {
-      await saveBuyerProfile(session.user.id, { organization_name: organization, province,
-        address: values.address.trim() || null });
-      setNotice('Đã lưu hồ sơ tổ chức.');
-      await saveDisplayName(session.user.id, fullName);
-      setNotice('Đã lưu hồ sơ tổ chức và tên hiển thị.');
-      retry();
-    } catch (cause) { setError(`${explainError(cause)} Hồ sơ tổ chức có thể đã được lưu; kiểm tra trước khi thử lại.`); }
-    finally { setSaving(false); }
-  }
-
-  return <><PageHeader eyebrow="Tài khoản" title="Hồ sơ thương lái" description="Thông tin tổ chức và tên hiển thị của bạn." />
-    <section className="panel form-panel narrow">{loading ? <p>Đang tải hồ sơ…</p> : <form onSubmit={submit}>
-      <div className="form-grid"><TextField label="Tên hiển thị" value={values.full_name} maxLength={160} onChange={e => setValues({ ...values, full_name: e.target.value })} required />
-        <TextField label="Tên tổ chức" value={values.organization_name} maxLength={160} onChange={e => setValues({ ...values, organization_name: e.target.value })} required />
-        <TextField label="Tỉnh / thành phố" value={values.province} maxLength={120} onChange={e => setValues({ ...values, province: e.target.value })} required />
-        <TextField label="Địa chỉ riêng" value={values.address} maxLength={500} onChange={e => setValues({ ...values, address: e.target.value })} /></div>
-      {error && <p className="form-error" role="alert">{error}</p>}{notice && <p className="form-success" role="status">{notice}</p>}
-      <Button type="submit" loading={saving}>{saving ? 'Đang lưu…' : 'Lưu hồ sơ'}</Button>
-    </form>}</section></>;
+  const {session,profile,refreshDisplayName}=useAuth();
+  const [values,setValues]=useState<BusinessProfile>({...emptyBusinessProfile}),[images,setImages]=useState<Evidence[]>([]),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[refreshRequired,setRefreshRequired]=useState(false),[attested,setAttested]=useState(false),[errors,setErrors]=useState<Partial<Record<keyof BusinessProfile|'attested',string>>>({});
+  const saved=useRef({values:{...emptyBusinessProfile},images:[] as Evidence[]});const previews=useRef(new Set<string>());const fileInput=useRef<HTMLInputElement>(null);const busy=useRef(false);
+  const userId=session?.user.id??'';
+  useEffect(()=>{let active=true;if(!userId)return;setLoading(true);loadBusinessProfile(userId,profile?.full_name??'').then(data=>{if(active){saved.current=data;setValues(data.values);setImages(data.images);setError('');}}).catch(()=>{if(active)setError('Không tải được hồ sơ. Kiểm tra kết nối và migration hồ sơ doanh nghiệp rồi tải lại trang.');}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[userId]);
+  useEffect(()=>()=>{previews.current.forEach(url=>URL.revokeObjectURL(url));},[]);
+  function add(files:File[]){const problem=evidenceError(files,images.length);if(problem){setError(problem);return;}setError('');setImages(rows=>[...rows,...files.map(file=>{const url=URL.createObjectURL(file);previews.current.add(url);return {path:crypto.randomUUID(),label:file.name.slice(0,160),file,url};})]);}
+  function cancel(){previews.current.forEach(url=>URL.revokeObjectURL(url));previews.current.clear();setValues({...saved.current.values});setImages([...saved.current.images]);setAttested(false);setErrors({});setError('');setNotice('');}
+  async function submit(e:React.FormEvent){e.preventDefault();if(busy.current||loading)return;const checked=validateBusinessProfile(values,attested);setErrors(checked.errors);setError('');setNotice('');if(Object.keys(checked.errors).length)return;if(images.some(x=>!x.label.trim()||x.label.trim().length>160)){setError('Đặt tên minh chứng (tối đa 160 ký tự) cho từng ảnh.');return;}busy.current=true;setSaving(true);
+    try{await saveBusinessProfile(userId,checked.data,images);const removed=saved.current.images.filter(old=>!images.some(x=>x.path===old.path)).map(x=>x.path);
+      // The RPC has committed. A refresh failure must not invite a duplicate upload.
+      try{const fresh=await loadBusinessProfile(userId,checked.data.full_name);saved.current=fresh;setValues(fresh.values);setImages(fresh.images);previews.current.forEach(url=>URL.revokeObjectURL(url));previews.current.clear();setNotice('Đã lưu hồ sơ và minh chứng. Hồ sơ chưa xác minh.');}catch{setNotice('Đã lưu hồ sơ. Chưa tải lại được minh chứng; tải lại trang để xem dữ liệu đã lưu.');setRefreshRequired(true);}
+      try{await cleanupBusinessImages(removed);}catch{setNotice('Đã lưu hồ sơ. Một số ảnh cũ chưa dọn được; chúng vẫn được bảo vệ riêng tư.');}setAttested(false);try{await refreshDisplayName?.();}catch{setNotice('Đã lưu hồ sơ. Tên trên thanh điều hướng sẽ cập nhật khi tải lại trang.');}
+    }catch{setError('Không lưu được hồ sơ. Thông tin và ảnh đang chọn được giữ lại để thử lại.');}finally{busy.current=false;setSaving(false);}}
+  const field=(key:keyof BusinessProfile,label:string,required=false,type='text')=><TextField key={key} label={label} required={required} type={type} maxLength={key==='address'?500:key==='business_email'?254:key==='production_certificate'?200:160} value={values[key]} error={errors[key]} onChange={e=>{setValues(v=>({...v,[key]:e.target.value}));setErrors(x=>({...x,[key]:undefined}));}}/>;
+  return <div className="stack business-profile"><header className="business-heading"><h1>Hồ sơ thương lái</h1><span className="badge badge-warning"><Clock3 size={14} aria-hidden="true"/> Chưa xác minh</span></header>
+    {loading?<p role="status">Đang tải hồ sơ…</p>:<form className="stack" onSubmit={submit} noValidate><fieldset className="stack business-fieldset" disabled={saving||refreshRequired||!!error.startsWith('Không tải được hồ sơ')}>
+      <section className="panel"><h2><span>1</span>Thông tin cơ bản</h2><p>Tên hiển thị và nơi hoạt động của tổ chức.</p><div className="business-grid">{field('full_name','Tên hiển thị',true)}{field('organization_name','Tên tổ chức',true)}{field('province','Tỉnh / thành phố',true)}{field('address','Địa chỉ riêng')}</div></section>
+      <section className="panel"><h2><span>2</span>Liên hệ cơ sở</h2><p>Dùng để đối tác và đội ngũ hỗ trợ liên hệ với bạn.</p><div className="business-grid">{field('business_phone','Số điện thoại cơ sở',true,'tel')}{field('business_email','Email cơ sở',false,'email')}</div></section>
+      <section className="panel"><h2><span>3</span>Thông tin pháp lý</h2><p>Bổ sung thông tin tổ chức. Thông tin chưa được xác minh.</p><div className="business-grid">{field('tax_code','Mã số thuế',true)}{field('business_license','Số giấy phép kinh doanh',true)}{field('representative_name','Họ tên người đại diện cơ sở',true)}{field('production_certificate','Số giấy chứng nhận cơ sở sản xuất')}</div><small>Chứng nhận cơ sở sản xuất có thể để trống nếu bạn chỉ thu mua.</small></section>
+      <section className="panel"><h2><span>4</span>Minh chứng hình ảnh</h2><p>Chụp rõ nét, đủ bốn góc, không bị che thông tin.</p><div className="evidence-drop" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();if(!saving)add(Array.from(e.dataTransfer.files));}}><Upload size={28} aria-hidden="true"/><p>Kéo thả ảnh vào đây hoặc</p><button className="button button-secondary" type="button" onClick={()=>fileInput.current?.click()}>Chọn tệp từ thiết bị</button><input hidden ref={fileInput} aria-label="Chọn ảnh minh chứng" type="file" accept="image/jpeg,image/png" multiple onChange={e=>{add(Array.from(e.target.files??[]));e.target.value='';}}/><small>JPG, PNG · Tối đa 5 MB mỗi ảnh · Tối đa 10 ảnh · Không bắt buộc</small></div>
+      <div className="evidence-grid">{images.map((img,index)=><div className="evidence-item" key={img.path}><img src={img.url} alt={`Minh chứng ${img.label}`}/><button type="button" className="button button-secondary evidence-remove" aria-label={`Xóa ảnh ${index+1}`} onClick={()=>{if(img.file&&img.url){URL.revokeObjectURL(img.url);previews.current.delete(img.url);}setImages(rows=>rows.filter(x=>x.path!==img.path));}}><X size={16}/></button><TextField label={`Loại minh chứng ${index+1}`} maxLength={160} value={img.label} onChange={e=>setImages(rows=>rows.map(x=>x.path===img.path?{...x,label:e.target.value}:x))}/></div>)}</div></section>
+      <label className="attestation"><input type="checkbox" checked={attested} onChange={e=>setAttested(e.target.checked)}/> Tôi cam đoan các thông tin và hình ảnh cung cấp là chính xác, đúng sự thật.</label>{errors.attested&&<p role="alert">{errors.attested}</p>}
+      <div className="row"><Button variant="secondary" type="button" onClick={cancel}>Hủy</Button><Button type="submit" loading={saving}>Lưu hồ sơ</Button></div>
+    </fieldset></form>}{error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
+  </div>;
 }

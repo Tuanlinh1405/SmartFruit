@@ -1,0 +1,22 @@
+import { useState } from 'react';
+import { TrendingUp, CalendarDays, Info } from 'lucide-react';
+import { formatMoney } from '../../lib/format';
+import './market-demo.css';
+
+const products=[{name:'Sầu riêng',varieties:['Ri6','Monthong'],price:65000},{name:'Mít',varieties:['Mít Thái','Mít ruột đỏ'],price:14000},{name:'Thanh long',varieties:['Ruột đỏ','Ruột trắng'],price:22000}];
+const provinces=['Đồng Nai','Tiền Giang','Long An'];
+export function PriceForecastPage(){
+  const [product,setProduct]=useState(0),[variety,setVariety]=useState(0),[province,setProvince]=useState(0);
+  const base=products[product].price*(1+variety*.08+province*.03);
+  const values=[.9,.92,.95,.94,.98,1,1.02,1.05,1.07,1.1].map(x=>Math.round(base*x/100)*100);
+  const points=values.map((v,i)=>`${40+i*56},${190-(v/base-.8)*400}`);
+  return <div className="stack market-demo"><header className="demo-page-heading"><div><h1>Dự báo giá</h1><p>Góc nhìn giá và xu hướng nông sản</p></div><span className="badge badge-demo">Dữ liệu minh họa</span></header>
+    <p className="notice"><Info size={18} aria-hidden="true"/>Bản mẫu trình diễn · Ngày tham chiếu 23/10/2026. Giá, dự báo và nhận định đều là dữ liệu giả lập, không dùng để quyết định giao dịch.</p>
+    <div className="panel demo-filter"><label>Loại quả<select className="control" value={product} onChange={e=>{setProduct(Number(e.target.value));setVariety(0);}}>{products.map((p,i)=><option value={i} key={p.name}>{p.name}</option>)}</select></label><label>Giống<select className="control" value={variety} onChange={e=>setVariety(Number(e.target.value))}>{products[product].varieties.map((v,i)=><option value={i} key={v}>{v}</option>)}</select></label><label>Khu vực<select className="control" value={province} onChange={e=>setProvince(Number(e.target.value))}>{provinces.map((p,i)=><option value={i} key={p}>{p}</option>)}</select></label></div>
+    <div className="demo-two-columns"><section className="panel"><h2>Diễn biến & dự báo giá mẫu</h2><div className="demo-price-metrics">{[['Giá tham chiếu',values[5]],['Dự báo cao',values[9]],['Dự báo thấp',values[6]]].map(([label,value])=><div key={label}><small>{label}</small><strong>{formatMoney(Number(value))}</strong></div>)}</div>
+      <svg viewBox="0 0 600 250" className="price-chart" role="img" aria-label={`Biểu đồ giá minh họa ${products[product].name}, đường liền lịch sử và nét đứt dự báo`}><rect x="320" y="20" width="250" height="185" fill="#fff8e5"/>{[55,105,155,205].map(y=><line key={y} x1="30" x2="580" y1={y} y2={y} stroke="#dce6df"/>)}<polyline points={points.slice(0,6).join(' ')} fill="none" stroke="#23794c" strokeWidth="3"/><polyline points={points.slice(5).join(' ')} fill="none" stroke="#c28a13" strokeWidth="3" strokeDasharray="7 5"/>{points.map((p,i)=>{const [cx,cy]=p.split(',');return <circle key={i} cx={cx} cy={cy} r="4" fill={i>5?'#c28a13':'#23794c'}><title>{18+i}/10/2026: {values[i].toLocaleString('vi-VN')} đ/kg · minh họa</title></circle>;})}<text x="35" y="235">18/10</text><text x="292" y="235">23/10</text><text x="515" y="235">27/10</text><text x="360" y="40" fill="#946400">Dự báo minh họa</text></svg>
+      <p className="demo-chart-legend"><span>Lịch sử mẫu —</span><span>Dự báo mẫu - - -</span><small>Đơn vị: đ/kg</small></p></section>
+      <aside className="stack"><section className="panel"><h2><TrendingUp size={18}/> Nhận định mẫu</h2><div className="demo-insight"><strong>Xu hướng tăng trong kịch bản mẫu</strong><p>Đường biểu diễn mô phỏng mức tăng trong những ngày tiếp theo để minh họa cách đọc xu hướng.</p></div><div className="demo-insight warm"><strong>Yếu tố cần theo dõi</strong><p>Chất lượng, mùa vụ, nhu cầu và chi phí vận chuyển có thể làm giá thực tế khác biệt.</p></div></section><section className="panel"><h2><CalendarDays size={18}/> Thời điểm bán tham khảo</h2><p>Trong kịch bản minh họa: 25–27/10/2026.</p><p className="muted">Không phải khuyến nghị bán hàng hoặc dự báo đã được kiểm chứng.</p></section></aside></div>
+    <section className="panel"><h2>Bảng giá mẫu · {provinces[province]}</h2><div className="table-wrap"><table><thead><tr><th>Nông sản</th><th>Giá mẫu / kg</th><th>Xu hướng mẫu</th></tr></thead><tbody>{products.map(p=><tr key={p.name}><td>{p.name}</td><td>{formatMoney(Math.round(p.price*(1+province*.03)))}</td><td><span className="badge badge-success">Tăng trong kịch bản mẫu</span></td></tr>)}</tbody></table></div><p className="muted">Nguồn: bộ dữ liệu giả lập nội bộ, mốc 23/10/2026. Chưa tích hợp nguồn giá thị trường.</p></section>
+  </div>;
+}

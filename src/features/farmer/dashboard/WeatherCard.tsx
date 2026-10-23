@@ -1,3 +1,4 @@
+import { CloudSun, CloudRain, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../auth/AuthProvider';
@@ -21,7 +22,7 @@ export function WeatherCard({compact=false}:{compact?:boolean}) {
   },[profile.data,chosen]);
   const forecast = useQuery({ queryKey: ['weather',place?.latitude,place?.longitude], queryFn: ({ signal }) => loadForecast(place!,signal), enabled: !!place, staleTime: 15 * 60_000, retry: false, refetchOnWindowFocus: false });
   const data: Forecast | undefined = forecast.data ?? (place ? cachedForecast(place) : undefined);
-  return <section className="panel farmer-weather" aria-label="Thời tiết tại vườn"><h2>Thời tiết tại vườn</h2>
+  return <section className="panel farmer-weather" aria-label="Thời tiết tại vườn"><h2>Thời tiết tại vườn</h2><span className="weather-symbol" aria-hidden="true">{data && data.code>=51?<CloudRain size={36}/>:data && data.code===0?<Sun size={36}/>:<CloudSun size={36}/>}</span>
     {profile.isPending && <p role="status">Đang đọc vị trí hồ sơ…</p>}
     {profile.isError && <p role="alert">Không đọc được hồ sơ. Bạn vẫn có thể chọn địa điểm bên dưới. <button className="text-link" onClick={() => void profile.refetch()}>Thử lại hồ sơ</button></p>}
     {!profile.isPending && !place && <p>Chưa có vị trí dự báo. Chọn địa điểm tham khảo hoặc bổ sung tọa độ trong hồ sơ vườn.</p>}

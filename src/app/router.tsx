@@ -29,6 +29,9 @@ import './b-styles.css';
 const PolicyPage = lazy(() => import('../features/policy/PolicyPage').then(m=>({default:m.PolicyPage})));
 const TransportPage = lazy(() => import('../features/transport/TransportPage').then(m=>({default:m.TransportPage})));
 import { NotificationsPage } from '../features/notifications/NotificationCenter';
+const PriceForecastPage=lazy(()=>import('../features/market-demo/PriceForecastPage').then(m=>({default:m.PriceForecastPage})));
+const CarrierTrackingPage=lazy(()=>import('../features/market-demo/CarrierDemoPages').then(m=>({default:m.CarrierTrackingPage})));
+const CarrierDriverReviewsPage=lazy(()=>import('../features/market-demo/CarrierDemoPages').then(m=>({default:m.CarrierDriverReviewsPage})));
 const DevUi = import.meta.env.DEV ? lazy(() => import('../dev/ui-page')) : null;
 type Feature = import('react').ComponentProps<typeof AFeaturePage>['feature'];
 function FarmerCarrierFeature({ feature }: { feature: Feature }) {
@@ -53,11 +56,11 @@ export function ApplicationRoutes() {
         {role === 'FARMER' && <><Route path="invitations" element={<TradePage view="invitations" />} /><Route path="negotiations" element={<TradePage view="negotiations" />} /><Route path="chat" element={<TradePage view="negotiations" />} /><Route path="reviews" element={<TradePage view="reviews" />} /></>}
         {role === 'CARRIER' && <Route path="dashboard" element={<RoleDashboard role={role} />} />}
         <Route path="policy" element={<PolicyPage/>}/><Route path="notifications" element={<NotificationsPage/>}/>
-        {pageInventory.filter(entry => entry.role === role && ['FUI-06','CUI-03','CUI-05','CUI-06'].includes(entry.id)).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={['FUI-06','CUI-03'].includes(entry.id)?<TransportPage/>:<DeferredPage kind={entry.id==='CUI-05'?'tracking':'carrier-reviews'} />} />)}
+        {pageInventory.filter(entry => entry.role === role && ['FUI-06','CUI-03','CUI-05','CUI-06'].includes(entry.id)).map(entry => <Route key={entry.id} path={entry.path.split('/').slice(2).join('/')} element={['FUI-06','CUI-03'].includes(entry.id)?<TransportPage/>:entry.id==='CUI-05'?<CarrierTrackingPage/>:<CarrierDriverReviewsPage/>} />)}
         {role === 'FARMER' ? <>
           <Route path="dashboard" element={<FarmerDashboard />} />
-          {['prices','weather','map'].map(path => <Route key={path} path={path} element={<Navigate to="/farmer/dashboard" replace />} />)}
-          <Route path="profile" element={<FarmerCarrierFeature feature="profile" />} />
+          {['weather','map'].map(path => <Route key={path} path={path} element={<Navigate to="/farmer/dashboard" replace />} />)}
+          <Route path="prices" element={<PriceForecastPage/>}/><Route path="profile" element={<FarmerCarrierFeature feature="profile" />} />
           <Route path="lots" element={<FarmerCarrierFeature feature="lots" />} />
           <Route path="lots/new" element={<FarmerCarrierFeature feature="new" />} />
           <Route path="lots/:id" element={<FarmerCarrierFeature feature="detail" />} />
@@ -69,7 +72,7 @@ export function ApplicationRoutes() {
     </Route>)}
     <Route element={<RoleGuard role="BUYER" />}><Route path="/buyer" element={<BuyerShell />}>
       <Route index element={<Navigate to="dashboard" replace />} /><Route path="dashboard" element={<BuyerDashboard />} />
-      <Route path="profile" element={<BuyerProfilePage />} /><Route path="requests" element={<RequestListPage />} />
+      <Route path="prices" element={<PriceForecastPage/>}/><Route path="profile" element={<BuyerProfilePage />} /><Route path="requests" element={<RequestListPage />} />
       <Route path="requests/new" element={<RequestFormPage />} /><Route path="requests/:id/edit" element={<RequestFormPage />} />
       <Route path="lots" element={<LotsPage />} /><Route path="chat" element={<TradePage view="negotiations" />} />
       {(['invitations','negotiations','reviews'] as const).map(view => <Route key={view} path={view} element={<TradePage view={view} />} />)}

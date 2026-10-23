@@ -1,3 +1,5 @@
+import { BuyerMatchCard, type MatchAction } from './buyer-match-card';
+import { formatDate, formatMoney, formatTonnes } from '../../../lib/format';
 import { supabase } from '../../../lib/supabase';
 import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -9,10 +11,11 @@ import { lotColumns } from '../lots/lot.api';
 import { explainError } from '../../../lib/format';
 import { searchFarmerCandidates, type FarmerSearchResult } from './hybrid-search';
 
-export type BuyCandidate = import('../../matching/core').ScoringRequest & { buyer_id: string; title: string };
+export type BuyCandidate = import('../../matching/core').ScoringRequest & { buyer_id: string; title: string } & Partial<Pick<import('../../../lib/domain').BuyRequest,'quality_requirements'|'packaging_options'|'notes'>>;
 export interface MatchResult { lotId: string; requestId: string; score: number; reasons: string[]; missingInformation: string[]; ruleVersion: string; suggestedQuantityKg?: number; cosineSimilarity?: number | null; }
 export type MatchScorer = (lot: Lot, requests: BuyCandidate[]) => MatchResult[] | Promise<MatchResult[]>;
 export interface FarmerMatchingRepository {
+  productName?(fruitId:string):Promise<string>;
   search?(userId: string, lotId: string): Promise<FarmerSearchResult>;
   lots(userId: string): Promise<Lot[]>;
   candidates(userId: string, lotId: string): Promise<{ lot: Lot; requests: BuyCandidate[]; partners: { user_id: string; display_name: string; province: string | null }[] }>;
@@ -20,6 +23,7 @@ export interface FarmerMatchingRepository {
 export function createFarmerMatchingRepository(client: SupabaseClient): FarmerMatchingRepository {
   async function owner(userId: string) { const auth = await client.auth.getUser(); if (auth.error || auth.data.user?.id !== userId) throw new Error('Phiên đăng nhập không hợp lệ.'); }
   const repository: FarmerMatchingRepository = {
+    async productName(id){const r=await client.from('fruit_types').select('name').eq('id',id).maybeSingle();return r.data?.name??'Nông sản';},
     async search(userId, lotId) {
       await owner(userId);
       const record = await client.from('lots').select(lotColumns).eq('id', lotId).eq('farmer_id', userId).eq('status', 'PUBLISHED').single<Lot>();
@@ -42,7 +46,7 @@ export function createFarmerMatchingRepository(client: SupabaseClient): FarmerMa
       if (record.error || !record.data) throw new Error('Không truy cập được lô hoặc lô chưa được công bố.');
       const lot = record.data; const requests: BuyCandidate[] = [];
       for (let offset = 0; offset <= 1000; offset += 100) {
-        const result = await client.from('buy_requests').select('id,status,buyer_id,fruit_type_id,variety_id,title,target_quantity_kg,min_lot_quantity_kg,allow_partial,min_price_vnd_per_kg,max_price_vnd_per_kg,required_start,required_end,preferred_provinces', { count: 'exact' })
+        const result = await client.from('buy_requests').select('id,status,buyer_id,fruit_type_id,variety_id,title,target_quantity_kg,min_lot_quantity_kg,allow_partial,min_price_vnd_per_kg,max_price_vnd_per_kg,required_start,required_end,preferred_provinces,quality_requirements,packaging_options,notes', { count: 'exact' })
           .eq('status', 'OPEN').eq('fruit_type_id', lot.fruit_type_id).lte('required_start', lot.harvest_end).gte('required_end', lot.harvest_start).order('id').range(offset, offset + 99);
         if (result.error || !result.data || result.count === null) throw new Error('Không thể tải nhu cầu thu mua.');
         if (result.count > 1000) throw new Error('Quá nhiều ứng viên. Hãy thu hẹp loại quả/ngày thu hoạch trước khi matching.');
@@ -58,7 +62,7 @@ export function createFarmerMatchingRepository(client: SupabaseClient): FarmerMa
   }; return repository;
 }
 async function configured() { return createFarmerMatchingRepository(supabase); }
-export const farmerMatchingRepository: FarmerMatchingRepository = { search: async (u, id) => (await configured()).search!(u, id), lots: async u => (await configured()).lots(u), candidates: async (u, id) => (await configured()).candidates(u, id) };
+export const farmerMatchingRepository: FarmerMatchingRepository = { productName:async id=>(await configured()).productName!(id),search: async (u, id) => (await configured()).search!(u, id), lots: async u => (await configured()).lots(u), candidates: async (u, id) => (await configured()).candidates(u, id) };
 export function validateMatches(lot: Lot, requests: BuyCandidate[], matches: MatchResult[]): void {
   if (!Array.isArray(matches)) throw new Error('Kết quả matching không đúng contract.');
   const seen = new Set<string>();
@@ -69,15 +73,15 @@ export function validateMatches(lot: Lot, requests: BuyCandidate[], matches: Mat
     seen.add(result.requestId);
   }
 }
-export function FarmerMatchingPanel(props: { authenticatedUserId: string | null; repository?: FarmerMatchingRepository; scorer?: MatchScorer; scoringVersion?: string; initialLotId?: string; onConnect: (lotId: string, requestId: string) => Promise<void> }) { return <ForUser key={props.authenticatedUserId} {...props} />; }
-function ForUser({ authenticatedUserId: userId, repository = farmerMatchingRepository, scorer, scoringVersion = 'shared', initialLotId = '', onConnect }: { authenticatedUserId: string | null; repository?: FarmerMatchingRepository; scorer?: MatchScorer; scoringVersion?: string; initialLotId?: string; onConnect: (lotId: string, requestId: string) => Promise<void> }) {
+export function FarmerMatchingPanel(props: { authenticatedUserId: string | null; repository?: FarmerMatchingRepository; scorer?: MatchScorer; scoringVersion?: string; initialLotId?: string; onConnect: (lotId: string, requestId: string, action?: MatchAction) => Promise<void> }) { return <ForUser key={props.authenticatedUserId} {...props} />; }
+function ForUser({ authenticatedUserId: userId, repository = farmerMatchingRepository, scorer, scoringVersion = 'shared', initialLotId = '', onConnect }: { authenticatedUserId: string | null; repository?: FarmerMatchingRepository; scorer?: MatchScorer; scoringVersion?: string; initialLotId?: string; onConnect: (lotId: string, requestId: string, action?: MatchAction) => Promise<void> }) {
   const sending = useRef(false);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [connectError, setConnectError] = useState('');
-  async function connect(lotId: string, requestId: string) {
+  async function connect(lotId: string, requestId: string, action:MatchAction) {
     if (sending.current) return;
     sending.current = true; setConnecting(requestId); setConnectError('');
-    try { await onConnect(lotId, requestId); }
+    try { await onConnect(lotId, requestId, action); }
     catch (cause) { setConnectError(explainError(cause)); }
     finally { sending.current = false; setConnecting(null); }
   }
@@ -89,10 +93,10 @@ function ForUser({ authenticatedUserId: userId, repository = farmerMatchingRepos
       try {
         const data = await repository.search(userId!, id);
         validateMatches(data.lot, data.requests, data.matches);
-        return { ...data, warning };
+        return { ...data, warning, productName:await repository.productName?.(data.lot.fruit_type_id).catch(()=>'Nông sản')??'Nông sản' };
       } catch { warning = 'Tìm kiếm E5 chưa khả dụng; đang dùng so tên và quy tắc giá/lượng.'; }
     }
-    const data = await repository.candidates(userId!, id); const matches = await scorer!(data.lot, data.requests); validateMatches(data.lot, data.requests, matches); return { ...data, matches, mode: 'degraded' as const, warning };
+    const data = await repository.candidates(userId!, id); const matches = await scorer!(data.lot, data.requests); validateMatches(data.lot, data.requests, matches); return { ...data, matches, mode: 'degraded' as const, warning,productName:await repository.productName?.(data.lot.fruit_type_id).catch(()=>'Nông sản')??'Nông sản' };
   } });
   if (!userId) return <EmptyState title="Chưa đăng nhập" />;
   return <div className="stack"><PageHeader title="Người mua phù hợp" description="Điểm gợi ý theo tiêu chí, không đảm bảo giao dịch." />
@@ -100,10 +104,9 @@ function ForUser({ authenticatedUserId: userId, repository = farmerMatchingRepos
     {lots.isPending ? <LoadingState /> : lots.isError ? <ErrorState message="Không thể tải lô để matching." onRetry={() => { void lots.refetch(); }} /> : <Select label="Chọn lô cần matching" value={id} onChange={e => { setId(e.target.value); setPage(1); }}><option value="">Chọn lô</option>{lots.data.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}</Select>}
     {connectError && <p role="alert">{connectError}</p>}
     {!id && <EmptyState title="Chưa chọn lô" />}
-    {id && scorer && (result.isPending ? <LoadingSteps label="Đang tìm người mua phù hợp…" /> : result.isError ? <ErrorState message={result.error.message} onRetry={() => { void result.refetch(); }} /> : !result.data.matches.length ? <EmptyState title="Không có người mua phù hợp" description="Thử thay đổi thông tin lô hoặc ngày thu hoạch." /> : <>
-      <p>{result.data.mode === 'hybrid' ? 'Đã lấy tối đa 20 nhu cầu bằng cosine E5 rồi xếp lại theo độ khớp tên.' : 'Đang dùng so tên và quy tắc giá/lượng.'}</p>
-      {result.data.warning && <p role="status">{result.data.warning}</p>}
-      {result.data.matches.slice((page - 1) * 20, page * 20).map(match => { const request = result.data.requests.find(r => r.id === match.requestId)!; return <Card key={match.requestId} title={result.data.partners.find(p => p.user_id === request.buyer_id)?.display_name ?? 'Đối tác thu mua'}><p>Phù hợp {match.score} điểm · Quy tắc {match.ruleVersion}</p>{match.cosineSimilarity != null && <p>Cosine E5: {match.cosineSimilarity.toFixed(4)}</p>}<ul>{match.reasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul><p>{request.title} · {request.allow_partial ? 'Chấp nhận một phần' : 'Yêu cầu đủ lượng'}</p><p>{match.suggestedQuantityKg !== undefined && `${match.suggestedQuantityKg} kg đề xuất`}</p><p>{match.missingInformation.join('; ')}</p><button className="button button-secondary" disabled={connecting !== null} onClick={() => { void connect(id, request.id); }}>{connecting === request.id ? 'Đang gửi…' : 'Gửi lời mời kết nối'}</button></Card>; })}
+    {id && scorer && (result.isPending ? <LoadingSteps label="Đang tìm người mua phù hợp…" /> : result.isError ? <ErrorState message="Không thể tìm người mua lúc này. Vui lòng thử lại." onRetry={() => { void result.refetch(); }} /> : !result.data.matches.length ? <EmptyState title="Không có người mua phù hợp" description="Thử thay đổi thông tin lô hoặc ngày thu hoạch." /> : <>
+      {result.data.warning && <p role="status">Một phần dịch vụ tìm kiếm chưa khả dụng; đang hiển thị kết quả thay thế.</p>}
+      {result.data.matches.slice((page - 1) * 20, page * 20).map(match => { const request = result.data.requests.find(r => r.id === match.requestId)!; return <BuyerMatchCard key={match.requestId} request={request} partner={result.data.partners.find(p=>p.user_id===request.buyer_id)} productName={result.data.productName} match={match} busy={connecting!==null} error={connectError} onAction={action=>{void connect(id,request.id,action);}}/>; })}
       <div className="row"><button className="button button-secondary" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Trang trước</button><p>Trang {page}</p><button className="button button-secondary" disabled={page * 20 >= result.data.matches.length} onClick={() => setPage(p => p + 1)}>Trang sau</button></div>
     </>)}
   </div>;

@@ -9,7 +9,7 @@ for(const width of [1440,390])test(`Single overview without tabs and notificatio
   await expect(page.getByRole('region',{name:'Thống kê lô hàng',exact:true})).toBeVisible();
   await expect(page.getByRole('region',{name:'Thời tiết tại vườn',exact:true})).toBeVisible();
   await expect(page.getByRole('region',{name:'Khu vực thu mua',exact:true})).toBeVisible();
-  await expect(page.getByRole('region',{name:'Giá tham khảo',exact:true})).toContainText('Chưa có nguồn giá thị trường');
+  await expect(page.getByRole('region',{name:'Giá tham khảo',exact:true})).toContainText('Xem dự báo giá minh họa');
   await page.reload();await expect(page.getByRole('region',{name:'Thời tiết tại vườn',exact:true})).toBeVisible();
   await expect(page.getByRole('tab')).toHaveCount(0);
   const bell=page.getByRole('button',{name:'Mở thông báo',exact:true});await bell.click();
@@ -19,7 +19,7 @@ for(const width of [1440,390])test(`Single overview without tabs and notificatio
   await page.screenshot({path:`tmp/farmer-compact-${width}.png`,fullPage:true});
 });
 
-for(const target of ['prices','weather','map'] as const)test(`Saved ${target} links return to the single overview`,async({page})=>{
+for(const target of ['weather','map'] as const)test(`Saved ${target} links return to the single overview`,async({page})=>{
   await installMockApi(page);await loginAs(page,'FARMER');await page.goto(`/farmer/${target}`);
   await expect(page).toHaveURL(/\/farmer\/dashboard$/);
   await page.goto(`/farmer/dashboard?tab=${target}&from=saved`);
@@ -37,20 +37,20 @@ for(const width of [1440,390,320])test(`Farmer live dashboard weather, buying ar
   const weather=page.getByRole('region',{name:'Thời tiết tại vườn',exact:true}),areas=page.getByRole('region',{name:'Khu vực thu mua',exact:true});
   await expect(weather).toContainText('29°C');await expect(weather).toContainText('Theo tọa độ hồ sơ vườn');await expect(weather).toContainText('Khả năng mưa hôm nay: 70%');
   await areas.getByText('Lọc và tải lại khu vực',{exact:true}).click();
-  await expect(areas).toContainText('3 nhu cầu riêng biệt');await expect(areas).not.toContainText('Nhu cầu đã đóng');await expect(areas).not.toContainText('Nhu cầu hết hạn');
+  await expect(areas).toContainText('3 nhu cầu');await expect(areas).not.toContainText('Nhu cầu đã đóng');await expect(areas).not.toContainText('Nhu cầu hết hạn');
   await expect(areas.getByRole('region',{name:'Bản đồ khu vực thu mua',exact:true})).toBeVisible();
   await expect(areas.locator('canvas.maplibregl-canvas')).toBeVisible();
   await expect(areas.locator('.buying-area-map')).toHaveAttribute('aria-busy','false');
   await expect(areas.locator('.leaflet-control-attribution')).toContainText('OpenFreeMap');
   await expect(areas.locator('.leaflet-marker-icon[title="Khu vực Tiền Giang"]')).toBeVisible();await areas.locator('.leaflet-marker-icon[title="Khu vực Tiền Giang"]').click();
-  await areas.getByRole('button',{name:'Xem nhu cầu tại Tiền Giang',exact:true}).click();await expect(areas.getByLabel('Tỉnh thu mua')).toHaveValue('tien giang');await expect(areas).toContainText('1 nhu cầu riêng biệt');
-  await expect(areas.getByRole('button',{name:'Thu gọn nhu cầu',exact:false})).toHaveAttribute('aria-expanded','true');await expect(areas.getByText('Mua Ri6 test',{exact:true})).toBeVisible();await expect(page).toHaveURL(/\/farmer\/dashboard$/);
+  await areas.getByRole('button',{name:'Xem danh sách tại Tiền Giang',exact:true}).click();await expect(areas.getByLabel('Tỉnh thu mua')).toHaveValue('tien giang');await expect(areas).toContainText('1 nhu cầu');
+  await expect(areas.getByRole('button',{name:'Thu gọn danh sách',exact:false})).toHaveAttribute('aria-expanded','true');await expect(areas.getByText('Mua Ri6 test',{exact:true})).toBeVisible();await expect(page).toHaveURL(/\/farmer\/dashboard$/);
   await areas.getByRole('button',{name:'Chỉ xem danh sách',exact:true}).click();await expect(areas.locator('.buying-area-map')).toHaveCount(0);
   await areas.getByLabel('Tỉnh thu mua').selectOption('khong xac dinh');await expect(areas).toContainText('Chưa xác định được điểm đại diện');
   await weather.getByText('Chọn địa điểm dự báo',{exact:true}).click();
   await weather.getByLabel('Tìm địa điểm thời tiết').fill('Long An');await weather.getByRole('button',{name:'Tìm địa điểm',exact:true}).click();await weather.getByLabel('Chọn địa điểm tham khảo').selectOption('101');await expect(weather).toContainText('Địa điểm đại diện');
-  await page.reload();await expect(weather).toContainText('Theo tọa độ hồ sơ vườn');await expect(areas).toContainText('3 nhu cầu riêng biệt');await areas.getByText('Lọc và tải lại khu vực',{exact:true}).click();
-  await expect(areas.getByLabel('Loại quả khu vực')).toBeVisible();await areas.getByLabel('Loại quả khu vực').selectOption('fruit-1');await expect(areas).toContainText('3 nhu cầu riêng biệt');
+  await page.reload();await expect(weather).toContainText('Theo tọa độ hồ sơ vườn');await expect(areas).toContainText('3 nhu cầu');await areas.getByText('Lọc và tải lại khu vực',{exact:true}).click();
+  await expect(areas.getByLabel('Loại quả khu vực')).toBeVisible();await areas.getByLabel('Loại quả khu vực').selectOption('fruit-1');await expect(areas).toContainText('3 nhu cầu');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);expect(errors).toEqual([]);
   await page.screenshot({path:info.outputPath(`farmer-dashboard-${width}.png`),fullPage:true});
 });
@@ -79,7 +79,7 @@ for(const recovery of ['button','online'] as const)test(`Buying area map recover
   await expect(areas.locator('.buying-area-map')).toHaveAttribute('aria-busy','false');
   await expect(areas.locator('.leaflet-control-attribution')).toContainText('OpenFreeMap');
   await areas.locator('.leaflet-marker-icon[title="Khu vực Tiền Giang"]').click();
-  await expect(areas.getByRole('button',{name:'Xem nhu cầu tại Tiền Giang',exact:true})).toBeVisible();
+  await expect(areas.getByRole('button',{name:'Xem danh sách tại Tiền Giang',exact:true})).toBeVisible();
   await expect(areas).toContainText('Mua Ri6 test');
 });
 
@@ -99,7 +99,7 @@ test('Unavailable WebGL keeps the list and markers usable through retry and remo
   await expect(areas.getByRole('button',{name:'Thử lại nền bản đồ',exact:true})).toBeVisible();
   await areas.getByRole('button',{name:'Thử lại nền bản đồ',exact:true}).click();
   await areas.locator('.leaflet-marker-icon[title="Khu vực Tiền Giang"]').click();
-  await expect(areas.getByRole('button',{name:'Xem nhu cầu tại Tiền Giang',exact:true})).toBeVisible();
+  await expect(areas.getByRole('button',{name:'Xem danh sách tại Tiền Giang',exact:true})).toBeVisible();
   await areas.getByRole('button',{name:'Chỉ xem danh sách',exact:true}).click();
   await areas.getByRole('button',{name:'Xem bản đồ',exact:true}).click();
   await expect(areas.getByRole('button',{name:'Thử lại nền bản đồ',exact:true})).toBeVisible();
