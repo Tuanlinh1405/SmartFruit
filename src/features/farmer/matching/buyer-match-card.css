@@ -1,0 +1,27 @@
+.buyer-match-card { display:grid;grid-template-columns:minmax(230px,1.1fr) minmax(0,1.8fr) auto;gap:22px 20px;align-items:start;padding:22px;border-radius:12px; }
+.buyer-match-identity { display:flex;align-items:start;gap:12px;min-width:0; }
+.buyer-match-avatar { width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--secondary);color:var(--primary);font-size:14px;font-weight:600;border:1px solid var(--border); }
+.buyer-match-card h2 { font-size:16px;font-weight:600;margin:0 0 4px;line-height:1.4; }
+.buyer-match-location { display:flex;gap:5px;align-items:center;flex-wrap:wrap;color:var(--muted-foreground);font-size:12px;line-height:1.6; }
+.buyer-match-location svg { flex:none; }
+.buyer-match-product { font-size:12px;line-height:1.6;color:var(--muted-foreground);margin-top:4px; }
+.buyer-match-facts { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0; }
+.buyer-match-facts>div { border-left:1px solid var(--border);padding-left:14px;min-width:0; }
+.buyer-match-facts dt,.buyer-match-detail-facts dt { font-size:11px;color:var(--muted-foreground);margin-bottom:5px; }
+.buyer-match-facts dd { font-size:13px;font-weight:600;line-height:1.6;margin:0;font-variant-numeric:tabular-nums; }
+.buyer-match-card .buyer-match-score { justify-self:end;white-space:nowrap;background:#d7f5e4;color:#1b6944;border:0;font-size:12px; }
+.buyer-match-tags { display:flex;align-items:center;flex-wrap:wrap;gap:8px;grid-column:1;align-self:center;min-width:0; }
+.buyer-match-tag { display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 10px;border-radius:999px;background:#efede5;color:#4b514a;font-size:11px;line-height:1.5; }
+.buyer-match-tag.quality { background:#d7f5e4;color:#1b6944; }
+.buyer-match-actions { display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;grid-column:2/4; }
+.buyer-match-card .buyer-match-actions .button { font-size:12px;min-height:40px;padding:9px 12px; }
+.buyer-match-actions .buyer-match-offer { background:#f0a300;color:#173026;border-color:#f0a300; }
+.buyer-match-actions .buyer-match-offer:hover { background:#d99500; }
+.buyer-match-actions .button-secondary { border-color:#80b79a;background:var(--card);color:var(--primary); }
+.buyer-match-note { color:var(--muted-foreground);font-size:11px;line-height:1.7; }
+.buyer-match-dialog { width:min(760px,calc(100vw - 32px)); }
+.buyer-match-detail-facts { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:20px 0; }
+.buyer-match-detail-facts dd { margin:0;font-size:13px;font-weight:500; }
+.buyer-match-dialog>p { margin:12px 0; }
+@media(max-width:1200px){.buyer-match-card { grid-template-columns:minmax(0,1fr) auto; }.buyer-match-facts { grid-row:2;grid-column:1/-1; }.buyer-match-card .buyer-match-score { grid-column:2;grid-row:1; }.buyer-match-tags { grid-column:1/-1; }.buyer-match-actions { grid-column:1/-1; }}
+@media(max-width:600px){.buyer-match-card { padding:16px;gap:16px 8px; }.buyer-match-avatar { width:34px;height:34px;font-size:11px; }.buyer-match-card h2 { font-size:14px; }.buyer-match-identity { gap:8px; }.buyer-match-card .buyer-match-score { font-size:10px;padding:4px 7px; }.buyer-match-facts { grid-template-columns:1fr;gap:12px; }.buyer-match-facts>div { display:grid;grid-template-columns:100px minmax(0,1fr);gap:8px;align-items:start; }.buyer-match-facts dt { margin:0;line-height:1.8; }.buyer-match-actions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%; }.buyer-match-actions .buyer-match-offer { grid-column:1/-1; }.buyer-match-detail-facts { grid-template-columns:1fr; }}

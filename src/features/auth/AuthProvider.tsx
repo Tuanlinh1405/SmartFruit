@@ -7,7 +7,7 @@ import { passwordCredentials } from './password-credentials';
 import { registrationCredentials, registrationRoles, type RegistrationInput } from './registration';
 
 type Snapshot = { session: Session | null; profile: Profile | null; status: 'loading' | 'signed-out' | 'ready' | 'error' | 'suspended'; error: string | null };
-export type AuthState = Snapshot & { retry: () => void; signOut: () => Promise<void>; signIn: (identifier: string, password: string) => Promise<void>; signUp: (input: RegistrationInput) => Promise<{ needsEmailConfirmation: boolean }> };
+export type AuthState = Snapshot & { retry: () => void; refreshDisplayName?: () => Promise<void>; signOut: () => Promise<void>; signIn: (identifier: string, password: string) => Promise<void>; signUp: (input: RegistrationInput) => Promise<{ needsEmailConfirmation: boolean }> };
 const initial: Snapshot = { session: null, profile: null, status: 'loading', error: null };
 const Context = createContext<AuthState | null>(null);
 export function AuthProvider({ children, client = supabase }: { children: ReactNode; client?: SupabaseClient }) {
@@ -68,6 +68,12 @@ export function AuthProvider({ children, client = supabase }: { children: ReactN
     return () => { alive = false; generation.current++; unsubscribe?.(); };
   }, [client, attempt, publish]);
   const retry = useCallback(() => { generation.current++; publish(initial); setAttempt(n => n + 1); }, [publish]);
+  const refreshDisplayName = useCallback(async () => {
+    const current=latest.current;if(current.status!=='ready'||!current.session||!current.profile)return;
+    const id=current.session.user.id;
+    const r=await client.from('profiles').select('full_name').eq('id',id).single();if(r.error)throw r.error;
+    if(latest.current.status==='ready'&&latest.current.session?.user.id===id&&latest.current.profile)publish({...latest.current,profile:{...latest.current.profile,full_name:r.data.full_name}});
+  },[client,publish]);
   const signOut = useCallback(async () => {
     const { error } = await client.auth.signOut(); if (error) throw error;
     generation.current++; publish({ ...initial, status: 'signed-out' });
@@ -83,6 +89,6 @@ export function AuthProvider({ children, client = supabase }: { children: ReactN
     if (!data.user) throw new Error('Registration returned no user');
     return { needsEmailConfirmation: !data.session };
   }, [client]);
-  return <Context.Provider value={{ ...state, retry, signOut, signIn, signUp }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ ...state, retry, refreshDisplayName, signOut, signIn, signUp }}>{children}</Context.Provider>;
 }
 export function useAuth() { const value = useContext(Context); if (!value) throw new Error('AuthProvider is missing'); return value; }

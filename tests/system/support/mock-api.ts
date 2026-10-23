@@ -13,7 +13,7 @@ export async function installMockApi(page: Page, sharedDatabase?: Record<string,
   const database: Record<string, Row[]> = sharedDatabase ?? {
     profiles: Object.entries(testIds).map(([role, id]) => ({ id, role, full_name: `Test ${role}`, phone_display: 'Test' })),
     trade_connections: [], trade_messages: [], trade_offers: [], trade_agreements: [], trade_reviews: [],
-    notifications: [], transport_requests: [],
+    notifications: [], transport_requests: [], buyer_profiles: [], buyer_evidence: [],
     farmer_profiles: [], carrier_profiles: [], vehicles: [], lot_images: [], lot_private_details: [],
     fruit_types: testCatalog.fruits.map(v => ({ ...v })), fruit_varieties: testCatalog.varieties.map(v => ({ ...v })),
     lots: [{ ...testLot({ id: '40000000-0000-4000-8000-000000000001', farmer_id: testIds.FARMER, status: 'PUBLISHED', quantity_kg: 5000 }) }],
@@ -49,6 +49,11 @@ export async function installMockApi(page: Page, sharedDatabase?: Record<string,
     }
     if (url.pathname.endsWith('/user')) return active ? send(user()) : send({ message: 'No session' }, 401);
     if (url.pathname.endsWith('/logout')) { active = false; return send({}); }
+    if(url.pathname.includes('/storage/v1/object/sign/buyer-evidence/')) {
+      if(method==='POST')return send({signedURL:'/object/sign/buyer-evidence/mock.png?token=test'});
+      return route.fulfill({status:200,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aVYkAAAAASUVORK5CYII=','base64')});
+    }
+    if(url.pathname.includes('/storage/v1/object/buyer-evidence'))return send({Key:'mock',Id:'mock'});
     if (url.pathname.includes('/storage/v1/object/list/')) return send([]);
     if (/\/rpc\/(prepare_lot_deletion|delete_empty_lot)$/.test(url.pathname)) {
       const id = request.postDataJSON().lot_id; const lot = database.lots.find(row => row.id === id);
@@ -82,7 +87,14 @@ export async function installMockApi(page: Page, sharedDatabase?: Record<string,
         if (profile.role === null) profile.role = registrationMetadata.registration_role;
         return send(profile.role);
       }
-      if (rpc === 'buyer_market_summary' && active && role === 'BUYER') return send([]);
+      if(rpc==='save_buyer_business_profile'&&active&&role==='BUYER'){
+        Object.assign(database.profiles.find(p=>p.id===actor)!,{full_name:(args.details as Row).full_name});
+        const details:Row={...(args.details as Row),user_id:actor};delete details.full_name;
+        const existing=database.buyer_profiles.find(p=>p.user_id===actor);if(existing)Object.assign(existing,details);else database.buyer_profiles.push(details);
+        database.buyer_evidence=database.buyer_evidence.filter(e=>e.user_id!==actor);
+        database.buyer_evidence.push(...(args.evidence as Row[]).map((x,i)=>({...x,user_id:actor,position:i})));return send(null);
+      }
+      if (rpc === 'buyer_market_summary'  && active && role === 'BUYER') return send([]);
       if (!active || !['BUYER', 'FARMER'].includes(role)) return denied();
       if (rpc === 'open_trade_connection') {
         if (failConnection) { failConnection = false; return send({ message: 'Không gửi được lời mời. Thử lại.' }, 409); }
@@ -169,7 +181,7 @@ export async function installMockApi(page: Page, sharedDatabase?: Record<string,
   return { database, calls, failNextPublish: () => { failPublish = 1; }, failNextConnection: () => { failConnection = true; } };
 }
 export async function loginAs(page: Page, role: TestRole) {
-  await page.goto('/login'); await page.getByLabel(/^Email hoặc số điện thoại/).fill(phones[role]); await page.getByLabel(/^Mật khẩu/).fill('test-only-password');
+  await page.goto('/login',{waitUntil:'domcontentloaded'}); await page.getByLabel(/^Email hoặc số điện thoại/).fill(phones[role]); await page.getByLabel(/^Mật khẩu/).fill('test-only-password');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(page).toHaveURL(role === 'BUYER' ? /\/buyer\/dashboard$/ : role === 'ADMIN' ? /\/admin\/dashboard$/ : new RegExp(`/${role.toLowerCase()}/dashboard$`));
 }

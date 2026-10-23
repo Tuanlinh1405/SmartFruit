@@ -17,10 +17,10 @@ for (const initiator of ['FARMER', 'BUYER'] as const) test(`${initiator} initiat
     if (initiator === 'FARMER') {
       await farmer.goto(`/farmer/matches?lotId=${lotId}`);
       api.failNextConnection();
-      await farmer.getByRole('button', { name: 'Gửi lời mời kết nối', exact: true }).click();
+      await farmer.getByRole('button', { name: 'Gửi đề nghị', exact: true }).click();
       await expect(farmer.getByRole('alert')).toContainText('Không gửi được lời mời');
       await expect(farmer).toHaveURL(/\/farmer\/matches/); expect(api.database.trade_connections).toHaveLength(0);
-      await farmer.getByRole('button', { name: 'Gửi lời mời kết nối', exact: true }).click();
+      await farmer.getByRole('button', { name: 'Gửi đề nghị', exact: true }).click();
     } else {
       await buyer.goto(`/buyer/lots?requestId=${requestId}`);
       await buyer.getByRole('button', { name: /Xem chi tiết/ }).first().click();
@@ -64,10 +64,9 @@ for (const initiator of ['FARMER', 'BUYER'] as const) test(`${initiator} initiat
     await buyer.goto(`/buyer/negotiations?connectionId=${connection.id}`); await buyer.getByRole('button', { name: 'Xác nhận đã hoàn tất giao dịch' }).click();
     for (const page of [buyer, farmer]) {
       await page.reload(); await page.getByRole('link', { name: 'Đánh giá giao dịch', exact: true }).click();
-      await page.getByRole('combobox', { name: /^Thỏa thuận/ }).selectOption({ index: 1 }); await page.getByRole('button', { name: '5 sao', exact: true }).click();
+      await page.getByRole('button', { name: '5 sao', exact: true }).click();
       await page.getByLabel('Nhận xét').fill(`${prefix(page)} giao dịch đúng hẹn`); await page.getByRole('button', { name: 'Lưu đánh giá' }).click();
-      await expect(page.getByText('Chưa có giao dịch hoàn tất cần đánh giá.')).toBeVisible();
-      await page.getByRole('button', { name: 'Đã gửi', exact: true }).click(); await expect(page.getByText(`${prefix(page)} giao dịch đúng hẹn`, { exact: true })).toBeVisible();
+      await expect(page.getByRole('tab',{name:/Đã đánh giá/})).toHaveAttribute('aria-selected','true'); await expect(page.getByText(`${prefix(page)} giao dịch đúng hẹn`, { exact: true })).toBeVisible();
       await page.reload(); await expect(page.getByText('Chưa có giao dịch hoàn tất cần đánh giá.')).toBeVisible();
     }
     expect(api.database.trade_reviews).toHaveLength(2); expect(api.database.trade_agreements[0].status).toBe('COMPLETED'); expect(errors).toEqual([]);

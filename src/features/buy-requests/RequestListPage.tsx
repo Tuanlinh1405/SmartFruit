@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { loadCatalog } from '../catalog/api';
 import { useAuth } from '../auth/AuthProvider';
 import type { BuyRequest, RequestStatus } from '../../lib/domain';
 import { formatDate, formatMoney, formatTonnes, explainError } from '../../lib/format';
@@ -13,6 +14,7 @@ const filters: Array<{ value: 'ALL' | RequestStatus; label: string }> = [
 
 export function RequestListPage() {
   const { session } = useAuth();
+  const [catalog,setCatalog]=useState<Awaited<ReturnType<typeof loadCatalog>>>({types:[],varieties:[]});
   const [rows, setRows] = useState<BuyRequest[]>([]);
   const [filter, setFilter] = useState<(typeof filters)[number]['value']>('ALL');
   const [loading, setLoading] = useState(true);
@@ -21,7 +23,7 @@ export function RequestListPage() {
   const reload = useCallback(async () => {
     if (!session) return;
     setLoading(true); setError('');
-    try { setRows(await listMyRequests(session.user.id)); }
+    try { const [rows,items]=await Promise.all([listMyRequests(session.user.id),loadCatalog()]);setRows(rows);setCatalog(items); }
     catch (cause) { setError(explainError(cause)); }
     finally { setLoading(false); }
   }, [session?.user.id]);
@@ -45,9 +47,9 @@ export function RequestListPage() {
     {loading ? <div className="panel empty-state">Đang tải nhu cầu…</div> : visible.length === 0 ?
       <div className="panel empty-state"><div className="empty-icon">▤</div><h2>Chưa có yêu cầu trong mục này</h2>
         <p>Tạo nhu cầu thu mua để bắt đầu tìm các lô phù hợp.</p><Link className="button primary" to="/buyer/requests/new">Tạo yêu cầu</Link></div> :
-      <div className="request-grid">{visible.map(row => <article className="panel request-card" key={row.id}>
+      <div className="request-grid">{visible.map(row => <article className={`panel request-card request-${row.status.toLowerCase()}`} key={row.id}>
         <div className="card-top"><span className={`status-pill ${row.status.toLowerCase()}`}>{row.status === 'OPEN' ? 'Đang mở' : row.status === 'DRAFT' ? 'Bản nháp' : row.status === 'CLOSED' ? 'Đã đóng' : 'Đã hủy'}</span><small>{formatDate(row.created_at)}</small></div>
-        <h2>{row.title}</h2><div className="request-meta"><span>◫ {formatTonnes(row.target_quantity_kg)}</span><span>◈ {formatMoney(row.min_price_vnd_per_kg)} – {formatMoney(row.max_price_vnd_per_kg)}</span><span>▤ {formatDate(row.required_start)} – {formatDate(row.required_end)}</span></div>
+        <div><h2>{row.title}</h2><small>{catalog.types.find(x=>x.id===row.fruit_type_id)?.name} {catalog.varieties.find(x=>x.id===row.variety_id)?.name}</small></div><div className="request-meta"><span><small>Khối lượng</small><strong>{formatTonnes(row.target_quantity_kg)}</strong></span><span><small>Giá mong muốn</small><strong>{formatMoney(row.min_price_vnd_per_kg)} – {formatMoney(row.max_price_vnd_per_kg)}</strong></span><span><small>Thời gian lấy hàng</small><strong>{formatDate(row.required_start)} – {formatDate(row.required_end)}</strong></span></div>
         <div className="chip-row">{row.preferred_provinces.map(province => <span className="chip" key={province}>{province}</span>)}</div>
         <div className="card-actions"><Link className="button outline" to={`/buyer/requests/${row.id}/edit`}>Xem / sửa</Link>
           {['OPEN', 'DRAFT'].includes(row.status) && <Link className="button primary" to={`/buyer/lots?requestId=${row.id}`}>Tìm lô phù hợp</Link>}

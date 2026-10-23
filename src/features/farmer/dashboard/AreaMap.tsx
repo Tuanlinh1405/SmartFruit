@@ -12,7 +12,7 @@ setWorkerUrl(workerUrl);
 const styleUrl=import.meta.env.VITE_MAP_STYLE_URL || 'https://tiles.openfreemap.org/styles/liberty';
 const attribution='<a href="https://openfreemap.org/">OpenFreeMap</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
-export default function AreaMap({ areas, places, onSelect }: { areas: BuyingArea[]; places: Record<string,Place>; onSelect: (key: string)=>void }) {
+export default function AreaMap({ areas, places, onSelect, supply=false }: { supply?:boolean; areas: BuyingArea[]; places: Record<string,Place>; onSelect: (key: string)=>void }) {
   const element=useRef<HTMLDivElement>(null),mapRef=useRef<L.Map|null>(null);const [failed,setFailed]=useState(false);
   const retryTiles=useRef<()=>void>(()=>{});
   const [loading,setLoading]=useState(true);
@@ -60,12 +60,13 @@ export default function AreaMap({ areas, places, onSelect }: { areas: BuyingArea
     const points: L.LatLngTuple[]=[];
     for(const area of areas){const p=places[area.key];if(!p)continue;const point: L.LatLngTuple=[p.latitude,p.longitude];points.push(point);
       const content=document.createElement('div');const title=document.createElement('strong');title.textContent=area.name;content.append(title);
-      const summary=document.createElement('p');summary.textContent=area.requests.length+' nhu cầu · Điểm đại diện khu vực';content.append(summary);
-      const action=document.createElement('button');action.type='button';action.textContent='Xem nhu cầu tại '+area.name;action.addEventListener('click',()=>onSelect(area.key));content.append(action);
+      const summary=document.createElement('p');summary.textContent=area.requests.length+(supply?' lô hàng':' nhu cầu')+' · Điểm đại diện tỉnh';content.append(summary);
+      const action=document.createElement('button');action.type='button';action.textContent='Xem danh sách tại '+area.name;action.addEventListener('click',()=>onSelect(area.key));content.append(action);
+      L.circleMarker(point,{radius:Math.min(65,18+Math.sqrt(area.requests.length)*8),color:'#1d7049',weight:1,fillColor:'#278757',fillOpacity:.2}).addTo(layer);
       L.marker(point,{keyboard:true,title:'Khu vực '+area.name,alt:'Khu vực '+area.name,icon:L.divIcon({className:'buying-area-marker',html:'<span>'+area.requests.length+'</span>',iconSize:[34,34],iconAnchor:[17,17]})}).addTo(layer).bindPopup(content);
     }
     if(points.length)map.fitBounds(L.latLngBounds(points),{padding:[30,30],maxZoom:9,animate:false});
     return()=>{layer.remove();};
-  },[areas,places,onSelect]);
-  return <><div ref={element} className="buying-area-map" role="region" aria-label="Bản đồ khu vực thu mua" aria-busy={loading} />{failed&&<div className="row"><p role="status">Không tải được một phần nền bản đồ. Danh sách nhu cầu bên dưới vẫn sử dụng được.</p><button className="button outline" onClick={()=>retryTiles.current()}>Thử lại nền bản đồ</button></div>}</>;
+  },[areas,places,onSelect,supply]);
+  return <><div ref={element} className="buying-area-map" role="region" aria-label={supply?'Bản đồ mật độ nguồn cung':'Bản đồ khu vực thu mua'} aria-busy={loading} />{failed&&<div className="row"><p role="status">Không tải được một phần nền bản đồ. Danh sách nhu cầu bên dưới vẫn sử dụng được.</p><button className="button outline" onClick={()=>retryTiles.current()}>Thử lại nền bản đồ</button></div>}</>;
 }

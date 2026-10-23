@@ -131,7 +131,7 @@ try {
 
   await check('all application tables have RLS', async () => {
     const r = await db.query("select count(*)::integer n, bool_and(relrowsecurity) secured from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'");
-    assert.equal(r.rows[0].n, process.argv.includes('--deploy') ? 18 : 25); assert.equal(r.rows[0].secured, true);
+    assert.equal(r.rows[0].n, process.argv.includes('--deploy') ? 18 : 26); assert.equal(r.rows[0].secured, true);
   });
   await check('deployment verification queries run successfully', async () => {
     await db.exec(await readFile(path.join(root, 'verify-deployment.sql'), 'utf8'));
@@ -281,7 +281,7 @@ try {
       'admin_close_listing','admin_directory','admin_marketplace','admin_trade_overview','admin_update_member',
       'complete_registration','complete_trade_agreement','create_transport_request','delete_empty_lot','embedding_query_cache','embedding_worker_claim','embedding_worker_finish','embedding_worker_status',
       'find_transport_vehicles','mark_notifications_read','my_review_summary','my_transport_sources','open_trade_connection','prepare_lot_deletion',
-      'propose_trade_offer','replace_lot_image','respond_trade_connection','respond_trade_offer','respond_transport_request','send_trade_message','submit_trade_review',
+      'propose_trade_offer','replace_lot_image','respond_trade_connection','respond_trade_offer','respond_transport_request','save_buyer_business_profile','send_trade_message','submit_trade_review',
     ];
     assert.deepEqual(r.rows.map(x=>x.proname),expected);
     for(const x of r.rows){assert.ok(x.proconfig.includes('search_path=""'));assert.equal(x.anon_access,false);}

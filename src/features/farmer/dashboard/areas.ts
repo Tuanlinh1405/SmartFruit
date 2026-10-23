@@ -2,6 +2,17 @@ import { supabase } from '../../../lib/supabase';
 import { normalizeProvince } from './geography';
 export interface AreaRequest { id: string; title: string; fruit_type_id: string; preferred_provinces: string[]; target_quantity_kg: number; min_price_vnd_per_kg: number; max_price_vnd_per_kg: number; required_start: string; required_end: string; }
 export interface BuyingArea { key: string; name: string; requests: AreaRequest[]; }
+export async function loadAreaLots(signal?: AbortSignal) {
+  const requests: AreaRequest[] = []; let truncated = false;
+  for (let offset=0; offset<1000; offset+=100) {
+    const r=await supabase.from('lots').select('id,title,fruit_type_id,province,quantity_kg,price_vnd_per_kg,harvest_start,harvest_end',{count:'exact'})
+      .eq('status','PUBLISHED').gte('harvest_end',vietnamDate()).order('id').range(offset,offset+99).abortSignal(signal??new AbortController().signal);
+    if(r.error||!r.data||r.count===null) throw new Error('Không tải được nguồn cung.');
+    requests.push(...r.data.map(x=>({id:x.id,title:x.title,fruit_type_id:x.fruit_type_id,preferred_provinces:[x.province],target_quantity_kg:Number(x.quantity_kg),min_price_vnd_per_kg:Number(x.price_vnd_per_kg),max_price_vnd_per_kg:Number(x.price_vnd_per_kg),required_start:x.harvest_start,required_end:x.harvest_end})));
+    truncated=r.count>1000; if(offset+r.data.length>=r.count||r.data.length<100)break;
+  }
+  return {requests,truncated};
+}
 export function vietnamDate(now = new Date()) { return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(now); }
 export async function loadAreaRequests(signal?: AbortSignal) {
   const requests: AreaRequest[] = []; let truncated = false;

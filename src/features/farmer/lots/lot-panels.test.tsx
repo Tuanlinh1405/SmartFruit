@@ -23,10 +23,11 @@ function deferred<T>() {
 }
 function fillForm() {
   const changes = [
-    ['Tên lô hàng', 'Lô Ri6'], ['Loại quả', 'fruit-1'], ['Giống', 'variety-1'], ['Khối lượng', '1.250125'],
+    ['Tên lô hàng', 'Lô Ri6'], ['Khối lượng', '1.250125'],
     ['Giá chào (đ/kg)', '65000'], ['Bắt đầu thu hoạch', '2026-10-15'], ['Kết thúc thu hoạch', '2026-10-20'],
     ['Tỉnh / thành phố', 'Tiền Giang'],
   ];
+  fireEvent.change(screen.getByRole('combobox',{name:/Loại quả/}),{target:{value:'sau rieng'}});fireEvent.click(screen.getByRole('option',{name:'Sầu riêng · Ri6'}));
   for (const [label, value] of changes) fireEvent.change(screen.getByLabelText(label, { exact: false, selector: label === 'Khối lượng' ? 'input' : undefined }), { target: { value } });
 }
 
@@ -66,15 +67,16 @@ test('unit changes preserve exact quantity; changing fruit resets variety', asyn
   expect(screen.getByRole('textbox', { name: 'Khối lượng' })).toHaveValue('1250.125');
   await userEvent.selectOptions(screen.getByLabelText('Đơn vị khối lượng'), 'tonne');
   expect(screen.getByRole('textbox', { name: 'Khối lượng' })).toHaveValue('1.250125');
-  await userEvent.selectOptions(screen.getByLabelText(/Loại quả/), 'fruit-2');
-  expect(screen.getByLabelText('Giống')).toHaveValue('');
+  await userEvent.clear(screen.getByRole('combobox',{name:/Loại quả/}));await userEvent.type(screen.getByRole('combobox',{name:/Loại quả/}),'mit');await userEvent.click(screen.getByRole('option',{name:'Mít'}));
+  expect(screen.getByRole('combobox',{name:/Loại quả/})).toHaveValue('Mít');
   expect(screen.queryByRole('option', { name: 'Ri6' })).not.toBeInTheDocument();
 });
 test('edit preserves assigned inactive catalog without permitting new inactive selections', async () => {
   const old = testLot({ fruit_type_id: 'inactive-fruit', variety_id: null }); const save = vi.fn().mockResolvedValue(old);
   renderApp(<LotForm initialLot={old} catalog={testCatalog} priceFloor={null} onSave={save} />);
-  expect(screen.getByRole('option', { name: 'Quả cũ (ngừng sử dụng)' })).toBeDisabled();
-  expect(screen.getByLabelText(/Loại quả/)).toHaveValue('inactive-fruit');
+  await userEvent.click(screen.getByRole('combobox',{name:/Loại quả/}));
+  expect(screen.getByRole('option', { name: 'Quả cũ (ngừng sử dụng)' })).toHaveAttribute('aria-disabled','true');
+  expect(screen.getByLabelText(/Loại quả/)).toHaveValue('Quả cũ');
   await userEvent.click(screen.getByRole('button', { name: 'Lưu nháp' }));
   expect(save).toHaveBeenCalledWith(expect.objectContaining({ fruit_type_id: 'inactive-fruit' }), 'save');
 });

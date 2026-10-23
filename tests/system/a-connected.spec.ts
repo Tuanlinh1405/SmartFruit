@@ -31,7 +31,7 @@ for (const width of [1440,768,390]) test(`Farmer production routes with mocked H
   await page.getByRole('button', { name: 'Lưu hồ sơ', exact: true }).click(); expect(api.calls.filter(c => c.method === 'POST')).toHaveLength(0);
   await page.getByLabel(/^Tên vườn/).fill('Vườn UI chính'); await page.getByLabel(/^Tỉnh \/ thành phố/).fill('Tiền Giang'); await page.getByRole('button', { name: 'Lưu hồ sơ', exact: true }).click();
   await expect(page.getByText('Đã lưu hồ sơ nhà vườn.')).toBeVisible(); await useMenu(page, 'Danh sách lô hàng'); await page.getByRole('button', { name: 'Tạo lô hàng', exact: true }).click();
-  await page.getByLabel(/^Tên lô hàng/).fill('Lô UI chính'); await page.getByLabel(/^Loại quả/).selectOption('fruit-1'); await page.getByLabel(/^Khối lượng/).fill('1');
+  await page.getByLabel(/^Tên lô hàng/).fill('Lô UI chính'); await page.getByRole('combobox',{name:/Loại quả/}).fill('sau rieng');await page.getByRole('option',{name:'Sầu riêng',exact:true}).click(); await page.getByLabel(/^Khối lượng/).fill('1');
   await page.getByLabel(/^Giá chào/).fill('65000'); await page.getByLabel(/^Bắt đầu thu hoạch/).fill('2026-10-15'); await page.getByLabel(/^Kết thúc thu hoạch/).fill('2026-10-20'); await page.getByLabel(/^Tỉnh \/ thành phố/).fill('Tiền Giang');
   api.failNextPublish(); await page.getByRole('button', { name: 'Đăng lô hàng', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('Đã lưu nháp nhưng chưa đăng');
   await page.getByRole('button', { name: 'Đăng lô hàng', exact: true }).click(); await expect(page).toHaveURL(/\/farmer\/lots\/[^/]+\/edit$/);
@@ -41,8 +41,8 @@ for (const width of [1440,768,390]) test(`Farmer production routes with mocked H
   await page.reload(); await expect(page.getByLabel('Giá sàn riêng (đ/kg)')).toHaveValue('60000');
   await page.getByRole('button', { name: 'Xem chi tiết lô' }).click(); const detailUrl = page.url();
   await page.getByRole('button', { name: 'Thông tin vận chuyển' }).click(); await expect(page).toHaveURL(/\/farmer\/transport\?lotId=/); await expect(page.getByRole('heading',{name:'Tìm xe phù hợp'})).toBeVisible(); await expect(page.getByRole('button', { name: 'Tìm xe',exact:true })).toBeVisible(); await expect(page.locator('main')).not.toContainText('PRIVATE UI TEST');
-  await page.goto(detailUrl); await page.getByRole('button', { name: 'Tìm người mua phù hợp' }).click(); await expect(page.getByText('Buyer công khai test')).toBeVisible(); await expect(page.getByText(/Phù hợp 58 điểm/)).toBeVisible();
-  await page.getByRole('button', { name: 'Gửi lời mời kết nối' }).click(); await expect(page).toHaveURL(/\/farmer\/invitations/); await expect(page.locator('main')).not.toContainText('PRIVATE UI TEST');
+  await page.goto(detailUrl); await page.getByRole('button', { name: 'Tìm người mua phù hợp' }).click(); await expect(page.getByText('Buyer công khai test')).toBeVisible(); await expect(page.getByText(/58.0% phù hợp/)).toBeVisible();
+  await page.getByRole('button', { name: 'Gửi đề nghị' }).click(); await expect(page).toHaveURL(/\/farmer\/invitations/); await expect(page.locator('main')).not.toContainText('PRIVATE UI TEST');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.goto(detailUrl); await page.getByRole('button', { name: 'Đóng lô', exact: true }).click(); await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click(); await expect(page.getByRole('button', { name: 'Tìm người mua phù hợp' })).toBeDisabled();
   await page.getByRole('button', { name: 'Xóa lô', exact: true }).click(); await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click();

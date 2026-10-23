@@ -6,7 +6,7 @@ for (const width of [1440, 768, 390]) for (const route of pages) test(`A workspa
   const errors: string[] = []; const remote: string[] = []; page.on('pageerror', e => errors.push(e.message)); page.on('request', r => { if (r.url().includes('supabase.co')) remote.push(r.url()); });
   await page.setViewportSize({ width, height: 960 }); await page.goto(route); await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   if (route.endsWith('/dashboard')) await expect(page.getByRole('region', { name: 'Thống kê tài khoản' })).toBeVisible();
-  else if(route.endsWith('/tracking')||route.endsWith('/reviews'))await expect(page.getByText('Chưa hỗ trợ', { exact: true })).toBeVisible();
+  else if(route.endsWith('/tracking')||route.endsWith('/reviews')||route.endsWith('/prices'))await expect(page.locator('.market-demo>.notice')).toContainText(/minh họa|giả lập/);
   else if(route.endsWith('/transport'))await expect(page.getByRole('heading',{name:'Tìm xe phù hợp'})).toBeVisible();
   else if(route.endsWith('/requests'))await expect(page.getByRole('heading',{name:'Yêu cầu gửi đến nhà xe'})).toBeVisible();
   else if(route.endsWith('/notifications'))await expect(page.getByRole('heading',{name:'Thông báo',exact:true})).toBeVisible();
@@ -19,9 +19,9 @@ test('Farmer utilities use live pages without simulated submissions', async ({ p
     await expect(page.getByRole('button', { name: /minh họa/ })).toHaveCount(0);
   }
 });
-test('carrier deferred tracking and reviews cannot create fake bookings', async ({ page }) => {
+test('carrier simulation tracking and reviews cannot create real bookings', async ({ page }) => {
   for (const route of ['/carrier/tracking','/carrier/reviews']) {
-    await page.goto(route); await expect(page.getByText('Chưa hỗ trợ', { exact: true })).toBeVisible();
+    await page.goto(route); await expect(page.locator('.market-demo>.notice')).toContainText(/minh họa|giả lập/);
     await expect(page.getByRole('button', { name: /Nhận chuyến|báo giá|minh họa/ })).toHaveCount(0);
   }
 });

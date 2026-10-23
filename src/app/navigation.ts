@@ -1,4 +1,4 @@
-import { Bell, Handshake, LayoutDashboard, Mail, Package, Search, ShieldCheck, Star, Truck } from 'lucide-react';
+import { ChartNoAxesCombined, Handshake, LayoutDashboard, Mail, Package, Search, ShieldCheck, Star, Truck } from 'lucide-react';
 import { navigationFor } from './ui-inventory';
 import type { Role, UiEntry } from '../types/ui';
 
@@ -13,17 +13,16 @@ const buyer: NavigationItem[] = [
   { path: '/buyer/transport', title: 'Vận chuyển', icon: Truck },
   { path: '/buyer/reviews', title: 'Đánh giá', icon: Star },
   { path: '/buyer/policy', title: 'Chính sách', icon: ShieldCheck },
-  { path: '/buyer/notifications', title: 'Thông báo', icon: Bell },
+  { path: '/buyer/prices', title: 'Dự báo giá', icon: ChartNoAxesCombined },
 ];
 export function workspaceNavigation(role: Role): NavigationItem[] {
   if (role === 'BUYER') return buyer;
   if (role === 'FARMER') return navigationFor(role)
-    .filter(item => !['FUI-02', 'FUI-04', 'FUI-10', 'FUI-11', 'FUI-12'].includes(item.id))
+    .filter(item => !['FUI-02', 'FUI-04', 'FUI-11', 'FUI-12'].includes(item.id))
     .flatMap<NavigationItem>(item => item.id === 'FUI-07' ? [
       { path: '/farmer/invitations', title: 'Lời mời kết nối', icon: Mail },
       { path: '/farmer/negotiations', title: 'Đàm phán', icon: Handshake },
     ] : item.id==='FUI-13'?[
-      {path:'/farmer/notifications',title:'Thông báo',icon:Bell},
       {path:'/farmer/policy',title:'Chính sách & bảo mật',icon:ShieldCheck},
     ]:[{ path: item.path, title: item.title, icon: item.icon, end: item.path.endsWith('/dashboard') }]);
   return [...navigationFor(role)

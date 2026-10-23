@@ -1,0 +1,104 @@
+/* Customer feedback, 23 October. Scoped to the authenticated workspaces. */
+.role-farmer .page-header .eyebrow,.role-buyer .page-header .eyebrow,
+.role-farmer .page-heading .eyebrow,.role-buyer .page-heading .eyebrow,
+.role-farmer .page-header>div>p,.role-buyer .page-header>div>p,
+.role-farmer .page-heading>div>p,.role-buyer .page-heading>div>p,
+.role-buyer .hero-panel>p,.role-buyer .hero-panel>.eyebrow { display:none; }
+.role-farmer .page-header,.role-buyer .page-header,.role-farmer .page-heading,.role-buyer .page-heading { margin-bottom:16px; }
+.role-farmer .metric-card,.role-buyer .metric-card { padding:14px 16px;grid-template-columns:1fr auto;gap:4px 12px;align-items:center; }
+.role-farmer .metric-card strong,.role-buyer .metric-card strong { grid-row:1/3;grid-column:2;font-size:24px; }
+.role-farmer .metric-card .metric-icon,.role-buyer .metric-card .metric-icon { display:none; }
+.role-farmer .farmer-overview-tools { grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:none; }
+.role-farmer .farmer-overview-tools>section { grid-area:auto; }
+.role-farmer .farmer-buying-areas,.role-buyer .farmer-buying-areas { margin:0; }
+.role-farmer .buying-area-map,.role-buyer .buying-area-map { height:300px;min-height:240px; }
+.role-farmer .farmer-overview-grid { grid-template-columns:1fr; }
+.role-farmer .assistant-fab { width:auto;min-width:92px;border-radius:8px;gap:8px; }
+.weather-symbol { color:var(--accent);float:right; }
+.rating-stars { display:inline-block;position:relative;font-size:24px;line-height:1.4;letter-spacing:3px;white-space:nowrap;color:var(--border); }
+.rating-stars>span:last-child { color:#d69500;position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap; }
+.review-summary .rating-stars { display:block;width:max-content; }
+.role-farmer .badge-danger,.role-buyer .status-pill.closed,.role-buyer .status-pill.cancelled { background:#fff0ef;color:#ac2929;border-color:#efc5c2; }
+.lot-status-edge { display:block;border-left:4px solid var(--border);padding-left:8px; }
+.lot-status-edge.edge-closed,.lot-status-edge.edge-cancelled { border-color:#d74747; }
+.lot-status-edge.edge-published { border-color:#24985b; }
+.role-buyer .request-grid { display:grid;grid-template-columns:1fr;gap:12px; }
+.role-buyer .request-card { display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,2fr) auto;gap:12px 24px;border-left:4px solid var(--border);align-items:center; }
+.role-buyer .request-card.request-open { border-left-color:var(--accent); }
+.role-buyer .request-card.request-closed,.role-buyer .request-card.request-cancelled { border-left-color:#d74747; }
+.role-buyer .request-card .card-top { grid-column:1/-1; }
+.role-buyer .request-meta { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px; }
+.role-buyer .request-meta span { display:grid;gap:6px; }
+.role-buyer .request-meta small,.partner-facts small { color:var(--muted-foreground);font-size:11px; }
+.role-buyer .request-meta strong { font-size:12px;font-weight:500; }
+.role-buyer .request-card .chip-row { grid-column:1/3; }
+.role-buyer .request-card .card-actions { grid-column:3;grid-row:2/4;display:grid;gap:8px; }
+.role-buyer .lot-list .lot-card { display:grid;grid-template-columns:40px minmax(140px,1fr) minmax(0,1.6fr) auto;align-items:center;gap:20px; }
+.role-buyer .lot-list .lot-facts { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:0; }
+.role-buyer .lot-list .lot-facts>span { padding:0;border:0;min-width:0; }
+.role-buyer .lot-list .lot-actions { display:grid;gap:8px; }
+.role-buyer .lot-list .lot-facts strong { font-size:12px; }
+.partner-result { display:grid;grid-template-columns:minmax(160px,1fr) minmax(0,2fr) auto;gap:24px;align-items:center; }
+.partner-result h2 { font-size:14px; }
+.partner-result p { color:var(--muted-foreground);font-size:12px;margin-top:6px; }
+.partner-facts { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px; }
+.partner-facts>span { display:grid;gap:6px; }
+.partner-facts strong { font-size:12px;font-weight:500; }
+.partner-result-actions { display:grid;gap:10px;justify-items:start; }
+.field-label>span { display:inline;white-space:nowrap; }
+.workspace-content .field>.field-label { display:block; }
+.role-buyer .lot-list .lot-facts,.role-buyer .lot-list .lot-actions { grid-column:auto;grid-row:auto; }
+.role-buyer form .form-row { align-items:start; }
+.fruit-combobox { position:relative; }
+.fruit-combobox [role=listbox] { position:absolute;top:64px;left:0;right:0;max-height:280px;overflow:auto;z-index:10;border:1px solid var(--border);border-radius:6px;background:var(--card);padding:4px;margin:0;list-style:none;box-shadow:var(--shadow-sm); }
+.fruit-combobox [role=option] { padding:10px;cursor:pointer;font-size:13px; }
+.fruit-combobox [role=option][aria-selected=true],.fruit-combobox [role=option]:hover { background:var(--secondary); }
+.fruit-combobox [aria-disabled=true] { opacity:.5; }
+.review-entry { display:grid;gap:12px; }
+.review-entry form { display:grid;gap:16px; }
+.review-entry .rating-row button { color:#b67c00;background:none;border:0;font-size:28px;min-width:40px;min-height:40px; }
+.business-profile { width:100%;max-width:1000px;margin:auto; }
+.business-heading { display:flex;justify-content:space-between;gap:12px;align-items:center; }
+.business-fieldset { border:0;padding:0;margin:0;min-width:0; }
+.business-profile .panel { padding:28px; }
+.business-profile h2 { display:flex;align-items:center;gap:12px;font-size:17px;font-weight:600; }
+.business-profile h2>span { display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--secondary);color:var(--primary);font-size:14px; }
+.business-profile .panel>p { margin:4px 0 22px 44px;color:var(--muted-foreground);font-size:13px; }
+.business-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px; }
+.business-profile small { color:var(--muted-foreground);font-size:12px; }
+.evidence-drop { display:grid;justify-items:center;gap:12px;background:var(--background);border:1px dashed var(--sidebar-muted);padding:28px 16px;border-radius:8px;text-align:center;color:var(--primary); }
+.evidence-drop input { max-width:100%;font-size:12px; }
+.evidence-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:20px; }
+.evidence-item { min-width:0;position:relative; }
+.evidence-item img { width:100%;height:140px;object-fit:cover;border:1px solid var(--border);border-radius:8px; }
+.evidence-remove { position:absolute;right:6px;top:6px;padding:6px;min-height:32px; }
+.business-profile .attestation { display:flex;flex-direction:row;align-items:start;gap:10px;font-size:13px; }
+.business-fieldset>.row>button[type=submit] { flex:1; }
+.business-profile .attestation input { width:auto;flex:none;margin:4px 0 0;accent-color:var(--primary); }
+@media(max-width:1100px) {
+ .role-buyer .request-card { grid-template-columns:1fr; }.role-buyer .request-card>* { grid-column:1!important;grid-row:auto!important; }
+ .role-buyer .request-card .card-actions { display:flex;flex-wrap:wrap; }
+ .partner-result,.role-buyer .lot-list .lot-card { grid-template-columns:1fr; }
+ .role-buyer .lot-list .lot-thumb { display:none; }.role-buyer .lot-list .lot-actions { display:flex;align-items:center;flex-wrap:wrap; }
+ .partner-result-actions { display:flex;align-items:center;flex-wrap:wrap; }
+}
+@media(max-width:767px) {
+ .role-farmer .farmer-overview-tools,.business-grid { grid-template-columns:1fr; }
+ .role-farmer .buying-area-map,.role-buyer .buying-area-map { height:240px; }
+ .business-profile .panel { padding:18px; }.business-profile .panel>p { margin-left:0; }.evidence-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .role-buyer .request-meta,.partner-facts,.role-buyer .lot-list .lot-facts { grid-template-columns:1fr;gap:12px; }
+ .role-buyer .request-meta>span,.partner-facts>span { grid-template-columns:100px minmax(0,1fr);align-items:start; }
+ .business-heading { align-items:start;flex-direction:column; }
+}
+.role-buyer .buyer-market-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin-top:16px; }
+.role-buyer .buyer-market-card { min-width:0;padding:14px 16px;border:1px solid var(--border);border-left:5px solid var(--primary);border-radius:8px;background:var(--card); }
+.role-buyer .buyer-market-card.fruit-jackfruit { border-left-color:#ed8c24; }
+.role-buyer .buyer-market-card.fruit-durian { border-left-color:#e6bc20; }
+.role-buyer .buyer-market-card.fruit-dragonfruit { border-left-color:#df4266; }
+.role-buyer .buyer-market-heading { display:flex;align-items:baseline;justify-content:space-between;gap:12px; }
+.role-buyer .buyer-market-heading h3 { margin:0;font-size:15px;overflow-wrap:anywhere; }
+.role-buyer .buyer-market-heading>span { flex-shrink:0;color:var(--muted-foreground);font-size:12px; }
+.role-buyer .buyer-market-quantity { margin:4px 0 12px;font-size:13px;color:var(--muted-foreground); }
+.role-buyer .buyer-market-price { display:grid;gap:3px;border-top:1px solid var(--border);padding-top:10px; }
+.role-buyer .buyer-market-price>span { color:var(--muted-foreground);font-size:11px; }
+.role-buyer .buyer-market-price strong { font-size:14px;font-weight:600;overflow-wrap:anywhere; }

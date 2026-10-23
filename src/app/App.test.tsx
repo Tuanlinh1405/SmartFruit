@@ -86,7 +86,7 @@ it.each(['/admin','/admin/dashboard'])('keeps Admin overview and active navigati
 });
 
 
-it.each(['prices', 'weather', 'map'])('preserves saved Farmer %s link filters and anchor', async page => {
+it.each(['weather', 'map'])('preserves saved Farmer %s link filters and anchor', async page => {
   auth.profile.role = 'FARMER';
   show(`/farmer/${page}?keep=1&province=Đồng%20Nai&filter=a&filter=b&tab=${page}#saved-section`);
   expect(await screen.findByRole('heading', {name: 'Tổng quan Farmer thời tiết và thu mua'})).toBeVisible();
@@ -97,4 +97,15 @@ it.each(['prices', 'weather', 'map'])('preserves saved Farmer %s link filters an
   expect(params.getAll('filter')).toEqual(['a', 'b']);
   expect(params.has('tab')).toBe(false);
   expect(window.location.hash).toBe('#saved-section');
+});
+
+
+it.each([['FARMER', '/farmer/prices'], ['BUYER', '/buyer/prices']])('opens the new price forecast for %s without redirecting to dashboard', async (role, path) => {
+  auth.profile.role = role;
+  show(`${path}?keep=1#forecast`);
+  expect(await screen.findByRole('heading', {name: 'Dự báo giá'})).toBeVisible();
+  expect(screen.getByText('Dữ liệu minh họa', {exact: true})).toBeVisible();
+  expect(window.location.pathname).toBe(path);
+  expect(window.location.search).toBe('?keep=1');
+  expect(window.location.hash).toBe('#forecast');
 });

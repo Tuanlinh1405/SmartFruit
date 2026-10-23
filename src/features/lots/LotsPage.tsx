@@ -72,7 +72,7 @@ export function LotsPage() {
         if (hybridEnabled && request) {
           try {
             await loadRuleOnly();
-            if (active) setError(`Tìm kiếm kết hợp chưa khả dụng; đang dùng quy tắc. ${explainError(cause)}`);
+            if (active) setError('Dịch vụ tìm kiếm tạm gián đoạn; đang hiển thị kết quả thay thế.');
           } catch (fallbackError) { if (active) setError(explainError(fallbackError)); }
         } else setError(explainError(cause));
       } finally { if (active) setLoading(false); }
@@ -123,15 +123,9 @@ export function LotsPage() {
           <option key={row.id} value={row.id}>{row.title} {row.status === 'DRAFT' ? '(nháp)' : ''}</option>)}</select></label>
       <label>Tìm theo từ khóa<input type="search" placeholder="Tên nông sản, giống…" maxLength={200} value={keyword}
         onChange={e => changeParam('q', e.target.value)} /></label></div>
-      <p className="muted small-text">Ưu tiên tên/giống khớp từ hoặc gần khớp trước, sau đó xét giá và khối lượng. Khu vực chưa tham gia xếp hạng.</p>
       {requestId && !request && <p className="form-error">Nhu cầu chưa tải xong hoặc không thuộc tài khoản của bạn.</p>}
       {request?.status === 'DRAFT' && <p className="notice">Đang xem trước với nhu cầu nháp; nhà vườn chưa thấy yêu cầu này.</p>}
-      <p className="muted">{hybridResponse?.meta.mode === 'hybrid'
-        ? 'Đã lấy tối đa 20 lô bằng cosine E5, sau đó xếp lại theo tên/giống, giá và lượng.'
-        : 'Đang so tên/giống bằng từ khóa và lỗi gõ gần đúng; điểm theo giá và lượng. E5 chưa khả dụng trong chế độ này.'}</p>
-      {hybridResponse?.meta.truncated && <p className="notice">{hybridResponse.meta.rankingScope === 'vector_top20'
-        ? 'Đang xếp lại trong top 20 vector; kết quả có thể ít hơn sau khi kiểm tra điều kiện.'
-        : 'Tập ứng viên đã được giới hạn; hãy thêm điều kiện để tìm chính xác hơn.'}</p>}
+
     </section>
     {error && <div className="notice error" role="alert">{error}</div>}
     {loading ? requestId ? <LoadingSteps label="Đang tìm lô hàng phù hợp…" /> : <LoadingState /> : tooMany ?
@@ -148,9 +142,9 @@ export function LotsPage() {
           <div className="lot-facts"><span><small>Sản lượng</small><strong>{formatTonnes(lot.quantity_kg)}</strong></span>
             <span><small>Giá</small><strong>{formatMoney(lot.price_vnd_per_kg)}</strong></span>
             <span><small>Thu hoạch</small><strong>{formatDate(lot.harvest_start)} – {formatDate(lot.harvest_end)}</strong></span></div>
-          <div className="lot-actions">{score !== null && <span className="match-pill">{score.toFixed(1)} điểm · {hybridResponse?.meta.mode === 'hybrid' ? 'E5/giá/lượng' : 'giá/lượng'}</span>}
+          <div className="lot-actions">{score !== null && <span className="match-pill">{score.toFixed(1)}% phù hợp</span>}
             <button className="button primary" onClick={() => setSelectedLot(lot.id)}>Xem chi tiết</button>
-            {reasons.length > 0 && <p className="muted small-text">{reasons.join(' ')}</p>}</div>
+            </div>
         </article>)}</div>}
       {totalPages > 1 && <div className="pagination"><button className="button outline" disabled={page <= 1} onClick={() => changeParam('page', String(page - 1))}>← Trước</button>
         <span>Trang {Math.min(page, totalPages)} / {totalPages}</span><button className="button outline" disabled={page >= totalPages} onClick={() => changeParam('page', String(page + 1))}>Tiếp →</button></div>}</>}
