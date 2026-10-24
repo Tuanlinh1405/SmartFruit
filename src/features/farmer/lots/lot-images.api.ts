@@ -1,6 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
-export interface LotImage { id: string; lot_id: string; storage_path: string; sort_order: number; }
+export interface LotImage { id: string; lot_id: string; storage_path: string; sort_order: number; is_ai_generated?: boolean; }
 export interface SignedImage extends LotImage { url: string | null; expiresAt: number; }
 export interface LotImagesRepository {
   list(userId: string, lotId: string): Promise<SignedImage[]>;
@@ -45,7 +45,7 @@ export function createLotImagesRepository(client: SupabaseClient): LotImagesRepo
     if (lot.error || !lot.data) throw new Error('Không truy cập được lô hàng.');
   }
   async function links(lotId: string): Promise<LotImage[]> {
-    const result = await client.from('lot_images').select('id,lot_id,storage_path,sort_order').eq('lot_id', lotId).order('sort_order');
+    const result = await client.from('lot_images').select('id,lot_id,storage_path,sort_order,is_ai_generated').eq('lot_id', lotId).order('sort_order');
     if (result.error || !result.data) throw new Error('Không thể tải liên kết ảnh.');
     return result.data;
   }
@@ -102,6 +102,7 @@ export function createLotImagesRepository(client: SupabaseClient): LotImagesRepo
       if (current && current.storage_path !== image.storage_path) throw new Error('Ảnh đã được thay đổi. Vui lòng tải lại.');
       if (current) {
         const result = await client.from('lot_images').delete().eq('id', image.id).eq('lot_id', lotId).eq('storage_path', image.storage_path).select('id').single();
+        if (result.error?.code === '23514') throw new Error('Lô đang công bố phải có ít nhất một ảnh. Hãy thêm hoặc thay ảnh trước khi xóa ảnh cuối.');
         if (result.error || !result.data) throw new Error('Chưa bỏ được liên kết ảnh. Vui lòng tải lại.');
       }
       await removeObject(userId, lotId, image.storage_path);

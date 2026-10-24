@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node verify-schema.mjs --deploy && node verify-schema.mjs && node verify-trading.mjs && node verify-registration.mjs && node verify-customer-feedback.mjs && node verify-buyer-business.mjs",
+    "test": "node verify-schema.mjs --deploy && node verify-schema.mjs && node verify-trading.mjs && node verify-registration.mjs && node verify-customer-feedback.mjs && node verify-buyer-business.mjs && node verify-required-lot-photos.mjs",
     "test:trading": "node verify-trading.mjs",
     "test:customer-feedback": "node verify-customer-feedback.mjs",
     "test:vector": "node verify-vector-top20.mjs",

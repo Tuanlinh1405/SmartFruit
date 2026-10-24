@@ -1,3 +1,4 @@
+import {ensureSeedProductPhoto} from './lib/seed-product-photo.mjs';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createClient } from '@supabase/supabase-js';
@@ -79,12 +80,16 @@ for (const [key, owner, status, quantity, price] of [
   ['lot2', 'farmer2', 'PUBLISHED', 20000, 68000],
   ['draftLot', 'farmer2', 'DRAFT', 5000, 63000],
 ]) {
-  check(await admin.from('lots').upsert({ id: ids[key], farmer_id: byName[owner].id,
+  const insertedLot = check(await admin.from('lots').upsert({ id: ids[key], farmer_id: byName[owner].id,
     fruit_type_id: durian.id, variety_id: ri6.id, title: `[TEST] Ri6 ${key}`, grade: 'A',
     quantity_kg: quantity, price_vnd_per_kg: price, harvest_start: '2026-10-20', harvest_end: '2026-11-05',
-    province: owner === 'farmer1' ? 'Đồng Nai' : 'Lâm Đồng', selling_method: 'PARTIAL', status,
+    province: owner === 'farmer1' ? 'Đồng Nai' : 'Lâm Đồng', selling_method: 'PARTIAL', status: 'DRAFT',
     certifications: ['VietGAP'], packaging_options: ['CARTON'], description: 'Lô dùng cho kiểm thử xuyên vai trò.' },
-  { onConflict: 'id', ignoreDuplicates: true }));
+  { onConflict: 'id', ignoreDuplicates: true }).select('id'));
+  const photo = await ensureSeedProductPhoto(admin, ids[key]);
+  if (status === 'PUBLISHED' && (insertedLot?.length || photo.created)) {
+    check(await admin.from('lots').update({status}).eq('id',ids[key]).eq('status','DRAFT'));
+  }
 }
 for (const [key, owner] of [['request1', 'buyer1'], ['request2', 'buyer2']]) {
   check(await admin.from('buy_requests').upsert({ id: ids[key], buyer_id: byName[owner].id,

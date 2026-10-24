@@ -1,4 +1,6 @@
 -- LogStar demo dataset v1, requested 2026-10-15.
+-- Published fixtures are staged as DRAFT until real Storage photos are uploaded.
+-- Upload photos, then explicitly publish the four marketplace fixtures.
 -- Apply AFTER migrations and supabase/seed.sql. Intended for the shared demo project.
 -- All identities, farms, requests and vehicles are fictional and labelled DEMO.
 -- Auth rows are non-login placeholders: no password, confirmation or identities.
@@ -65,7 +67,7 @@ with fixtures(id,farmer_id,fruit_code,variety_code,title,grade,quantity_kg,price
 insert into public.lots(id,farmer_id,fruit_type_id,variety_id,title,grade,quantity_kg,price_vnd_per_kg,harvest_start,harvest_end,province,certifications,packaging_options,selling_method,description,status)
 select f.id::uuid,f.farmer_id::uuid,t.id,v.id,f.title,f.grade,f.quantity_kg,f.price,
  f.harvest_start::date,f.harvest_end::date,f.province,f.certifications,f.packaging,
- f.selling_method::public.trade_method,f.description,f.status::public.lot_status
+ f.selling_method::public.trade_method,f.description,(case when f.status='PUBLISHED' then 'DRAFT' else f.status end)::public.lot_status
 from fixtures f join public.fruit_types t on t.code=f.fruit_code
 join public.fruit_varieties v on v.fruit_type_id=t.id and v.code=f.variety_code
 on conflict (id) do nothing;

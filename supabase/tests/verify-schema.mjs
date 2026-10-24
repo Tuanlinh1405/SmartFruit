@@ -322,11 +322,26 @@ try {
     assert.equal(r.rows[0].n,0);
   });
   const demoSql = await readFile(path.join(root, 'seeds', 'demo.sql'), 'utf8');
+  async function seedDemoWithPhotos() {
+    await db.exec(demoSql);
+    // Test-only Storage stand-ins; production uploads real files with the seed CLI.
+    await db.exec(`begin;
+      insert into storage.objects(bucket_id,name)
+      select 'lot-images',farmer_id::text||'/'||id::text||'/fixture.jpg' from public.lots
+      where id::text like '72000000-%' on conflict(bucket_id,name) do nothing;
+      insert into public.lot_images(lot_id,storage_path,sort_order)
+      select id,farmer_id::text||'/'||id::text||'/fixture.jpg',0 from public.lots
+      where id::text like '72000000-%' and not exists(select 1 from public.lot_images i where i.lot_id=lots.id)
+      ;
+      update public.lots set status='PUBLISHED' where id::text in (
+      '72000000-0000-4000-8000-000000000001','72000000-0000-4000-8000-000000000002',
+      '72000000-0000-4000-8000-000000000003','72000000-0000-4000-8000-000000000004') and status='DRAFT';commit;`);
+  }
   const demoBuyer = '71000000-0000-4000-8000-000000000004';
   const demoFarmer = '71000000-0000-4000-8000-000000000002';
   const demoLot = '72000000-0000-4000-8000-000000000001';
   await check('demo seed creates complete linked business dataset', async () => {
-    await db.exec(demoSql);
+    await seedDemoWithPhotos();
     const results = await db.exec(await readFile(path.join(root, 'seeds', 'verify-demo.sql'), 'utf8'));
     assert.deepEqual(Object.fromEntries(results[0].rows.map(r => [r.dataset, Number(r.records)])), {
       profiles:6,farmer_profiles:3,buyer_profiles:2,carrier_profiles:1,marketplace_profiles:6,
@@ -366,8 +381,8 @@ try {
   await check('demo rerun preserves edits and never duplicates business rows', async () => {
     await db.exec(`update public.lot_private_details set price_floor_vnd_per_kg=50000 where lot_id='${demoLot}';
       update public.lots set title='[DEMO] Edited by developer',price_vnd_per_kg=55000 where id='${demoLot}';`);
-    await db.exec(demoSql);
-    await db.exec(demoSql);
+    await seedDemoWithPhotos();
+    await seedDemoWithPhotos();
     const r=await db.query(`select title,price_vnd_per_kg from public.lots where id='${demoLot}'`);
     assert.equal(r.rows[0].title,'[DEMO] Edited by developer');
     assert.equal(Number(r.rows[0].price_vnd_per_kg),55000);

@@ -116,11 +116,16 @@ function Editor({ userId, initialLot, catalog, repository = lotsRepository, imag
     finally { setReloading(false); }
   }
   async function save(input: LotInput, intent: 'save' | 'publish'): Promise<Lot> {
+    if (!photoFiles.length) {
+      const existing = saved ? await imagesRepository.list(userId, saved.id) : [];
+      if (!existing.length) throw new Error('Cần ít nhất một ảnh sản phẩm trước khi lưu hoặc đăng lô.');
+    }
     const lot = await actions.mutateAsync(saved ? { kind: 'update', id: saved.id, input } : { kind: 'create', draftId: draftId.current, input });
     if (!lot) throw new Error('Chưa lưu được lô.');
     setSaved(lot);
     try {
       await uploadQueuedPhotos(imagesRepository, userId, lot.id, photoFiles, completedPhotos.current);
+      if (!(await imagesRepository.list(userId, lot.id)).length) throw new Error('Chưa có ảnh sản phẩm được lưu. Hãy tải lại ảnh rồi thử tiếp.');
       setPhotoFiles([]); void client.invalidateQueries({ queryKey: ['lot-images', userId, lot.id] });
     } catch (cause) { throw new Error(`Nội dung lô đã lưu nhưng ảnh chưa hoàn tất. ${cause instanceof Error ? cause.message : 'Vui lòng thử lại.'}`); }
     if (intent === 'publish' && lot.status === 'DRAFT') {

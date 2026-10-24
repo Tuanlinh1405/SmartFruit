@@ -1,0 +1,57 @@
+[
+  {
+    "key": "ri6",
+    "fruit": "Sầu riêng",
+    "variety": "Ri6",
+    "file": "ri6.jpg",
+    "prompt": "Use case: product-mockup. Create one photorealistic catalog photograph for a Vietnamese fruit marketplace: a ripe Ri6 durian, one whole green spiky fruit beside an opened half showing rich golden-yellow creamy flesh, on a clean wooden produce table with a softly blurred green orchard behind. Landscape 4:3 composition, product centered with generous margins, soft natural daylight, realistic fruit texture, appetizing fresh produce, consistent professional farm product photography. No people, no text, no labels, no logos, no certifications, no collage, no frame. This will be clearly labeled AI illustration in the app; do not imply documentary evidence. Compact standard-resolution image suitable for a product card, opaque background.",
+    "method": "built-in image_gen",
+    "label": "Ảnh minh họa AI",
+    "original_file": "ri6.png",
+    "bytes": 281688
+  },
+  {
+    "key": "monthong",
+    "fruit": "Sầu riêng",
+    "variety": "Monthong",
+    "file": "monthong.jpg",
+    "prompt": "Use case: product-mockup. Create one photorealistic catalog photograph for a Vietnamese fruit marketplace: a Monthong durian, one whole elongated green spiky fruit and an opened section with pale golden-yellow creamy flesh. Clean wooden produce table, softly blurred green orchard behind. Landscape 4:3 composition, product centered with generous margins, soft natural daylight, realistic fruit texture, appetizing fresh produce, professional farm product photography consistent with other fruit catalog assets. No people, no text, no labels, no logos, no certifications, no collage, no frame. This will be labeled AI illustration in the app, not documentary evidence. Compact standard resolution suitable for a product card, opaque background.",
+    "method": "built-in image_gen",
+    "label": "Ảnh minh họa AI",
+    "original_file": "monthong.png",
+    "bytes": 259661
+  },
+  {
+    "key": "jackfruit_thai",
+    "fruit": "Mít",
+    "variety": "Mít Thái",
+    "file": "jackfruit_thai.jpg",
+    "prompt": "Use case: product-mockup. Create one photorealistic catalog photograph for a Vietnamese fruit marketplace: a Thai jackfruit, one whole green oval bumpy fruit beside a cut section and a few plump yellow jackfruit bulbs, visually unmistakably jackfruit. Clean wooden produce table, softly blurred green orchard behind. Landscape 4:3 composition, product centered with generous margins, soft natural daylight, realistic fruit texture, appetizing fresh produce, professional farm product photography consistent with other fruit catalog assets. No people, no text, no labels, no logos, no certifications, no collage, no frame. This will be labeled AI illustration in the app, not documentary evidence. Compact standard resolution suitable for a product card, opaque background.",
+    "method": "built-in image_gen",
+    "label": "Ảnh minh họa AI",
+    "original_file": "jackfruit_thai.png",
+    "bytes": 256047
+  },
+  {
+    "key": "dragon_red",
+    "fruit": "Thanh long",
+    "variety": "Ruột đỏ",
+    "file": "dragon_red.jpg",
+    "prompt": "Use case: product-mockup. Create one photorealistic catalog photograph for a Vietnamese fruit marketplace: red-fleshed dragon fruit, vivid pink skins with green-tipped scales, one whole fruit beside a cut half showing deep magenta-red flesh dotted with tiny black seeds; absolutely not white flesh. Clean wooden produce table, softly blurred green orchard behind. Landscape 4:3 composition, product centered with generous margins, soft natural daylight, realistic fruit texture, appetizing fresh produce, professional farm product photography consistent with other fruit catalog assets. No people, no text, no labels, no logos, no certifications, no collage, no frame. This will be labeled AI illustration in the app, not documentary evidence. Compact standard resolution suitable for a product card, opaque background.",
+    "method": "built-in image_gen",
+    "label": "Ảnh minh họa AI",
+    "original_file": "dragon_red.png",
+    "bytes": 269359
+  },
+  {
+    "key": "dragon_white",
+    "fruit": "Thanh long",
+    "variety": "Ruột trắng",
+    "file": "dragon_white.jpg",
+    "prompt": "Use case: product-mockup. Create one photorealistic catalog photograph for a Vietnamese fruit marketplace: white-fleshed dragon fruit, vivid pink skins with green-tipped scales, one whole fruit beside a cut half showing bright white flesh dotted with tiny black seeds; absolutely not red flesh. Clean wooden produce table, softly blurred green orchard behind. Landscape 4:3 composition, product centered with generous margins, soft natural daylight, realistic fruit texture, appetizing fresh produce, professional farm product photography consistent with other fruit catalog assets. No people, no text, no labels, no logos, no certifications, no collage, no frame. This will be labeled AI illustration in the app, not documentary evidence. Compact standard resolution suitable for a product card, opaque background.",
+    "method": "built-in image_gen",
+    "label": "Ảnh minh họa AI",
+    "original_file": "dragon_white.png",
+    "bytes": 245559
+  }
+]

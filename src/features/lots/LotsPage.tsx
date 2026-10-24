@@ -1,4 +1,6 @@
-import { Sprout } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ProductPhoto } from '../../components/shared/product-photo';
+import './product-photos.css';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
@@ -10,7 +12,7 @@ import { listMyRequests } from '../buy-requests/api';
 import { lexicalRank, rankMatches } from '../matching/core';
 import { createNameMatcher, productSearchText } from '../matching/name-match';
 import { searchBuyerMatches, type MatchResponse } from '../matching/api';
-import { getPublishedLot, loadFarmerCards, loadLotImageUrls, loadPublishedLots } from './api';
+import { getPublishedLot, loadFarmerCards, loadLotPhotos, loadPublishedLots } from './api';
 import { openConnection } from '../trading/api';
 import { Modal } from '../../components/ui/dialog';
 
@@ -112,6 +114,10 @@ export function LotsPage() {
   const totalPages = Math.max(1, Math.ceil(resultCount / 12));
   const visible = hybridResponse ? cards : cards.slice((Math.min(page, totalPages) - 1) * 12,
     Math.min(page, totalPages) * 12);
+  const photoIds = visible.map(card => card.lot.id);
+  const photos = useQuery({queryKey: ['buyer-lot-photos', session?.user.id, photoIds],
+    enabled: !!session && photoIds.length > 0, queryFn: () => loadLotPhotos(photoIds),
+    retry: false, staleTime: 30_000, refetchInterval: 45_000});
   const fruitName = (lot: Lot) => [types.find(item => item.id === lot.fruit_type_id)?.name,
     varieties.find(item => item.id === lot.variety_id)?.name].filter(Boolean).join(' · ');
 
@@ -135,7 +141,7 @@ export function LotsPage() {
           ? 'Xếp hạng kết hợp' : hybridResponse ? 'Tìm kiếm dự phòng' : 'Xếp hạng theo quy tắc'}</span>}</div>
       {cards.length === 0 ? <div className="panel empty-state"><div className="empty-icon">⌕</div><h2>Chưa có lô phù hợp</h2><p>Thử đổi từ khóa hoặc chọn một nhu cầu khác.</p></div> :
         <div className="lot-list">{visible.map(({ lot, score, reasons }) => <article className="panel lot-card" key={lot.id}>
-          <div className="lot-thumb"><Sprout size={24} aria-hidden="true" /></div><div className="lot-main"><span className="eyebrow">{fruitName(lot)}</span><h3>{lot.title}</h3>
+          <div className="lot-thumb"><ProductPhoto photo={photos.data?.[lot.id]?.[0]} alt={lot.title} loading={photos.isFetching && !photos.data} onRetry={() => { void photos.refetch(); }} /></div><div className="lot-main"><span className="eyebrow">{fruitName(lot)}</span><h3>{lot.title}</h3>
             <p>{farmers[lot.farmer_id]?.display_name || 'Nhà vườn'} · {lot.province}{lot.district ? `, ${lot.district}` : ''}</p>
             <div className="chip-row">{lot.certifications.map(item => <span className="chip green" key={item}>{item} · tự khai</span>)}
               {lot.packaging_options.map(item => <span className="chip" key={item}>{item}</span>)}</div></div>
@@ -156,16 +162,18 @@ function LotDetail({ id, request, farmer, onClose }: { id: string; request?: Buy
   const navigate = useNavigate();
   const [connecting, setConnecting] = useState(false);
   const [lot, setLot] = useState<Lot | null>(null);
-  const [images, setImages] = useState<string[]>([]);
+  const { session } = useAuth();
+  const imageQuery = useQuery({queryKey: ['buyer-lot-photos', session?.user.id, [id]],
+    enabled: !!lot, queryFn: () => loadLotPhotos([id]), retry: false,
+    staleTime: 30_000, refetchInterval: 45_000});
+  const images = imageQuery.data?.[id] ?? [];
   const [error, setError] = useState('');
   useEffect(() => {
     let active = true;
-    getPublishedLot(id).then(async data => {
+    getPublishedLot(id).then(data => {
       if (!active) return;
       if (!data) { setError('Lô hàng không còn khả dụng.'); return; }
       setLot(data);
-      try { const urls = await loadLotImageUrls(id); if (active) setImages(urls); }
-      catch { if (active) setError('Chưa tải được ảnh lô hàng.'); }
     }).catch(cause => { if (active) setError(explainError(cause)); });
     return () => { active = false; };
   }, [id]);
@@ -180,8 +188,8 @@ function LotDetail({ id, request, farmer, onClose }: { id: string; request?: Buy
         <h3>Mô tả nhà vườn</h3><p>{lot.description || 'Chưa có mô tả.'}</p>
         <div className="chip-row">{lot.certifications.map(item => <span className="chip green" key={item}>{item} · nhà vườn tự khai</span>)}
           {lot.packaging_options.map(item => <span className="chip" key={item}>{item}</span>)}</div>
-        {images.length > 0 && <div className="image-grid">{images.map(url => <img src={url} alt="Ảnh lô nông sản" key={url} />)}</div>}
-        {images.length === 0 && <div className="image-placeholder">Chưa có ảnh được tải lên</div>}
+        {images.length > 0 && <div className="image-grid">{images.map(photo => <ProductPhoto photo={photo} alt={lot.title} key={photo.url} />)}</div>}
+        {images.length === 0 && <div className="image-placeholder">{imageQuery.isFetching ? 'Đang tải ảnh sản phẩm…' : 'Chưa tải được ảnh sản phẩm.'}<button className="button outline" onClick={() => { void imageQuery.refetch(); }}>Tải lại ảnh</button></div>}
       </div><div className="modal-footer"><button className="button outline" onClick={onClose}>Đóng</button>
         <button className="button accent" disabled={connecting || Boolean(request && request.status !== 'OPEN')} onClick={async () => {
           setConnecting(true); setError(''); try { const connectionId = await openConnection(lot.id, request?.id);

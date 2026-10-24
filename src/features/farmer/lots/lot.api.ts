@@ -96,6 +96,7 @@ export function createLotRepositories(client: SupabaseClient): { lots: LotsRepos
       if (!canChangeStatus(current.status, status)) throw new Error('Không thể chuyển trạng thái này. Vui lòng tải lại lô.');
       const { data, error } = await client.from('lots').update({ status }).eq('id', id).eq('farmer_id', userId)
         .eq('status', current.status).select(lotColumns).single<Lot>();
+      if (error?.code === '23514' && /photo|published_lot_requires_image/i.test(error.message)) throw new Error('Cần ít nhất một ảnh sản phẩm trước khi công bố lô.');
       if (error || !data) throw new Error('Chưa đổi được trạng thái. Nội dung đã lưu được giữ nguyên; vui lòng tải lại.');
       return data;
     },

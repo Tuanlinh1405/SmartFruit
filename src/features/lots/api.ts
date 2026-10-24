@@ -26,13 +26,22 @@ export async function loadFarmerCards(farmerIds: string[]): Promise<Record<strin
   return Object.fromEntries((data as MarketplaceProfile[]).map(row => [row.user_id, row]));
 }
 
-export async function loadLotImageUrls(lotId: string): Promise<string[]> {
-  const { data, error } = await supabase.from('lot_images').select('storage_path')
-    .eq('lot_id', lotId).order('sort_order');
+export interface LotPhoto { url: string; is_ai_generated: boolean; }
+export async function loadLotPhotos(lotIds: string[]): Promise<Record<string, LotPhoto[]>> {
+  if (!lotIds.length) return {};
+  const { data, error } = await supabase.from('lot_images').select('lot_id,storage_path,is_ai_generated')
+    .in('lot_id', [...new Set(lotIds)]).order('sort_order');
   if (error) throw error;
-  const paths = (data ?? []).map(row => row.storage_path as string);
-  if (!paths.length) return [];
-  const signed = await supabase.storage.from('lot-images').createSignedUrls(paths, 60);
+  const rows = data ?? [];
+  if (!rows.length) return {};
+  const signed = await supabase.storage.from('lot-images').createSignedUrls(rows.map(row => row.storage_path), 120);
   if (signed.error) throw signed.error;
-  return (signed.data ?? []).flatMap(item => item.signedUrl ? [item.signedUrl] : []);
+  const urls = new Map((signed.data ?? []).map(item => [item.path, item.signedUrl]));
+  const result: Record<string, LotPhoto[]> = {};
+  for (const row of rows) {
+    const url = urls.get(row.storage_path);
+    if (!url) throw new Error('Chưa tải được ảnh sản phẩm. Vui lòng thử lại.');
+    (result[row.lot_id] ??= []).push({url, is_ai_generated: !!row.is_ai_generated});
+  }
+  return result;
 }

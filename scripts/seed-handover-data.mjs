@@ -1,3 +1,4 @@
+import {ensureSeedProductPhoto} from './lib/seed-product-photo.mjs';
 // Customer presentation data. Dry-run by default; no migrations or existing-data resets.
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -63,11 +64,17 @@ const credentials=await readJson(credentialsPath);
 assert.ok(Array.isArray(credentials),'Prepare tmp/handover-accounts.json with the three requested emails and passwords');
 const make=key=>createClient(expectedUrl,key,{auth:{persistSession:false,autoRefreshToken:false}});
 const admin=process.env.SUPABASE_SECRET_KEY?make(process.env.SUPABASE_SECRET_KEY):null;
+assert.ok(admin,'Seeding AI product photos needs backend credentials and the latest photo migration');
 const clients={};const users={};
 const check=(stage,result)=>{if(result.error)throw Error(`${stage}: ${result.error.code??result.error.status??'request-failed'}`);return result.data;};
 async function insertMissing(client,table,row,ownerColumn,owner){
  const found=check(`Read ${table}`,await client.from(table).select('*').eq('id',row.id).maybeSingle());
  if(found){assert.equal(found[ownerColumn],owner);return found;}
+ if(table==='lots'){
+  const draft=check('Insert photographed lot draft',await client.from(table).insert({...row,status:'DRAFT'}).select('*').single());
+  await ensureSeedProductPhoto(admin,draft.id);
+  return row.status==='PUBLISHED'?check('Publish photographed seed lot',await client.from(table).update({status:'PUBLISHED'}).eq('id',draft.id).select('*').single()):draft;
+ }
  return check(`Insert ${table}`,await client.from(table).insert(row).select('*').single());
 }
 try{

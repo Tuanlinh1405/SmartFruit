@@ -4,14 +4,17 @@ import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import { LotEditorPanel, LotsListPanel, LotDetailPanel } from './lot-panels';
 import { LotForm } from './lot-form';
+import { LotImages } from './lot-images';
 import { LotActions } from './lot-actions';
 import { lotKeys } from './use-lots';
 import { testCatalog, testInput, testLot, testRepositories } from './lot.fixtures';
 import type { Lot, LotListFilters, LotPrivateInput } from './lot.model';
 vi.mock('./lot-images.api', async importOriginal => ({ ...(await importOriginal<typeof import('./lot-images.api')>()), lotImagesRepository: {
-  list: async () => [], upload: async () => undefined, remove: async () => undefined, cleanup: async () => 0, deleteLot: async () => undefined,
+  list: async () => [{id:'photo-1',lot_id:'lot-1',storage_path:'test/photo.jpg',sort_order:0,url:null,expiresAt:0}], upload: async () => undefined, remove: async () => undefined, cleanup: async () => 0, deleteLot: async () => undefined,
 } }));
 
+Object.defineProperty(URL,'createObjectURL',{value:vi.fn(()=> 'blob:lot-test'),configurable:true});
+Object.defineProperty(URL,'revokeObjectURL',{value:vi.fn(),configurable:true});
 function renderApp(element: React.ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: 0 } } });
   return { client, ...render(<QueryClientProvider client={client}>{element}</QueryClientProvider>) };
@@ -84,6 +87,10 @@ test('failed create retains input; successful retry creates one draft per attemp
   const repo = testRepositories(); const create = vi.spyOn(repo.lots, 'createDraft').mockRejectedValueOnce(new Error('Chưa tạo được lô nháp')).mockImplementation(async (userId, input, id) => testLot({ ...input, id, farmer_id: userId }));
   renderApp(<LotEditorPanel authenticatedUserId="farmer-1" repository={repo.lots} privateRepository={repo.privateDetails} />);
   await screen.findByRole('form'); fillForm();
+  vi.stubGlobal('createImageBitmap', vi.fn(async () => ({width:10,height:10,close:()=>{}})));
+  const photoInput=screen.getByLabelText('Chọn ảnh lô hàng');
+  fireEvent.change(photoInput,{target:{files:[new File(['photo'],'test.jpg',{type:'image/jpeg'})]}});
+  await screen.findByRole('button',{name:'Bỏ lựa chọn ảnh'});
   await userEvent.click(screen.getByRole('button', { name: 'Lưu nháp' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Chưa tạo được');
   expect(screen.getByLabelText(/Tên lô hàng/)).toHaveValue('Lô Ri6');
@@ -97,6 +104,10 @@ test('publish failure after create keeps draft ID; retry updates/publishes the s
   const publish = vi.spyOn(repo.lots, 'changeStatus').mockRejectedValueOnce(new Error('network')).mockImplementation(async (userId, id, status) => testLot({ id, farmer_id: userId, status }));
   const view = renderApp(<LotEditorPanel authenticatedUserId="farmer-1" repository={repo.lots} privateRepository={repo.privateDetails} />);
   await screen.findByRole('form'); fillForm();
+  vi.stubGlobal('createImageBitmap', vi.fn(async () => ({width:10,height:10,close:()=>{}})));
+  const photoInput=screen.getByLabelText('Chọn ảnh lô hàng');
+  fireEvent.change(photoInput,{target:{files:[new File(['photo'],'test.jpg',{type:'image/jpeg'})]}});
+  await screen.findByRole('button',{name:'Bỏ lựa chọn ảnh'});
   await userEvent.click(screen.getByRole('button', { name: 'Đăng lô hàng' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Đã lưu nháp nhưng chưa đăng');
   await waitFor(() => expect(screen.getByRole('button', { name: 'Đăng lô hàng' })).toBeEnabled());
@@ -214,4 +225,29 @@ test('explicit reload refreshes asking price and private data without erasing ed
   await userEvent.click(screen.getByRole('button', { name: 'Tải lại thông tin riêng' }));
   expect(await screen.findByText('Đã tải lại dữ liệu đã lưu. Các ô đang sửa được giữ nguyên.')).toBeVisible();
   expect(screen.getByText(/Giá chào đã lưu: 70/)).toBeVisible(); expect(screen.getByLabelText(/Tên lô hàng/)).toHaveValue('Đang sửa, chưa lưu'); expect(privateLoad.mock.calls.length).toBeGreaterThanOrEqual(2);
+});
+
+
+test.each(['Lưu nháp','Đăng lô hàng'])('%s requires a photo before any draft is created',async action=>{
+ const repo=testRepositories();const create=vi.spyOn(repo.lots,'createDraft');
+ renderApp(<LotEditorPanel authenticatedUserId="farmer-1" repository={repo.lots} privateRepository={repo.privateDetails}/>);
+ await screen.findByRole('form');fillForm();await userEvent.click(screen.getByRole('button',{name:action}));
+ expect(await screen.findByRole('alert')).toHaveTextContent('Cần ít nhất một ảnh sản phẩm');expect(create).not.toHaveBeenCalled();
+});
+test('a failed upload keeps one draft and retry completes photos before publication',async()=>{
+ const repo=testRepositories();const create=vi.spyOn(repo.lots,'createDraft');const publish=vi.spyOn(repo.lots,'changeStatus');let uploaded=false;
+ const image={id:'retry-image',lot_id:'lot-1',storage_path:'test/image.jpg',sort_order:0,url:null,expiresAt:0};
+ const photos={list:vi.fn(async()=>uploaded?[image]:[]),upload:vi.fn().mockRejectedValueOnce(new Error('upload failed')).mockImplementation(async()=>{uploaded=true;}),remove:vi.fn(),cleanup:vi.fn(),deleteLot:vi.fn()};
+ renderApp(<LotEditorPanel authenticatedUserId="farmer-1" repository={repo.lots} privateRepository={repo.privateDetails} imagesRepository={photos}/>);
+ await screen.findByRole('form');fillForm();vi.stubGlobal('createImageBitmap',vi.fn(async()=>({width:10,height:10,close:()=>{}})));
+ fireEvent.change(screen.getByLabelText('Chọn ảnh lô hàng'),{target:{files:[new File(['photo'],'test.jpg',{type:'image/jpeg'})]}});
+ await screen.findByRole('button',{name:'Bỏ lựa chọn ảnh'});await userEvent.click(screen.getByRole('button',{name:'Đăng lô hàng'}));
+ expect(await screen.findByRole('alert')).toHaveTextContent('ảnh chưa hoàn tất');expect(publish).not.toHaveBeenCalled();
+ await userEvent.click(screen.getByRole('button',{name:'Đăng lô hàng'}));expect(await screen.findByText('Đã lưu lô đã đăng.')).toBeVisible();
+ expect(create).toHaveBeenCalledOnce();expect(photos.upload).toHaveBeenCalledTimes(2);expect(publish).toHaveBeenCalledOnce();
+});
+test('AI provenance is visible and the only saved photo cannot be removed',async()=>{
+ const remove=vi.fn();const photos={list:async()=>[{id:'ai-photo',lot_id:'lot-1',storage_path:'test/ai.jpg',sort_order:0,url:'https://example.test/photo.jpg',expiresAt:0,is_ai_generated:true}],upload:vi.fn(),remove,cleanup:vi.fn(),deleteLot:vi.fn()};
+ renderApp(<LotImages userId="farmer-1" lotId="lot-1" repository={photos}/>);
+ expect(await screen.findByText('Ảnh minh họa AI')).toBeVisible();expect(screen.getByRole('button',{name:'Xóa ảnh 1'})).toBeDisabled();expect(remove).not.toHaveBeenCalled();
 });
