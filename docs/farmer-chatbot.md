@@ -4,7 +4,7 @@ Cập nhật 19/10/2026. Giữ giao diện và hợp đồng `farmer-chat`, thay
 
 ## Luồng và nguồn dữ liệu
 
-Thẻ dưới tiêu đề Tổng quan Farmer mở khung chat tối đa 480px, toàn màn hình khi hẹp. Chỉ Farmer hoạt động được dùng; backend xác thực JWT bằng `auth.getUser`, đọc role và trạng thái khóa của chính tài khoản. CORS chỉ cho phép origin cấu hình chính xác.
+Nút Trợ lý trên Tổng quan Farmer mở khung chat 520px, toàn màn hình khi rộng không quá 850px. Phần chọn cây/chủ đề nằm phía trên, giai đoạn cây mở thêm khi cần; lịch sử cuộn riêng và ô nhập giữ ở đáy. Enter gửi câu hỏi, Shift + Enter xuống dòng. Giao diện chỉ hiển thị câu trả lời và câu hỏi bổ sung, không hiển thị danh sách nguồn hay đoạn mô tả cảnh báo. Chỉ Farmer hoạt động được dùng; backend xác thực JWT bằng `auth.getUser`, đọc role và trạng thái khóa của chính tài khoản. CORS chỉ cho phép origin cấu hình chính xác.
 
 Nguồn khách hàng: [Tổng hợp bệnh và phân loại.xlsx](https://drive.google.com/file/d/1AsJqN1X3V-2xqyqWWGCfqyxTuURC47d3). `knowledge.json` chứa 27 mục về sầu riêng/mít/thanh long, hai chủ đề bệnh/phân loại, phiên bản `2026-10-17-v1`. Nội dung là bảng tổng hợp tham khảo, chưa xác minh độc lập toàn bộ tài liệu nông học gốc.
 

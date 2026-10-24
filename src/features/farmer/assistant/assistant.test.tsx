@@ -28,13 +28,14 @@ test('trailing slash on a refreshed dashboard still allows opening the assistant
   expect(await screen.findByText(answer.answer)).toBeVisible();
 });
 
-test('suggestions only fill composer; source and model text render safely; supplement restores original context', async () => {
+test('suggestions only fill composer; model text renders safely without sources; supplement restores original context', async () => {
   const send = vi.fn<typeof askFarmer>(async () => answer); show(send); await open();
-  expect(screen.getByText(/Không nhập thông tin cá nhân/)).toBeVisible();
   await userEvent.click(screen.getByRole('button', { name: 'Dấu hiệu bệnh thường gặp' }));
   expect(screen.getByLabelText('Câu hỏi cho trợ lý')).not.toHaveValue(''); expect(send).not.toHaveBeenCalled();
   await submit(); await screen.findByText(answer.answer);
-  expect(document.querySelector('script')).toBeNull(); expect(screen.getByRole('link', { name: 'Bảng tham khảo' })).toHaveAttribute('href', 'https://drive.google.com/file/d/example');
+  expect(document.querySelector('script')).toBeNull();
+  expect(screen.queryByText('Nguồn tham khảo')).toBeNull();
+  expect(screen.queryByText('Bảng tham khảo')).toBeNull();
   await userEvent.selectOptions(screen.getByLabelText('Cây trồng'), 'JACKFRUIT');
   await userEvent.click(screen.getByRole('button', { name: 'Bổ sung câu hỏi' }));
   expect(screen.getByLabelText('Câu hỏi cho trợ lý')).toHaveValue('Câu hỏi mẫu'); expect(screen.getByLabelText('Cây trồng')).toHaveValue('DURIAN'); expect(screen.getByLabelText('Câu hỏi cho trợ lý')).toHaveFocus();

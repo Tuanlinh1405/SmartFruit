@@ -38,18 +38,20 @@ test('Farmer assistant opens after refreshing a trailing-slash dashboard URL', a
   expect(api.requests).toHaveLength(1);
 });
 
-for (const width of [1440, 768, 390, 320]) test(`Farmer assistant at ${width}px: single prompt, source, focus and reset`, async ({ page }, info) => {
+for (const width of [1440, 768, 390, 320]) test(`Farmer assistant at ${width}px: single prompt, clean answer, focus and reset`, async ({ page }, info) => {
   await page.setViewportSize({ width, height: 960 }); await installMockApi(page); const api = await assistantApi(page); await loginAs(page, 'FARMER');
   const entry = page.getByRole('button', { name: 'Hỏi trợ lý', exact: true }); await expect(entry).toBeVisible();
   expect(api.requests).toHaveLength(0); await entry.click();
   const panel = page.getByRole('dialog', { name: 'Trợ lý nhà vườn', exact: true }); await expect(panel).toBeVisible();
-  await expect(panel).toHaveCSS('width', width <= 850 ? `${width}px` : '480px');
-  await expect(panel).toContainText('Không nhập thông tin cá nhân');
+  await expect(panel).toHaveCSS('width', width <= 850 ? `${width}px` : '520px');
+  await expect(panel).not.toContainText('Không nhập thông tin cá nhân');
+  if (width === 1440 || width === 390) await page.screenshot({ path: info.outputPath(`assistant-welcome-${width}.png`) });
   await panel.getByRole('button', { name: 'Dấu hiệu bệnh thường gặp', exact: true }).click(); expect(api.requests).toHaveLength(0);
   await panel.getByLabel('Câu hỏi cho trợ lý').fill('Tình huống mẫu: có dấu hiệu nào cần lưu ý?');
   await panel.getByRole('button', { name: 'Gửi câu hỏi', exact: true }).click();
   await expect(panel.getByText('Nội dung tham khảo cho DURIAN.', { exact: false })).toBeVisible();
-  await expect(panel.getByRole('link').first()).toHaveAttribute('href', 'https://drive.google.com/file/d/1AsJqN1X3V-2xqyqWWGCfqyxTuURC47d3');
+  await expect(panel.getByText('Nguồn tham khảo', { exact: true })).toHaveCount(0);
+  await expect(panel.getByRole('link')).toHaveCount(0);
   expect(await page.evaluate(() => (window as unknown as { chatInjected?: boolean }).chatInjected)).toBeUndefined();
   await panel.getByRole('button', { name: 'Bổ sung câu hỏi', exact: true }).click(); await expect(panel.getByLabel('Câu hỏi cho trợ lý')).toHaveValue('Tình huống mẫu: có dấu hiệu nào cần lưu ý?');
   await panel.getByLabel('Cây trồng', { exact: true }).selectOption('JACKFRUIT'); await panel.getByLabel('Chủ đề', { exact: true }).selectOption('GRADING');
@@ -77,6 +79,31 @@ test('quota retains composer without retries; logout/login clears session', asyn
   await expect(panel.getByRole('alert')).toContainText('Đã chạm hạn mức'); await expect(panel.getByLabel('Câu hỏi cho trợ lý')).toHaveValue('Tình huống mẫu bị lỗi quota'); expect(api.requests).toHaveLength(1);
   await page.keyboard.press('Escape'); await logout(page); await loginAs(page, 'FARMER'); await page.getByRole('button', { name: 'Hỏi trợ lý', exact: true }).click();
   await expect(page.getByLabel('Câu hỏi cho trợ lý')).toHaveValue(''); await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('compact mobile layout keeps composer visible and supports keyboard sending', async ({ page }, info) => {
+  await page.setViewportSize({ width: 390, height: 640 });
+  await installMockApi(page); const api = await assistantApi(page); await loginAs(page, 'FARMER');
+  await page.getByRole('button', { name: 'Hỏi trợ lý', exact: true }).click();
+  const panel = page.getByRole('dialog', { name: 'Trợ lý nhà vườn', exact: true });
+  await panel.locator('summary').click();
+  await panel.getByLabel('Giai đoạn cây (tùy chọn)', { exact: true }).selectOption('FLOWERING');
+  await panel.locator('summary').click();
+  const input = panel.getByLabel('Câu hỏi cho trợ lý');
+  await input.fill('Sầu riêng đang ra hoa.');
+  await input.press('Shift+Enter');
+  await input.pressSequentially('Can luu y gi?');
+  expect(api.requests).toHaveLength(0);
+  await input.press('Enter');
+  await expect(panel.locator('.assistant-answer')).toContainText('Nội dung tham khảo cho DURIAN.');
+  expect(api.requests).toHaveLength(1);
+  expect(api.requests[0].growthStage).toBe('FLOWERING');
+  expect(api.requests[0].question).toContain('\n');
+  const bounds = await panel.locator('.assistant-input-box').boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(640);
+  expect(await panel.evaluate(el => el.scrollHeight <= el.clientHeight)).toBe(true);
+  await page.screenshot({ path: info.outputPath('assistant-compact-mobile.png') });
 });
 for (const role of ['CARRIER', 'BUYER', 'ADMIN'] as const) test(`${role} has no Farmer assistant entry`, async ({ page }) => {
   await installMockApi(page); await loginAs(page, role); await expect(page.getByRole('heading', { level: 1 })).toBeVisible(); await expect(page.getByRole('button', { name: 'Hỏi trợ lý', exact: true })).toHaveCount(0);
