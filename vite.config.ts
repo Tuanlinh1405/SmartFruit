@@ -25,6 +25,7 @@ export default defineConfig({
     },
   },
   test: {
+    alias: {'npm:@supabase/supabase-js@2.117.3': '@supabase/supabase-js'},
     maxWorkers: 2,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],

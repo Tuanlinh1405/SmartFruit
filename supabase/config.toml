@@ -6,3 +6,7 @@ verify_jwt = false
 
 [functions.process-embeddings]
 verify_jwt = false
+
+# Intentionally public, limited to four seeded demo identities.
+[functions.demo-login]
+verify_jwt = false

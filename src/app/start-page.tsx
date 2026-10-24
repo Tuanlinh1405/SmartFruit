@@ -4,6 +4,8 @@ import { ArrowRight, Bell, Bot, Brain, Check, Handshake, Home, Mail, Phone, Puzz
 import { Brand } from '../components/shared/brand';
 import { useAuth } from '../features/auth/AuthProvider';
 import { roleHome } from '../features/auth/auth-routing';
+import { DemoRoleButtons } from '../features/auth/demo-role-buttons';
+import '@fontsource-variable/plus-jakarta-sans';
 import './start-page.css';
 
 const navigation = [
@@ -42,18 +44,6 @@ const technology = [
 
 function OrchardIllustration() {
   return <div className="start-orchard" role="group" aria-label="Minh họa kết nối nông sản, matching và vận chuyển">
-    <svg className="start-landscape" viewBox="0 0 560 620" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Vườn trái cây xanh và xe vận chuyển trên đường">
-      <defs><linearGradient id="orchard-sky" x2="0" y2="1"><stop stopColor="#c3ead8"/><stop offset="1" stopColor="#e0f4e9"/></linearGradient><linearGradient id="orchard-ground" x2="1" y2="1"><stop stopColor="#38b878"/><stop offset="1" stopColor="#12a15a"/></linearGradient></defs>
-      <rect width="560" height="620" fill="url(#orchard-sky)"/>
-      <circle cx="450" cy="90" r="59" fill="#f4fcf7" opacity=".75"/>
-      <path d="M0 298C110 243 197 280 302 252S453 233 560 249V620H0Z" fill="#78c49d"/>
-      <path d="M0 358C127 320 209 364 335 328S474 327 560 316V620H0Z" fill="url(#orchard-ground)"/>
-      {[{x:76,y:334,s:1},{x:177,y:365,s:1.12},{x:289,y:350,s:1.02}].map(({x,y,s})=><g key={x} transform={`translate(${x} ${y}) scale(${s})`}><ellipse cy="39" rx="37" ry="9" fill="#127344" opacity=".18"/><circle cy="-6" r="29" fill="#16814b"/><circle cx="-16" cy="12" r="22" fill="#1a9555"/><circle cx="15" cy="12" r="23" fill="#087741"/><rect x="-5" y="21" width="10" height="30" rx="4" fill="#976a31"/></g>)}
-      <text x="378" y="295" fontSize="35">🥭</text><text x="472" y="391" fontSize="29">🍈</text><text x="133" y="228" fontSize="24">🌱</text>
-      <path d="M-38 597C93 560 147 497 263 472S449 440 596 439" fill="none" stroke="#dedec5" strokeWidth="65"/>
-      <path d="M-38 597C93 560 147 497 263 472S449 440 596 439" fill="none" stroke="#fffdf1" strokeWidth="4" strokeDasharray="17 15"/>
-      <g transform="translate(194 450) rotate(-13)"><rect width="48" height="33" rx="5" fill="white"/><text x="10" y="24" fontSize="23">🥭</text><path d="M48 9h18l9 11v15H48Z" fill="#21b265"/><path d="M54 13h10l6 10H54Z" fill="#b7e8dc"/><circle cx="13" cy="36" r="8" fill="#31483a"/><circle cx="61" cy="36" r="8" fill="#31483a"/><circle cx="13" cy="36" r="3" fill="#e5e8df"/><circle cx="61" cy="36" r="3" fill="#e5e8df"/></g>
-    </svg>
     <div className="start-float start-price-card">
       <div className="start-mini-heading"><span className="start-mini-icon green"><Bot size={20}/></span><div><strong>AI Trợ lý Giá</strong><small>Sầu riêng Ri6 · Giá minh họa</small></div></div>
       <div className="start-price-value">85.000đ <span>▲ 8,2%</span></div>
@@ -79,10 +69,10 @@ export function StartPage() {
     <header className="start-header"><div className="start-container start-header-inner">
       <a className="start-logo" href="#trang-chu" aria-label="onlmallfruit — Trang chủ"><Brand/></a>
       <nav aria-label="Điều hướng giới thiệu">{navigation.map(({id,label,icon:Icon})=><a key={id} href={`#${id}`} aria-current={activeSection===id?'location':undefined} onClick={()=>setActiveSection(id)}><Icon size={16} aria-hidden="true"/>{label}</a>)}</nav>
-      <div className="start-header-actions"><Link className="start-guest-bell" to="/login" aria-label="Đăng nhập để xem thông báo"><Bell size={20}/></Link><Link className="start-login" to="/login">Đăng nhập</Link></div>
+      <div className="start-header-actions"><Link className="start-guest-bell" to="/login" aria-label="Đăng nhập để xem thông báo"><Bell size={20}/></Link><Link className="start-login" to="/login">Đăng nhập</Link><DemoRoleButtons/></div>
     </div></header>
     <main id="start-main" className="start-container">
-      <section className="start-hero" aria-labelledby="start-title"><div className="start-intro">
+      <section className="start-hero" aria-labelledby="start-title"><img className="start-hero-background" src={`${import.meta.env.BASE_URL}images/orchard-harvest.png`} alt="" fetchPriority="high"/><div className="start-intro">
         <span className="start-kicker"><Sprout size={15} aria-hidden="true"/> Nền tảng kết nối chuỗi cung ứng trái cây thông minh</span>
         <h1 id="start-title">Thuận mua. <br/>Vừa bán. <br/><span>Vận chuyển</span> <em>tối ưu.</em></h1>
         <p className="start-description">Mở gian hàng nông sản của bạn — <strong>miễn phí.</strong> Giải pháp công nghệ giúp nhà vườn, thương lái và đơn vị vận chuyển tìm thấy nhau trực tiếp.</p>
